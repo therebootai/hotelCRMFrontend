@@ -1,11 +1,11 @@
-import './App.css'
+import AppLayout from './components/layout/AppLayout'
+import Dashboard from './pages/Dashboard/Dashboard'
 
 function App() {
-
   return (
-    <>
-      <h1>Project Started</h1>
-    </>
+    <AppLayout>
+      <Dashboard />
+    </AppLayout>
   )
 }
 

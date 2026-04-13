@@ -1,111 +1,197 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ========================================
+  1. THEME DEFINITION
+  ======================================== */
+@theme inline {
+  /* Typography */
+  --font-sans: "Inter", sans-serif;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* Brand Colors */
+  --color-primary: #FF5A3C;
+  --color-primary-hover: #E5492E; /* Slightly darker for subtle hover */
+
+  /* Background & UI Colors */
+  --color-background: #F9FAFB; /* Very subtle light grey */
+  --color-card: #FFFFFF;
+  --color-border: #E5E7EB; /* Light grey border */
+  
+  /* Text Colors */
+  --color-text-primary: #111827; /* Dark grey/black */
+  --color-text-secondary: #6B7280; /* Medium grey */
+
+  /* Status Colors (Soft tones) */
+  --color-success: #10B981; 
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+
+  /* Room Specific Status Colors */
+  --color-room-available: #37A108;
+  --color-room-confirm: #FF5A3C;
+  --color-room-pencil: #8D6700;
+  --color-room-book: #006875;
+  --color-room-checkin: #0081FA;
+
+  /* Spacing Scale (Matching your internal scale) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Subtle Shadows for Cards & Modals */
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-modal: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
+/* ========================================
+  2. BASE STYLES
+  ======================================== */
 body {
-  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -1px; /* Global letter spacing rule */
+  -webkit-font-smoothing: antialiased;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* Typography Hierarchy Setup */
+h1, h2, h3 {
+  font-weight: 600; /* Slightly bold */
+  color: var(--color-text-primary);
+}
+h4, h5, h6, .section-title {
+  font-weight: 500; /* Medium weight */
+}
+p, span, div {
+  font-weight: 400; /* Regular */
+}
+small, .text-small {
+  font-weight: 300; /* Light and subtle */
+  color: var(--color-text-secondary);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+button {
+  cursor: pointer;
+}
+
+/* ========================================
+  3. COMPONENT CLASSES (Reusable SaaS-grade)
+  ======================================== */
+@layer components {
+  /* Page Layout */
+  .page-container {
+    @apply px-[32px] w-full mx-auto; /* Fixed 32px left/right spacing */
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-card border border-border rounded-xl p-[24px] shadow-card transition-all duration-200;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-primary text-white font-medium rounded-lg px-[16px] py-[8px] 
+           transition-all duration-200 ease-in-out
+           hover:bg-primary-hover hover:-translate-y-[1px] hover:shadow-md 
+           active:translate-y-0 active:shadow-none;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-100 text-text-primary font-medium rounded-lg px-[16px] py-[8px] 
+           transition-all duration-200 ease-in-out
+           hover:bg-gray-200 hover:-translate-y-[1px]
+           active:translate-y-0;
+  }
+
+  /* Form Inputs */
+  .input-field {
+    @apply w-full border border-border rounded-lg px-[16px] py-[10px] text-text-primary bg-white
+           transition-all duration-200 ease-in-out placeholder:text-text-secondary
+           focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary;
+  }
+  
+  .input-label {
+    @apply block text-[13px] font-medium text-text-secondary mb-[4px];
+  }
+
+  /* Table */
+  .table-container {
+    @apply w-full border-collapse text-left;
+  }
+  .table-container th {
+    @apply text-text-secondary font-medium px-[16px] py-[12px] border-b border-border;
+  }
+  .table-container td {
+    @apply px-[16px] py-[16px] border-b border-border transition-colors duration-200;
+  }
+  .table-container tbody tr:hover td {
+    @apply bg-gray-50; /* Light background highlight on row hover */
+  }
+
+  /* Modal Animations */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/40 backdrop-blur-sm z-40 
+           animate-fade-in flex items-center justify-center;
+  }
+  .modal-content {
+    @apply bg-white rounded-2xl shadow-modal p-[24px] z-50 
+           animate-zoom-in relative max-h-[90vh] overflow-y-auto custom-scroll;
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+
+/* ========================================
+  4. UTILITIES & ANIMATIONS
+  ======================================== */
+@layer utilities {
+  /* Fast, subtle animations (Under 300ms) */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 200ms ease-out forwards;
+  }
+  .animate-zoom-in {
+    animation: zoomIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-slide-up {
+    animation: slideUp 250ms ease-out forwards;
+  }
+
+  /* Scrollbar Utilities */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;  
+    scrollbar-width: none;  
   }
 }
-p {
-  margin: 0;
-}
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* Custom Styled Scrollbar */
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 10px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
 }

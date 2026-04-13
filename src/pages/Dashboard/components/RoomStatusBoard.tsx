@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 // --- STYLING CONFIGURATION ---
-// Mapped exactly to the Hex codes from your UI design document
 const STATUS_STYLES = {
   available: {
     label: "Available",
     headerText: "text-[#37A108]",
     headerBorder: "border-[#37A108]",
-    cardBg: "bg-[#37A108]/10", // 10% opacity for a soft background
+    cardBg: "bg-[#37A108]/10", 
     divider: "border-[#37A108]/20",
   },
   confirmed: {
@@ -49,28 +48,29 @@ const StatusColumn = ({ statusKey, count, rooms }: any) => {
   if (!rooms || rooms.length === 0) return null;
 
   return (
-    <div className="min-w-[180px] flex-1 flex flex-col">
+    // CHANGED: Removed min-w-[180px] and added min-w-0 to allow shrinking
+    <div className="flex-1 min-w-0 flex flex-col">
       
-      {/* 1. Header Block: Thick top border, soft background, NO bottom/side borders */}
+      {/* 1. Header Block */}
       <div className={`p-3 border-t-[4px] ${style.headerBorder} ${style.cardBg}`}>
         <h4 className={`text-[13px] font-bold ${style.headerText} flex gap-1 justify-center`}>
           {style.label} <span className="opacity-80">({count})</span>
         </h4>
       </div>
 
-      {/* 2. Cards Stack: Margin top, soft bg, Left/Right/Bottom borders (top is 0) */}
-      <div className={`flex flex-col mt-[8px] ${style.cardBg}  `}>
+      {/* 2. Cards Stack */}
+      <div className={`flex flex-col mt-[8px] ${style.cardBg}`}>
         {rooms.map((room: any, idx: number) => (
           <div 
             key={idx} 
-            // Use a white bottom border to separate the individual inner cards
-            className={`p-3 border-x border-b border-t-0 ${style.headerBorder} ${idx !== rooms.length - 1 ? '' : 'rounded-b-xl'} `}
+            className={`p-3 border-x border-b border-t-0 ${style.headerBorder} ${idx !== rooms.length - 1 ? '' : 'rounded-b-xl'}`}
           >
-            <div className="flex justify-between items-start mb-1.5">
-              <span className="text-[12px] font-semibold text-text-primary leading-tight">{room.type}</span>
-              <span className="text-[12px] font-semibold text-text-primary">{room.qty}</span>
+            <div className="flex justify-between items-start mb-1.5 gap-2">
+              <span className="text-[12px] font-semibold text-text-primary leading-tight break-words">{room.type}</span>
+              <span className="text-[12px] font-semibold text-text-primary shrink-0">{room.qty}</span>
             </div>
-            <p className="text-[11px] text-text-secondary leading-relaxed">{room.numbers}</p>
+            {/* CHANGED: Added break-words so long number strings wrap instead of breaking the layout */}
+            <p className="text-[11px] text-text-secondary leading-relaxed break-words">{room.numbers}</p>
           </div>
         ))}
       </div>
@@ -82,7 +82,6 @@ const StatusColumn = ({ statusKey, count, rooms }: any) => {
 // --- MAIN COMPONENT ---
 
 const RoomStatusBoard = () => {
-  // MOCK DATA: Structured to match your UI state
   const [boardData, setBoardData] = useState([
     {
       id: "1",
@@ -141,9 +140,9 @@ const RoomStatusBoard = () => {
       {boardData.map((row) => (
         <div
           key={row.id}
-          className="flex flex-col md:flex-row gap-4 items-start"
+          className="flex flex-col md:flex-row gap-4 items-start w-full"
         >
-          {/* Left Side: Date Toggle Button (Now with permanent background) */}
+          {/* Left Side: Date Toggle Button */}
           <button
             onClick={() => toggleRow(row.id)}
             className="w-[180px] shrink-0 flex items-center justify-between py-2.5 px-4 bg-[#F1F5F9] hover:bg-[#E2E8F0] rounded-lg transition-colors text-[13px] font-semibold text-text-primary"
@@ -157,10 +156,10 @@ const RoomStatusBoard = () => {
           </button>
 
           {/* Right Side: Board Content */}
-          <div className="flex-1 w-full overflow-x-auto custom-scroll pb-2">
+          <div className="flex-1 w-full min-w-0">
             {row.isExpanded && row.statuses ? (
-              // EXPANDED STATE: Show columns
-              <div className="flex gap-4 min-w-max">
+              // CHANGED: Replaced min-w-max with w-full so it respects screen boundaries
+              <div className="flex gap-3 w-full">
                 {Object.entries(row.statuses).map(([statusKey, data]: any) => (
                   <StatusColumn
                     key={statusKey}

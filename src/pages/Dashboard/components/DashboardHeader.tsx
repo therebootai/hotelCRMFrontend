@@ -6,7 +6,7 @@ const DashboardHeader = () => {
     <div className="flex items-center justify-between w-full">
       
       {/* Date Filter Control */}
-      <button className="flex items-center justify-between bg-[#ff8a73] hover:bg-[#ff765c] text-white px-4 py-2 rounded-lg transition-colors min-w-[200px]">
+      <button className="flex items-center justify-between bg-[#ff8a73] hover:bg-[#ff765c] text-white px-4 py-2 rounded-lg transition-colors min-w-50">
         <ChevronLeft size={20} className="opacity-80" />
         <span className="text-sm font-medium">Select Date Filter</span>
         <ChevronRight size={20} className="opacity-80" />

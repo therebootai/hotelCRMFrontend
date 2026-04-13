@@ -4,7 +4,7 @@ import { Banknote, AlertTriangle, ArrowLeftRight, Brush } from 'lucide-react';
 // Reusable Sub-component
 const KpiCard = ({ icon: Icon, label, value, valueColor, iconBg, iconColor }: any) => (
   <div className="card flex items-center gap-5 py-5 hover:-translate-y-1 transition-transform duration-200">
-    <div className={`w-[50px] h-[50px] rounded-full flex items-center justify-center shrink-0 ${iconBg} ${iconColor}`}>
+    <div className={`w-12.5 h-12.5 rounded-full flex items-center justify-center shrink-0 ${iconBg} ${iconColor}`}>
       <Icon size={24} strokeWidth={1.5} />
     </div>
     <div className="flex flex-col">

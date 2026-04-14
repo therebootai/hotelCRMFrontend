@@ -5,17 +5,17 @@ const DashboardHeader = () => {
   return (
     <div className="flex items-center justify-between w-full">
       
-      {/* Date Filter Control - Styled exactly like a Status Column Header */}
-      <div className=" btn-primary w-[180px] h-[46px] flex items-center justify-between px-3 shrink-0">
-        <button className=" hover:text-[#E5492E] transition-colors flex items-center justify-center">
+      {/* Date Filter Control - Uses btn-primary with opacity hover for the chevrons */}
+      <div className="btn-primary w-45 h-11.5 flex items-center justify-between px-3 shrink-0">
+        <button className="text-white opacity-70 hover:opacity-100 transition-opacity flex items-center justify-center">
           <ChevronLeft size={18} strokeWidth={2.5} />
         </button>
         
-        <h4 className="text-[13px] font-bold">
+        <h4 className="text-[13px] font-bold text-white">
           Date Filter
         </h4>
         
-        <button className=" transition-colors flex items-center justify-center">
+        <button className="text-white opacity-70 hover:opacity-100 transition-opacity flex items-center justify-center">
           <ChevronRight size={18} strokeWidth={2.5} />
         </button>
       </div>

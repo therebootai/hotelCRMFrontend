@@ -117,7 +117,7 @@ const ExpectedDeparturesCard = () => (
           </div>
 
           {/* Action Button - Overriding the global btn-secondary slightly for size */}
-          <button className="btn-secondary !text-[11px] !px-3 !py-1.5">
+          <button className="btn-secondary text-[11px]! px-3! py-1.5!">
             Checkout
           </button>
         </div>
@@ -130,7 +130,7 @@ const ExpectedDeparturesCard = () => (
 
 const OperationsOverview = () => {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-[76px]">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-19">
       <ExpectedArrivalsCard />
       <OccupiedRoomsCard />
       <ExpectedDeparturesCard />

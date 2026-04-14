@@ -1,13 +1,16 @@
 import React from 'react';
 import { Search, Bell, HelpCircle } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
-// Define the props we expect
-interface TopBarProps {
-  activeView: 'calendar' | 'overview';
-  setActiveView: (view: 'calendar' | 'overview') => void;
-}
+const TopBar = () => {
+  // Helper to apply the active bottom-border styling based on the current URL
+  const navLinkClass = ({ isActive }: { isActive: boolean }) => 
+    `uppercase tracking-wide text-xs pb-1 transition-colors ${
+      isActive 
+        ? 'text-primary border-b-2 border-primary' 
+        : 'text-text-secondary hover:text-text-primary'
+    }`;
 
-const TopBar = ({ activeView, setActiveView }: TopBarProps) => {
   return (
     <header className="h-17.5 bg-white border-b border-border flex items-center justify-between px-[32px] shrink-0">
       
@@ -27,20 +30,17 @@ const TopBar = ({ activeView, setActiveView }: TopBarProps) => {
 
       {/* Center/Right: Toggles & Profile */}
       <div className="flex items-center gap-6">
-        {/* View Toggles - Now fully functional! */}
+        
+        {/* View Toggles - Now using Routing! */}
         <div className="hidden md:flex items-center gap-4 text-sm font-medium">
-          <button 
-            onClick={() => setActiveView('calendar')}
-            className={`uppercase tracking-wide text-xs pb-1 transition-colors ${activeView === 'calendar' ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'}`}
-          >
+          {/* Use 'end' so it only highlights on exactly /dashboard, not /dashboard/stay-overview */}
+          <NavLink to="/dashboard" end className={navLinkClass}>
             Calendar
-          </button>
-          <button 
-            onClick={() => setActiveView('overview')}
-            className={`uppercase tracking-wide text-xs pb-1 transition-colors ${activeView === 'overview' ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'}`}
-          >
+          </NavLink>
+          
+          <NavLink to="/dashboard/stay-overview" className={navLinkClass}>
             Stay Overview
-          </button>
+          </NavLink>
         </div>
 
         {/* Divider */}

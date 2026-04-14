@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Snowflake, Wrench, User } from 'lucide-react';
-import NewBookingButton from '../../../components/ui/NewBookingButton';
+import NewBookingButton from '../../components/ui/NewBookingButton';
 
 // --- HELPER CONSTANTS & FUNCTIONS ---
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -293,7 +293,7 @@ const StayOverview = () => {
   const gridTemplate = `180px repeat(${datesArray.length}, minmax(0, 1fr))`;
 
   return (
-    <div className="flex flex-col gap-[24px] w-full animate-fade-in relative pb-10">
+    <div className="page-container flex flex-col py-[32px] gap-[24px] w-full animate-fade-in relative pb-10">
       
       {/* 1. Top Header */}
       <div className="flex items-center justify-between">

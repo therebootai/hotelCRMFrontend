@@ -1,29 +1,43 @@
 import React from "react";
 import DashboardHeader from "./components/DashboardHeader";
-import KpiMetrics from "./components/KpiMetrics";
 import RoomStatusBoard from "./components/RoomStatusBoard";
+import StayOverview from "./components/StayOverview";
 import OperationsOverview from "./components/OperationsOverview";
+import KpiMetrics from "./components/KpiMetrics";
 
-const Dashboard = () => {
+// Define the expected prop
+interface DashboardProps {
+  activeView: 'calendar' | 'overview';
+}
+
+const Dashboard = ({ activeView }: DashboardProps) => {
   return (
-    <div className="page-container py-[32px] flex flex-col gap-19 animate-fade-in">
-      {/* 1. Header Area */}
-      <DashboardHeader />
+    <div className="page-container py-[32px] flex flex-col gap-[32px] animate-fade-in">
+      
+      {activeView === 'calendar' ? (
+        <>
+          <section className="w-full">
+            <DashboardHeader /> 
+          </section>
+          
+          <section className="w-full">
+            <RoomStatusBoard />
+          </section>
 
-      {/* 2. Room Status Board (Kanban-style grid) */}
-      <section className="w-full">
-        <RoomStatusBoard />
-      </section>
+          <section className="w-full mt-14">
+            <OperationsOverview />
+          </section>
 
-      {/* 3. Operations Overview (3-Column Layout) */}
-      <section className="w-full">
-        <OperationsOverview />
-      </section>
-
-      {/* 4. KPI Metrics Cards */}
-      <section className="w-full">
-        <KpiMetrics />
-      </section>
+          <section className="w-full mt-14">
+            <KpiMetrics />
+          </section>
+        </>
+      ) : (
+        <section className="w-full">
+          <StayOverview />
+        </section>
+      )}
+      
     </div>
   );
 };

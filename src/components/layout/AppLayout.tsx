@@ -4,17 +4,19 @@ import TopBar from './TopBar';
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  activeView: 'calendar' | 'overview';
+  setActiveView: (view: 'calendar' | 'overview') => void;
 }
 
-const AppLayout = ({ children }: AppLayoutProps) => {
+const AppLayout = ({ children, activeView, setActiveView }: AppLayoutProps) => {
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden text-text-primary">
       <SideBar />
       
       <div className="flex flex-col flex-1 h-full min-w-0">
-        <TopBar />
+        {/* Pass the props into TopBar */}
+        <TopBar activeView={activeView} setActiveView={setActiveView} />
         
-        {/* Main Content Area - Uses the custom scrollbar we defined in index.css */}
         <main className="flex-1 overflow-y-auto custom-scroll relative">
           {children}
         </main>

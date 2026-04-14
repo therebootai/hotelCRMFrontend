@@ -1,9 +1,15 @@
 import React from 'react';
 import { Search, Bell, HelpCircle } from 'lucide-react';
 
-const TopBar = () => {
+// Define the props we expect
+interface TopBarProps {
+  activeView: 'calendar' | 'overview';
+  setActiveView: (view: 'calendar' | 'overview') => void;
+}
+
+const TopBar = ({ activeView, setActiveView }: TopBarProps) => {
   return (
-    <header className="h-[70px] bg-white border-b border-border flex items-center justify-between px-[32px] shrink-0">
+    <header className="h-17.5 bg-white border-b border-border flex items-center justify-between px-[32px] shrink-0">
       
       {/* Left: Property Name & Search */}
       <div className="flex items-center gap-8 flex-1">
@@ -21,10 +27,20 @@ const TopBar = () => {
 
       {/* Center/Right: Toggles & Profile */}
       <div className="flex items-center gap-6">
-        {/* View Toggles */}
+        {/* View Toggles - Now fully functional! */}
         <div className="hidden md:flex items-center gap-4 text-sm font-medium">
-          <button className="text-text-secondary hover:text-text-primary transition-colors uppercase tracking-wide text-xs">Calendar</button>
-          <button className="text-primary border-b-2 border-primary pb-1 uppercase tracking-wide text-xs">Stay Overview</button>
+          <button 
+            onClick={() => setActiveView('calendar')}
+            className={`uppercase tracking-wide text-xs pb-1 transition-colors ${activeView === 'calendar' ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'}`}
+          >
+            Calendar
+          </button>
+          <button 
+            onClick={() => setActiveView('overview')}
+            className={`uppercase tracking-wide text-xs pb-1 transition-colors ${activeView === 'overview' ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'}`}
+          >
+            Stay Overview
+          </button>
         </div>
 
         {/* Divider */}
@@ -48,7 +64,6 @@ const TopBar = () => {
             <p className="text-[10px] text-text-secondary uppercase tracking-wider">Front Desk Manager</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-border">
-            {/* Replace src with actual avatar URL if available */}
             <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Masud&backgroundColor=e2e8f0" alt="Masud Rahaman" className="w-full h-full object-cover" />
           </div>
         </div>

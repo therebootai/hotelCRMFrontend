@@ -59,11 +59,11 @@ const StatusColumn = ({ statusKey, count, rooms }: any) => {
       </div>
 
       {/* 2. Cards Stack */}
-      <div className={`flex flex-col mt-[8px] ${style.cardBg}`}>
+      <div className={`flex flex-col `}>
         {rooms.map((room: any, idx: number) => (
           <div 
             key={idx} 
-            className={`p-3 border-x border-b border-t-0 ${style.headerBorder} ${idx !== rooms.length - 1 ? '' : 'rounded-b-xl'}`}
+            className={`p-3 border-x border-b border-t-0 mt-[8px] ${style.cardBg} ${style.headerBorder} ${idx !== rooms.length - 1 ? '' : 'rounded-b-xl'}`}
           >
             <div className="flex justify-between items-start mb-1.5 gap-2">
               <span className="text-[12px] font-semibold text-text-primary leading-tight break-words">{room.type}</span>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Search,
   UserPlus,
@@ -9,6 +9,9 @@ import {
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
+
+// Import your newly created Modal
+import AddStaffModal from "./Components/AddStaffModal";
 
 const staffData = [
   {
@@ -57,19 +60,37 @@ const staffData = [
   },
 ];
 
-const ToggleSwitch = ({ isActive }: { isActive: boolean }) => (
+// ToggleSwitch used specifically for the data table
+const ToggleSwitch = ({
+  isActive,
+}: {
+  isActive: boolean;
+}) => (
   <div
-    className={`w-9 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${isActive ? "bg-[#FF5A3C]" : "bg-gray-300"}`}
+    className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+      isActive ? "bg-[#FF5A3C]" : "bg-gray-300"
+    }`}
   >
     <div
-      className={`bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform ${isActive ? "translate-x-4" : "translate-x-0"}`}
+      className={`bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform ${
+        isActive ? "translate-x-4" : "translate-x-0"
+      }`}
     />
   </div>
 );
 
 const StaffMaster = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
-    <div className="flex flex-col w-full h-full p-8 max-w-300 mx-auto">
+    <div className="flex flex-col w-full h-full p-8 max-w-[1200px] mx-auto relative">
+      
+      {/* Extracted Modal Component */}
+      <AddStaffModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
+
       {/* Page Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -78,7 +99,10 @@ const StaffMaster = () => {
             Manage roles, permissions, and directory for property personnel.
           </p>
         </div>
-        <button className="btn-primary flex items-center gap-2 shadow-sm">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="bg-[#FF5A3C] hover:bg-[#E5492E] text-white font-medium rounded-lg px-4 py-2 flex items-center gap-2 shadow-sm transition-colors"
+        >
           <UserPlus size={18} />
           <span>Add Staff</span>
         </button>
@@ -98,12 +122,11 @@ const StaffMaster = () => {
           />
         </div>
 
-        <div className="relative min-w-45">
-          <select className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 focus:outline-none cursor-pointer">
+        <div className="relative min-w-[180px]">
+          <select defaultValue="All Roles" className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 focus:outline-none cursor-pointer">
             <option>All Roles</option>
             <option>Admin</option>
             <option>Reception</option>
-            <option>Waiter</option>
           </select>
           <ChevronDown
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
@@ -120,25 +143,25 @@ const StaffMaster = () => {
       {/* Data Table */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex-1">
         <div className="overflow-x-auto">
-          <table className="table-container w-full min-w-200">
+          <table className="table-container w-full min-w-[800px]">
             <thead>
               <tr className="bg-gray-50/50">
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left py-3 px-4">
                   Name
                 </th>
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left py-3 px-4">
                   Role
                 </th>
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left py-3 px-4">
                   Mobile
                 </th>
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left py-3 px-4">
                   Login ID
                 </th>
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left py-3 px-4">
                   Status
                 </th>
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right pr-8">
+                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right py-3 px-4 pr-8">
                   Actions
                 </th>
               </tr>
@@ -177,23 +200,17 @@ const StaffMaster = () => {
                     </span>
                   </td>
                   <td className="py-4 px-4">
-                    <span className="text-sm text-gray-500 max-w-25 block wrap-break-word">
+                    <span className="text-sm text-gray-500 max-w-[100px] block break-words">
                       {staff.loginId}
                     </span>
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`w-2 h-2 rounded-full ${staff.status === "Active" ? "bg-green-500" : "bg-gray-400"}`}
-                      ></span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {staff.status}
-                      </span>
+                      <ToggleSwitch isActive={staff.status === "Active"} />
                     </div>
                   </td>
                   <td className="py-4 px-4 pr-8">
                     <div className="flex items-center justify-end gap-4">
-                      <ToggleSwitch isActive={staff.status === "Active"} />
                       <button className="text-gray-400 hover:text-[#FF5A3C] transition-colors">
                         <Edit size={16} />
                       </button>

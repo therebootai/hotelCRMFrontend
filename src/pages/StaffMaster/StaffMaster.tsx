@@ -11,7 +11,9 @@ import toast from "react-hot-toast";
 import api from "../../lib/axios";
 
 import AddStaffModal from "./Components/AddStaffModal";
+import DeleteModal from "./Components/DeleteModal";
 import { useDebounce } from "../../hooks/useDebounce";
+import { isAxiosError } from "axios";
 
 export interface StaffMember {
   _id: string;
@@ -47,6 +49,9 @@ const ToggleSwitch = ({
 const StaffMaster = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+
+  const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,6 +136,32 @@ const StaffMaster = () => {
     return matchesRole && matchesSearch;
   });
 
+
+  const handleDeleteStaff = async () => {
+    if (!staffToDelete) return;
+    setIsDeleting(true);
+
+    try {
+      await api.delete(`/users/${staffToDelete._id}`);
+      
+      setStaffList((prev) => prev.filter((staff) => staff._id !== staffToDelete._id));
+      toast.success(`${staffToDelete.fullName} has been deleted.`);
+      setStaffToDelete(null);
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        const errorMsg = error.response?.data?.message || "Failed to delete user.";
+        toast.error(errorMsg);
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    } finally {
+      setIsDeleting(false);
+      // if (!isAxiosError(error) || error?.response?.status === 200) {
+      //     setStaffToDelete(null);
+      // }
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full p-8 max-w-300 mx-auto relative">
       <AddStaffModal
@@ -141,6 +172,15 @@ const StaffMaster = () => {
         }}
         onSuccess={fetchStaff}
         editData={selectedStaff}
+      />
+
+      <DeleteModal
+        isOpen={!!staffToDelete}
+        onClose={() => setStaffToDelete(null)}
+        onConfirm={handleDeleteStaff}
+        isLoading={isDeleting}
+        title="Delete Staff Member?"
+        message={`Are you sure you want to permanently delete ${staffToDelete?.fullName}? This action cannot be undone and will revoke all their access to the ERP immediately.`}
       />
 
       {/* Page Header */}
@@ -310,7 +350,10 @@ const StaffMaster = () => {
                         >
                           <Edit size={16} />
                         </button>
-                        <button className="text-text-secondary hover:text-danger transition-colors">
+                        <button 
+                          onClick={() => setStaffToDelete(staff)} 
+                          className="text-text-secondary hover:text-danger transition-colors"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>

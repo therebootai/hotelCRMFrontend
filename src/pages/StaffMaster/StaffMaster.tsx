@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   UserPlus,
@@ -23,6 +23,7 @@ export interface StaffMember {
   isActive: boolean;
   mobile: string;
   loginId: string;
+  createdAt?: string;
 }
 
 const ToggleSwitch = ({
@@ -60,6 +61,25 @@ const StaffMaster = () => {
   const [searchInput, setSearchInput] = useState("");
 
   const debouncedSearch = useDebounce(searchInput, 300);
+
+  const [isMoreFiltersOpen, setIsMoreFiltersOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all"); // "all" | "active" | "disabled"
+  const [sortOrder, setSortOrder] = useState("newest"); // "newest" | "oldest"
+
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target as Node)
+      ) {
+        setIsMoreFiltersOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const fetchStaff = async () => {
     try {
@@ -123,19 +143,34 @@ const StaffMaster = () => {
     }
   };
 
-  const filteredStaffList = staffList.filter((staff) => {
-    const matchesRole = roleFilter === "all" || staff.role === roleFilter;
+  const filteredStaffList = staffList
+    .filter((staff) => {
+      // 1. Role Check
+      const matchesRole = roleFilter === "all" || staff.role === roleFilter;
 
-    const searchLower = debouncedSearch.toLowerCase();
-    const matchesSearch = 
-      !debouncedSearch ||
-      staff.fullName.toLowerCase().includes(searchLower) ||
-      staff.mobile?.includes(searchLower) ||
-      staff.loginId?.toLowerCase().includes(searchLower);
+      // 2. Status Check
+      const matchesStatus = 
+        statusFilter === "all" || 
+        (statusFilter === "active" && staff.isActive) || 
+        (statusFilter === "disabled" && !staff.isActive);
 
-    return matchesRole && matchesSearch;
-  });
+      // 3. Search Check
+      const searchLower = debouncedSearch.toLowerCase();
+      const matchesSearch = 
+        !debouncedSearch ||
+        staff.fullName.toLowerCase().includes(searchLower) ||
+        staff.mobile?.includes(searchLower) ||
+        staff.loginId?.toLowerCase().includes(searchLower);
 
+      return matchesRole && matchesStatus && matchesSearch;
+    })
+    .sort((a, b) => {
+      // 4. Sort Check (Using createdAt, or falling back to a dummy date if missing)
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+
+      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+    });
 
   const handleDeleteStaff = async () => {
     if (!staffToDelete) return;
@@ -143,13 +178,16 @@ const StaffMaster = () => {
 
     try {
       await api.delete(`/users/${staffToDelete._id}`);
-      
-      setStaffList((prev) => prev.filter((staff) => staff._id !== staffToDelete._id));
+
+      setStaffList((prev) =>
+        prev.filter((staff) => staff._id !== staffToDelete._id),
+      );
       toast.success(`${staffToDelete.fullName} has been deleted.`);
       setStaffToDelete(null);
     } catch (error: unknown) {
       if (isAxiosError(error)) {
-        const errorMsg = error.response?.data?.message || "Failed to delete user.";
+        const errorMsg =
+          error.response?.data?.message || "Failed to delete user.";
         toast.error(errorMsg);
       } else {
         toast.error("An unexpected error occurred.");
@@ -235,10 +273,62 @@ const StaffMaster = () => {
           />
         </div>
 
-        <button className="btn-secondary flex items-center gap-2 py-2.5">
-          <ListFilter size={16} />
-          <span>More Filters</span>
-        </button>
+        <div className="relative" ref={popoverRef}>
+          <button 
+            onClick={() => setIsMoreFiltersOpen(!isMoreFiltersOpen)}
+            className={`flex items-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${isMoreFiltersOpen ? 'bg-gray-200 text-text-primary' : 'bg-gray-100 hover:bg-gray-200 text-text-secondary'}`}
+          >
+            <ListFilter size={16} />
+            <span>More Filters</span>
+            {/* Show a little dot if a filter is active */}
+            {(statusFilter !== "all" || sortOrder !== "newest") && (
+              <span className="w-2 h-2 rounded-full bg-primary ml-1"></span>
+            )}
+          </button>
+
+          {/* Popover Menu */}
+          {isMoreFiltersOpen && (
+            <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-xl shadow-modal z-20 animate-fade-in p-4">
+              
+              {/* Status Filter */}
+              <div className="mb-4">
+                <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Account Status</label>
+                <select 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="active">Active Only</option>
+                  <option value="disabled">Disabled Only</option>
+                </select>
+              </div>
+
+              {/* Sort Filter */}
+              <div>
+                <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Sort By</label>
+                <select 
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                </select>
+              </div>
+
+              {/* Reset Button */}
+              {(statusFilter !== "all" || sortOrder !== "newest") && (
+                <button 
+                  onClick={() => { setStatusFilter("all"); setSortOrder("newest"); }}
+                  className="w-full mt-4 text-xs font-semibold text-danger hover:text-red-700 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Data Table */}
@@ -350,8 +440,8 @@ const StaffMaster = () => {
                         >
                           <Edit size={16} />
                         </button>
-                        <button 
-                          onClick={() => setStaffToDelete(staff)} 
+                        <button
+                          onClick={() => setStaffToDelete(staff)}
                           className="text-text-secondary hover:text-danger transition-colors"
                         >
                           <Trash2 size={16} />

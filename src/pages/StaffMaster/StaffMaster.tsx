@@ -50,6 +50,8 @@ const StaffMaster = () => {
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [roleFilter, setRoleFilter] = useState("all");
+
   const fetchStaff = async () => {
     try {
       setIsLoading(true);
@@ -112,6 +114,11 @@ const StaffMaster = () => {
     }
   };
 
+  const filteredStaffList = staffList.filter((staff) => {
+    if (roleFilter === "all") return true;
+    return staff.role === roleFilter;
+  });
+
   return (
     <div className="flex flex-col w-full h-full p-8 max-w-300 mx-auto relative">
       <AddStaffModal
@@ -160,12 +167,13 @@ const StaffMaster = () => {
 
         <div className="relative min-w-45">
           <select
-            defaultValue="All Roles"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
             className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-text-primary focus:outline-none cursor-pointer"
           >
-            <option>All Roles</option>
-            <option>Admin</option>
-            <option>Reception</option>
+            <option value="all">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="receptionist">Reception</option>
           </select>
           <ChevronDown
             className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
@@ -228,7 +236,7 @@ const StaffMaster = () => {
                   </td>
                 </tr>
               ) : (
-                staffList.map((staff) => (
+                filteredStaffList.map((staff) => (
                   <tr
                     key={staff._id}
                     className="group hover:bg-gray-50/50 border-b border-border last:border-none"

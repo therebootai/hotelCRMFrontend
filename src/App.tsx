@@ -5,6 +5,7 @@ import StaffMaster from './pages/StaffMaster/StaffMaster';
 import Dashboard from './pages/Dashboard/Dashboard';
 // Import your new StayOverview component
 import StayOverview from './pages/Dashboard/StayOverview'; 
+import Login from './pages/Auth/Login';
 
 const MastersOverview = () => (
   <div className="p-8">
@@ -16,6 +17,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Layout />}>
           
           <Route index element={<Navigate to="/dashboard" replace />} />

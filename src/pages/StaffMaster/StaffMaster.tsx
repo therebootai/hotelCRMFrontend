@@ -1,74 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   UserPlus,
   ListFilter,
   Edit,
   Trash2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
 } from "lucide-react";
+import toast from "react-hot-toast";
+import api from "../../lib/axios"; // Import your Axios instance
 
 // Import your newly created Modal
 import AddStaffModal from "./Components/AddStaffModal";
 
-const staffData = [
-  {
-    id: 1,
-    name: "Adrian Thorne",
-    email: "athorne@gmail.com",
-    role: "ADMIN",
-    roleClass: "bg-orange-100 text-orange-600",
-    mobile: "+91 89654 56880",
-    loginId: "ADRIAN_88",
-    status: "Active",
-    avatar: "https://i.pravatar.cc/150?u=adrian",
-  },
-  {
-    id: 2,
-    name: "Elena Rodriguez",
-    email: "elena.r@gmail.com",
-    role: "RECEPTION",
-    roleClass: "bg-blue-100 text-blue-600",
-    mobile: "+91 89654 56880",
-    loginId: "ELENA_RECP",
-    status: "Active",
-    avatar: "https://i.pravatar.cc/150?u=elena",
-  },
-  {
-    id: 3,
-    name: "Marco Santini",
-    email: "marco.s@gmail.com",
-    role: "WAITER",
-    roleClass: "bg-emerald-100 text-emerald-600",
-    mobile: "+91 89654 56880",
-    loginId: "MARCO_FNB",
-    status: "Disabled",
-    avatar: "https://i.pravatar.cc/150?u=marco",
-  },
-  {
-    id: 4,
-    name: "Sophie Chen",
-    email: "s.chen@gmail.com",
-    role: "RECEPTION",
-    roleClass: "bg-blue-100 text-blue-600",
-    mobile: "+91 89654 56880",
-    loginId: "SCHEN_FRONT",
-    status: "Active",
-    avatar: "https://i.pravatar.cc/150?u=sophie",
-  },
-];
+// 1. Updated Interface based on your backend model
+export interface StaffMember {
+  _id: string;
+  fullName: string;
+  email: string;
+  role: "admin" | "receptionist";
+  isActive: boolean;
+  mobile?: string; // Optional in case backend doesn't send it yet
+  loginId?: string; // Optional in case backend doesn't send it yet
+}
 
 // ToggleSwitch used specifically for the data table
-const ToggleSwitch = ({
-  isActive,
-}: {
-  isActive: boolean;
-}) => (
+const ToggleSwitch = ({ isActive }: { isActive: boolean }) => (
   <div
     className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-      isActive ? "bg-[#FF5A3C]" : "bg-gray-300"
+      isActive ? "bg-primary" : "bg-gray-300"
     }`}
   >
     <div
@@ -81,27 +43,69 @@ const ToggleSwitch = ({
 
 const StaffMaster = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null); // NEW STATE
+
+  // 2. Real State for Data and Loading
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 3. Fetch Data Function
+  const fetchStaff = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get("/users");
+      setStaffList(response.data.data);
+    } catch (error) {
+      console.error("Failed to fetch staff list", error);
+      toast.error("Failed to load staff directory.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 4. Trigger fetch on component mount
+  useEffect(() => {
+    fetchStaff();
+  }, []);
+
+  // 5. Helper function for Role Badge Colors
+  const getRoleBadgeStyle = (role: string) => {
+    switch (role.toLowerCase()) {
+      case "admin":
+        return "bg-orange-100 text-orange-600";
+      case "receptionist":
+        return "bg-blue-100 text-blue-600";
+      default:
+        return "bg-gray-100 text-gray-600";
+    }
+  };
 
   return (
-    <div className="flex flex-col w-full h-full p-8 max-w-[1200px] mx-auto relative">
-      
-      {/* Extracted Modal Component */}
-      <AddStaffModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+    <div className="flex flex-col w-full h-full p-8 max-w-300 mx-auto relative">
+      <AddStaffModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedStaff(null);
+        }}
+        onSuccess={fetchStaff}
+        editData={selectedStaff}
       />
 
       {/* Page Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Staff Master</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-text-primary">Staff Master</h1>
+          <p className="text-sm text-text-secondary mt-1">
             Manage roles, permissions, and directory for property personnel.
           </p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-[#FF5A3C] hover:bg-[#E5492E] text-white font-medium rounded-lg px-4 py-2 flex items-center gap-2 shadow-sm transition-colors"
+        <button
+          onClick={() => {
+            setSelectedStaff(null);
+            setIsModalOpen(true);
+          }}
+          className="btn-primary flex items-center gap-2"
         >
           <UserPlus size={18} />
           <span>Add Staff</span>
@@ -118,117 +122,152 @@ const StaffMaster = () => {
           <input
             type="text"
             placeholder="Search by name, mobile or email..."
-            className="w-full bg-white border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-[#FF5A3C] transition-colors"
+            className="input-field pl-10 py-2.5"
           />
         </div>
 
-        <div className="relative min-w-[180px]">
-          <select defaultValue="All Roles" className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 focus:outline-none cursor-pointer">
+        <div className="relative min-w-45">
+          <select
+            defaultValue="All Roles"
+            className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-text-primary focus:outline-none cursor-pointer"
+          >
             <option>All Roles</option>
             <option>Admin</option>
             <option>Reception</option>
           </select>
           <ChevronDown
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
             size={16}
           />
         </div>
 
-        <button className="bg-gray-200 text-gray-700 font-medium rounded-lg px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-gray-300 transition-colors">
+        <button className="btn-secondary flex items-center gap-2 py-2.5">
           <ListFilter size={16} />
           <span>More Filters</span>
         </button>
       </div>
 
       {/* Data Table */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex-1">
-        <div className="overflow-x-auto">
-          <table className="table-container w-full min-w-[800px]">
+      <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col">
+        <div className="overflow-x-auto flex-1">
+          <table className="table-container w-full min-w-200">
             <thead>
               <tr className="bg-gray-50/50">
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left py-3 px-4">
+                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
                   Name
                 </th>
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left py-3 px-4">
+                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
                   Role
                 </th>
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left py-3 px-4">
+                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
                   Mobile
                 </th>
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left py-3 px-4">
+                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
                   Login ID
                 </th>
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left py-3 px-4">
+                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
                   Status
                 </th>
-                <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right py-3 px-4 pr-8">
+                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-right py-3 px-4 pr-8">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
-              {staffData.map((staff) => (
-                <tr
-                  key={staff.id}
-                  className="group hover:bg-gray-50/50 border-b border-gray-100 last:border-none"
-                >
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={staff.avatar}
-                        alt={staff.name}
-                        className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                      />
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {staff.name}
-                        </p>
-                        <p className="text-xs text-gray-500">{staff.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${staff.roleClass}`}
-                    >
-                      {staff.role}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="text-sm text-gray-600">
-                      {staff.mobile}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="text-sm text-gray-500 max-w-[100px] block break-words">
-                      {staff.loginId}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-2">
-                      <ToggleSwitch isActive={staff.status === "Active"} />
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 pr-8">
-                    <div className="flex items-center justify-end gap-4">
-                      <button className="text-gray-400 hover:text-[#FF5A3C] transition-colors">
-                        <Edit size={16} />
-                      </button>
-                      <button className="text-gray-400 hover:text-red-500 transition-colors">
-                        <Trash2 size={16} />
-                      </button>
+              {/* 6. Handle Loading State */}
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center">
+                    <div className="flex justify-center items-center gap-3 text-text-secondary">
+                      <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                      <span className="text-sm font-medium">
+                        Loading staff directory...
+                      </span>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : staffList.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-12 text-center text-text-secondary text-sm"
+                  >
+                    No staff members found.
+                  </td>
+                </tr>
+              ) : (
+                /* 7. Map over real data */
+                staffList.map((staff) => (
+                  <tr
+                    key={staff._id}
+                    className="group hover:bg-gray-50/50 border-b border-border last:border-none"
+                  >
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={`https://api.dicebear.com/7.x/notionists/svg?seed=${staff.fullName}&backgroundColor=e2e8f0`}
+                          alt={staff.fullName}
+                          className="w-10 h-10 rounded-full object-cover border border-border"
+                        />
+                        <div>
+                          <p className="text-sm font-semibold text-text-primary">
+                            {staff.fullName}
+                          </p>
+                          <p className="text-xs text-text-secondary">
+                            {staff.email}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${getRoleBadgeStyle(staff.role)}`}
+                      >
+                        {staff.role}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className="text-sm text-text-secondary">
+                        {staff.mobile || "N/A"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className="text-sm text-text-secondary max-w-25 block wrap-break-word">
+                        {staff.loginId || staff.email}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-2">
+                        <ToggleSwitch isActive={staff.isActive} />
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 pr-8">
+                      <div className="flex items-center justify-end gap-4">
+                        <button
+                          onClick={() => {
+                            setSelectedStaff(staff);
+                            setIsModalOpen(true);
+                          }}
+                          className="text-text-secondary hover:text-primary transition-colors"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button className="text-text-secondary hover:text-danger transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-white">
-          <span className="text-xs text-gray-500 font-medium">
-            Showing 1-4 of 32 staff members
+        {/* Pagination Footer - Can be wired up to state later */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-white mt-auto">
+          <span className="text-xs text-text-secondary font-medium">
+            Showing {staffList.length} staff members
           </span>
           <div className="flex items-center gap-1.5">
             <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">

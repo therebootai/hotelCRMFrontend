@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import api from "../../lib/axios";
 
 import AddStaffModal from "./Components/AddStaffModal";
+import { useDebounce } from "../../hooks/useDebounce";
 
 export interface StaffMember {
   _id: string;
@@ -51,6 +52,9 @@ const StaffMaster = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [roleFilter, setRoleFilter] = useState("all");
+  const [searchInput, setSearchInput] = useState("");
+
+  const debouncedSearch = useDebounce(searchInput, 300);
 
   const fetchStaff = async () => {
     try {
@@ -115,8 +119,16 @@ const StaffMaster = () => {
   };
 
   const filteredStaffList = staffList.filter((staff) => {
-    if (roleFilter === "all") return true;
-    return staff.role === roleFilter;
+    const matchesRole = roleFilter === "all" || staff.role === roleFilter;
+
+    const searchLower = debouncedSearch.toLowerCase();
+    const matchesSearch = 
+      !debouncedSearch ||
+      staff.fullName.toLowerCase().includes(searchLower) ||
+      staff.mobile?.includes(searchLower) ||
+      staff.loginId?.toLowerCase().includes(searchLower);
+
+    return matchesRole && matchesSearch;
   });
 
   return (
@@ -160,7 +172,9 @@ const StaffMaster = () => {
           />
           <input
             type="text"
-            placeholder="Search by name, mobile or email..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by name, mobile or ID..."
             className="input-field pl-10 py-2.5"
           />
         </div>

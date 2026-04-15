@@ -22,8 +22,15 @@ export interface StaffMember {
   loginId: string;
 }
 
-const ToggleSwitch = ({ isActive }: { isActive: boolean }) => (
+const ToggleSwitch = ({
+  isActive,
+  onToggle,
+}: {
+  isActive: boolean;
+  onToggle: () => void;
+}) => (
   <div
+    onClick={onToggle}
     className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
       isActive ? "bg-primary" : "bg-gray-300"
     }`}
@@ -59,6 +66,40 @@ const StaffMaster = () => {
   useEffect(() => {
     fetchStaff();
   }, []);
+
+  const handleToggleStatus = async (
+    staffId: string,
+    currentStatus: boolean,
+  ) => {
+    setStaffList((prevList) =>
+      prevList.map((staff) =>
+        staff._id === staffId ? { ...staff, isActive: !currentStatus } : staff,
+      ),
+    );
+
+    try {
+      const response = await api.patch(`/users/${staffId}/toggle-status`);
+
+      const finalStatus = response.data.data.isActive;
+      setStaffList((prevList) =>
+        prevList.map((staff) =>
+          staff._id === staffId ? { ...staff, isActive: finalStatus } : staff,
+        ),
+      );
+
+      toast.success(finalStatus ? "Account activated" : "Account disabled");
+    } catch (error) {
+      console.error("Failed to toggle status", error);
+
+      setStaffList((prevList) =>
+        prevList.map((staff) =>
+          staff._id === staffId ? { ...staff, isActive: currentStatus } : staff,
+        ),
+      );
+
+      toast.error("Failed to update status. Change reverted.");
+    }
+  };
 
   const getRoleBadgeStyle = (role: string) => {
     switch (role.toLowerCase()) {
@@ -228,7 +269,12 @@ const StaffMaster = () => {
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-2">
-                        <ToggleSwitch isActive={staff.isActive} />
+                        <ToggleSwitch
+                          isActive={staff.isActive}
+                          onToggle={() =>
+                            handleToggleStatus(staff._id, staff.isActive)
+                          }
+                        />
                       </div>
                     </td>
                     <td className="py-4 px-4 pr-8">
@@ -253,7 +299,6 @@ const StaffMaster = () => {
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
   );

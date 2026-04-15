@@ -28,11 +28,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let mounted = true;
 
     const loadMe = async () => {
-      if (window.location.pathname === "/login") {
-        if (mounted) setLoading(false);
-        return;
-      }
-
       try {
         const res = await api.get("/users/me");
         if (mounted) setUser(res.data.data);

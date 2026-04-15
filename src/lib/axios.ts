@@ -8,24 +8,24 @@ const api = axios.create({
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
-    if (error?.response?.status === 401) {
+  const isLoginRequest = error.config?.url?.includes("/login");
+
+    if (error?.response?.status === 401 && !isLoginRequest) {
       try {
         await axios.post(
-          `${api.defaults.baseURL}/api/v1/users/logout`, 
-          {}, 
-          { withCredentials: true }
+          `${api.defaults.baseURL}/api/v1/users/logout`,
+          {},
+          { withCredentials: true },
         );
       } catch (e) {
         console.error("Logout request failed:", e);
       }
-      
-    //   localStorage.removeItem("userData"); 
-      
-      window.location.href = "/login"; 
+
+      window.location.href = "/login";
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

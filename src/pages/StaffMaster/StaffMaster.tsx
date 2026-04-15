@@ -148,7 +148,7 @@ const StaffMaster = () => {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col">
+      <div className="bg-white border border-border rounded-xl shadow-sm">
         <div className="overflow-x-auto flex-1">
           <table className="table-container w-full min-w-200">
             <thead>
@@ -264,29 +264,6 @@ const StaffMaster = () => {
           </table>
         </div>
 
-        {/* Pagination Footer - Can be wired up to state later */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-white mt-auto">
-          <span className="text-xs text-text-secondary font-medium">
-            Showing {staffList.length} staff members
-          </span>
-          <div className="flex items-center gap-1.5">
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-              <ChevronLeft size={16} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded bg-[#FF5A3C] text-white font-medium text-xs shadow-sm">
-              1
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-xs transition-colors">
-              2
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-xs transition-colors">
-              3
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

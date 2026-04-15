@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       try {
         const res = await api.get("/users/me");
-        if (mounted) setUser(res.data.data.user);
+        if (mounted) setUser(res.data.data);
       } catch (err: unknown) {
         if (isAxiosError(err) && err.response?.status === 401) {
           if (mounted) setUser(null);

@@ -5,7 +5,7 @@ import api from "../lib/axios";
 
 export interface User {
   _id: string;
-  name: string;
+  fullName: string;
   email: string;
   role: "admin" | "receptionist";
   isActive: boolean;

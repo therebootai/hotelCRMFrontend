@@ -9,8 +9,9 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
   const isLoginRequest = error.config?.url?.includes("/login");
+  const isMeEndpoint = error.config?.url?.includes("/users/me");
 
-    if (error?.response?.status === 401 && !isLoginRequest) {
+    if (error?.response?.status === 401 && !isLoginRequest && !isMeEndpoint) {
       try {
         await axios.post(
           `${api.defaults.baseURL}/api/v1/users/logout`,

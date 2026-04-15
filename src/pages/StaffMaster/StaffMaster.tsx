@@ -6,27 +6,22 @@ import {
   Edit,
   Trash2,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import api from "../../lib/axios"; // Import your Axios instance
+import api from "../../lib/axios";
 
-// Import your newly created Modal
 import AddStaffModal from "./Components/AddStaffModal";
 
-// 1. Updated Interface based on your backend model
 export interface StaffMember {
   _id: string;
   fullName: string;
   email: string;
   role: "admin" | "receptionist";
   isActive: boolean;
-  mobile?: string; // Optional in case backend doesn't send it yet
-  loginId?: string; // Optional in case backend doesn't send it yet
+  mobile: string;
+  loginId: string;
 }
 
-// ToggleSwitch used specifically for the data table
 const ToggleSwitch = ({ isActive }: { isActive: boolean }) => (
   <div
     className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
@@ -43,13 +38,11 @@ const ToggleSwitch = ({ isActive }: { isActive: boolean }) => (
 
 const StaffMaster = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null); // NEW STATE
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
 
-  // 2. Real State for Data and Loading
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 3. Fetch Data Function
   const fetchStaff = async () => {
     try {
       setIsLoading(true);
@@ -63,12 +56,10 @@ const StaffMaster = () => {
     }
   };
 
-  // 4. Trigger fetch on component mount
   useEffect(() => {
     fetchStaff();
   }, []);
 
-  // 5. Helper function for Role Badge Colors
   const getRoleBadgeStyle = (role: string) => {
     switch (role.toLowerCase()) {
       case "admin":
@@ -196,7 +187,6 @@ const StaffMaster = () => {
                   </td>
                 </tr>
               ) : (
-                /* 7. Map over real data */
                 staffList.map((staff) => (
                   <tr
                     key={staff._id}
@@ -233,7 +223,7 @@ const StaffMaster = () => {
                     </td>
                     <td className="py-4 px-4">
                       <span className="text-sm text-text-secondary max-w-25 block wrap-break-word">
-                        {staff.loginId || staff.email}
+                        {staff.loginId || "N/A"}
                       </span>
                     </td>
                     <td className="py-4 px-4">

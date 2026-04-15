@@ -3,8 +3,7 @@ import { User, Briefcase, Key, Eye, Camera, ChevronDown, EyeOff } from "lucide-r
 import toast from "react-hot-toast";
 import api from "../../../lib/axios";
 import { isAxiosError } from "axios";
-import type { User as StaffMembar  }  from "../../../context/AuthContext";
-// import { StaffMember } from "../../../lib/axios"
+import type {StaffMember} from "../StaffMaster"
 
 const ModalToggleSwitch = ({ isActive, onToggle }: { isActive: boolean; onToggle: () => void; }) => (
   <div
@@ -25,7 +24,7 @@ interface AddStaffModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  editData: StaffMembar | null;
+  editData: StaffMember | null;
 }
 
 const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalProps) => {
@@ -42,10 +41,19 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
     isActive: true,
   });
 
+  const [errors, setErrors] = useState({
+    fullName: "",
+    mobile: "",
+    role: "",
+    loginId: "",
+    password: "",
+  });
+
   const isEditMode = !!editData;
 
   useEffect(() => {
     if (isOpen) {
+      setErrors({ fullName: "", mobile: "", role: "", loginId: "", password: "" });
       if (editData) {
         setFormData({
           fullName: editData.fullName || "",
@@ -70,27 +78,55 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
   }, [isOpen, editData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setErrors({ ...errors, [e.target.name]: "" });
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async () => {
-    // Basic Frontend Validation (Matches your Zod schema)
-    if (!formData.fullName || formData.fullName.length < 3) return toast.error("Full name must be at least 3 characters");
-    if (!formData.mobile || formData.mobile.length < 10) return toast.error("Invalid mobile number");
-    if (!formData.role) return toast.error("Please select a role");
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = { fullName: "", mobile: "", role: "", loginId: "", password: "" };
+
+    if (!formData.fullName.trim() || formData.fullName.length < 3) {
+      newErrors.fullName = "Full name must be at least 3 characters";
+      isValid = false;
+    }
     
-    // Login ID and Password are required ONLY in Add Mode
+    if (!formData.mobile.trim() || formData.mobile.length < 10) {
+      newErrors.mobile = "Mobile number must be at least 10 digits";
+      isValid = false;
+    }
+
+    if (!formData.role || !["admin", "receptionist"].includes(formData.role)) {
+      newErrors.role = "Please select a valid role";
+      isValid = false;
+    }
+
+    // Add-Mode specific validations
     if (!isEditMode) {
-      if (!formData.loginId || formData.loginId.length < 4) return toast.error("Login ID must be at least 4 characters");
-      if (!formData.password || formData.password.length < 6) return toast.error("Password must be at least 6 characters");
+      if (!formData.loginId.trim() || formData.loginId.length < 4) {
+        newErrors.loginId = "Login ID must be at least 4 characters";
+        isValid = false;
+      }
+      if (!formData.password || formData.password.length < 6) {
+        newErrors.password = "Password must be at least 6 characters";
+        isValid = false;
+      }
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      toast.error("Please fix the highlighted errors.");
+      return;
     }
 
     setIsLoading(true);
 
     try {
       if (isEditMode) {
-        // PUT REQUEST (Update)
-        // Based on your schema, PUT doesn't take loginId or password
         const payload = {
           fullName: formData.fullName,
           mobile: formData.mobile,
@@ -100,13 +136,12 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
         await api.put(`/users/${editData._id}`, payload);
         toast.success("Staff updated successfully!");
       } else {
-        // POST REQUEST (Create)
         await api.post("/users", formData);
         toast.success("New staff member added!");
       }
 
-      onSuccess(); // Refresh the table data
-      onClose();   // Close the modal
+      onSuccess();
+      onClose();
     } catch (error: unknown) {
       if (isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || error.response?.data?.error;
@@ -126,9 +161,8 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
 
       <div className="relative w-full h-full overflow-y-auto md:overflow-hidden flex justify-center items-start md:items-center p-4 py-8 sm:p-6 md:py-12 z-10">
-        <div className="relative w-full max-w-[850px] flex flex-col md:flex-row gap-4 sm:gap-6 md:max-h-[85vh] animate-fade-in">
+        <div className="relative w-full max-w-212.5 flex flex-col md:flex-row gap-4 sm:gap-6 md:max-h-[85vh] animate-fade-in">
           
-          {/* --- LEFT COLUMN: Form --- */}
           <div className="bg-card rounded-2xl shadow-modal flex-1 flex flex-col shrink-0 md:shrink md:overflow-hidden">
             <div className="p-5 sm:p-8 flex-1 md:overflow-y-auto">
               
@@ -155,9 +189,10 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
-                      placeholder="e.g. Masud Rahaman"
-                      className="input-field py-3"
+                      placeholder="e.g. Arjit Das"
+                      className={`input-field py-3 ${errors.fullName ? "border-danger focus:border-danger focus:ring-danger" : ""}`}
                     />
+                    {errors.fullName && <p className="text-xs text-danger mt-1.5 font-medium">{errors.fullName}</p>}
                   </div>
                   <div>
                     <label className="input-label font-bold uppercase tracking-wider mb-2">Mobile Number</label>
@@ -166,9 +201,10 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                       name="mobile"
                       value={formData.mobile}
                       onChange={handleChange}
-                      placeholder="+91 86956 02588"
-                      className="input-field py-3"
+                      placeholder="72XXXXXXXX"
+                      className={`input-field py-3 ${errors.mobile ? "border-danger focus:border-danger focus:ring-danger" : ""}`}
                     />
+                    {errors.mobile && <p className="text-xs text-danger mt-1.5 font-medium">{errors.mobile}</p>}
                   </div>
                 </div>
               </div>
@@ -188,7 +224,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                       name="role"
                       value={formData.role}
                       onChange={handleChange}
-                      className="input-field py-3 appearance-none cursor-pointer"
+                      className={`input-field py-3 appearance-none cursor-pointer ${errors.role ? "border-danger focus:border-danger focus:ring-danger" : ""}`}
                     >
                       <option value="" disabled>Select a role</option>
                       <option value="admin">Admin</option>
@@ -196,10 +232,11 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
                   </div>
+                  {errors.role && <p className="text-xs text-danger mt-1.5 font-medium">{errors.role}</p>}
                 </div>
               </div>
 
-              {/* Hide Login details block completely if editing (based on your schema) */}
+              {/* Login Details */}
               {!isEditMode && (
                 <>
                   <hr className="border-border mb-8" />
@@ -217,8 +254,9 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                           value={formData.loginId}
                           onChange={handleChange}
                           placeholder="staff_username"
-                          className="input-field py-3"
+                          className={`input-field py-3 ${errors.loginId ? "border-danger focus:border-danger focus:ring-danger" : ""}`}
                         />
+                        {errors.loginId && <p className="text-xs text-danger mt-1.5 font-medium">{errors.loginId}</p>}
                       </div>
                       <div>
                         <label className="input-label font-bold uppercase tracking-wider mb-2">Password</label>
@@ -229,7 +267,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                             value={formData.password}
                             onChange={handleChange}
                             placeholder="••••••••"
-                            className="input-field pr-10 py-3"
+                            className={`input-field pr-10 py-3 ${errors.password ? "border-danger focus:border-danger focus:ring-danger" : ""}`}
                           />
                           <button 
                             type="button"
@@ -239,6 +277,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                           </button>
                         </div>
+                        {errors.password && <p className="text-xs text-danger mt-1.5 font-medium">{errors.password}</p>}
                       </div>
                     </div>
                   </div>
@@ -269,9 +308,8 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
             </div>
           </div>
 
-          {/* --- RIGHT COLUMN: Status & Photo Cards --- */}
           <div className="w-full md:w-70 flex flex-col gap-4 sm:gap-6 shrink-0 md:shrink md:overflow-y-auto no-scrollbar">
-            
+            {/* Status Card */}
             <div className="bg-card rounded-2xl shadow-modal p-6 shrink-0">
               <h3 className="text-lg font-bold text-text-primary mb-4">Staff Status</h3>
               <div className="bg-background rounded-xl p-4 flex items-center justify-between mb-4 border border-border">
@@ -291,8 +329,9 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
               </div>
             </div>
 
+            {/* Avatar Card */}
             <div className="bg-primary rounded-2xl shadow-modal p-6 text-white flex flex-col items-center text-center relative overflow-hidden shrink-0">
-              <div className="absolute right-[-20px] top-[20px] opacity-10 pointer-events-none">
+              <div className="absolute -right-5 top-5 opacity-10 pointer-events-none">
                  <User size={120} />
               </div>
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4 backdrop-blur-md">
@@ -306,7 +345,6 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                 Coming Soon
               </button>
             </div>
-            
           </div>
         </div>
       </div>

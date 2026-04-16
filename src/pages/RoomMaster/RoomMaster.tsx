@@ -7,15 +7,18 @@ import ComingSoon from './components/ComingSoon';
 import BulkUpdatePanel from './components/BulkUpdatePanel';
 import AddRoomForm from './components/AddRoomForm';
 import RoomTypeMaster from './components/RoomTypeMaster';
+import AmenitiesMaster from './components/AmenitiesMaster';
 import { mockRooms } from './data/mockData';
 
 export default function RoomMaster() {
   const [activeTab, setActiveTab] = useState('Room Master');
   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
-  const [isRoomTypeModalOpen, setIsRoomTypeModalOpen] = useState(false);
-  
   const [view, setView] = useState<'list' | 'add'>('list');
+
+  const [isRoomTypeModalOpen, setIsRoomTypeModalOpen] = useState(false);
+  const [isAmenityModalOpen, setIsAmenityModalOpen] = useState(false);
+  
 
   const handleCloseBulkUpdate = () => {
     setIsBulkUpdateOpen(false);
@@ -83,6 +86,12 @@ export default function RoomMaster() {
               </button>
             )}
 
+            {activeTab === 'Amenities Master' && (
+              <button onClick={() => setIsAmenityModalOpen(true)} className="btn-primary flex items-center gap-2 px-5 py-2.5">
+                <Plus size={18} /> Add Amenities
+              </button>
+            )}
+
           </div>
         )}
       </div>
@@ -118,6 +127,8 @@ export default function RoomMaster() {
           isAddModalOpen={isRoomTypeModalOpen}
           setIsAddModalOpen={setIsRoomTypeModalOpen}
         />
+      ) : activeTab === 'Amenities Master' ? (
+        <AmenitiesMaster isAddModalOpen={isAmenityModalOpen} setIsAddModalOpen={setIsAmenityModalOpen} />
       ) : (
         <ComingSoon moduleName={activeTab} />
       )}

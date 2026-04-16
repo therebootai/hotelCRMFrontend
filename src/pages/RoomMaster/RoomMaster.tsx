@@ -8,6 +8,7 @@ import BulkUpdatePanel from './components/BulkUpdatePanel';
 import AddRoomForm from './components/AddRoomForm';
 import RoomTypeMaster from './components/RoomTypeMaster';
 import AmenitiesMaster from './components/AmenitiesMaster';
+import TaxGstMaster from './components/TaxGstMaster'; // NEW IMPORT
 import { mockRooms } from './data/mockData';
 
 export default function RoomMaster() {
@@ -18,6 +19,7 @@ export default function RoomMaster() {
 
   const [isRoomTypeModalOpen, setIsRoomTypeModalOpen] = useState(false);
   const [isAmenityModalOpen, setIsAmenityModalOpen] = useState(false);
+  const [isTaxModalOpen, setIsTaxModalOpen] = useState(false);
   
 
   const handleCloseBulkUpdate = () => {
@@ -92,6 +94,12 @@ export default function RoomMaster() {
               </button>
             )}
 
+            {activeTab === 'Tax / GST Master' && (
+              <button onClick={() => setIsTaxModalOpen(true)} className="btn-primary flex items-center gap-2 px-5 py-2.5">
+                <Plus size={18} /> Add Tax/GST
+              </button>
+            )}
+
           </div>
         )}
       </div>
@@ -129,6 +137,8 @@ export default function RoomMaster() {
         />
       ) : activeTab === 'Amenities Master' ? (
         <AmenitiesMaster isAddModalOpen={isAmenityModalOpen} setIsAddModalOpen={setIsAmenityModalOpen} />
+      ) : activeTab === 'Tax / GST Master' ? (
+        <TaxGstMaster isAddModalOpen={isTaxModalOpen} setIsAddModalOpen={setIsTaxModalOpen} />
       ) : (
         <ComingSoon moduleName={activeTab} />
       )}

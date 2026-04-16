@@ -91,8 +91,8 @@ export default function App() {
 
           <Route path="master">
             {/* <Route index element={<MastersOverview />} /> */}
-            <Route path="staff" element={<StaffMaster />} />
-            <Route path="room" element={<RoomMaster/>}/>
+            <Route path="staffs" element={<StaffMaster />} />
+            <Route path="rooms" element={<RoomMaster/>}/>
           </Route>
 
           <Route path="*" element={<NotFound />} />

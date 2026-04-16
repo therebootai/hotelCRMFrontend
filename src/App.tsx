@@ -8,6 +8,7 @@ import Login from "./pages/Auth/Login";
 import { Toaster } from "react-hot-toast";
 import { FileQuestion } from "lucide-react";
 import { useAuth } from "./context/AuthContext";
+import RoomMaster from "./pages/RoomMaster/RoomMaster";
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -91,6 +92,7 @@ export default function App() {
           <Route path="master">
             {/* <Route index element={<MastersOverview />} /> */}
             <Route path="staff" element={<StaffMaster />} />
+            <Route path="room" element={<RoomMaster/>}/>
           </Route>
 
           <Route path="*" element={<NotFound />} />

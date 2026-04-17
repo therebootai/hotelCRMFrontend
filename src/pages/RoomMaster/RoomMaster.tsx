@@ -8,7 +8,7 @@ import BulkUpdatePanel from './components/BulkUpdatePanel';
 import AddRoomForm from './components/AddRoomForm';
 import RoomTypeMaster from './components/RoomTypeMaster';
 import AmenitiesMaster from './components/AmenitiesMaster';
-import TaxGstMaster from './components/TaxGstMaster'; // NEW IMPORT
+import TaxGstMaster from './components/TaxGstMaster';
 import { mockRooms } from './data/mockData';
 
 export default function RoomMaster() {

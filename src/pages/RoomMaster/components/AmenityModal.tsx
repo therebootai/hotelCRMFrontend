@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Snowflake, Wifi, Tv, Coffee, Waves, Dumbbell, Utensils, Wine, Car, PawPrint, Ban } from 'lucide-react';
 import toast from 'react-hot-toast';
-// import api from '../../../lib/axios';
+import api from '../../../lib/axios';
+import { AxiosError } from 'axios';
 
 // Map string identifiers to actual Lucide icons
 export const ICON_MAP: Record<string, React.ElementType> = {
@@ -38,42 +39,86 @@ export default function AmenityModal({ isOpen, onClose, onSuccess, initialData }
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    icon: 'wifi', // default icon
+    icon: 'wifi',
   });
+  const [errors, setErrors] = useState<{ name?: string; icon?: string }>({});
   const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false);
 
   useEffect(() => {
+    setErrors({});
+    setIsIconSelectorOpen(false);
+    
     if (initialData) {
       setFormData({ name: initialData.name, icon: initialData.icon });
     } else {
       setFormData({ name: '', icon: 'wifi' });
     }
-    setIsIconSelectorOpen(false); // Reset dropdown state on open
   }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 
+  const validate = () => {
+    const newErrors: { name?: string; icon?: string } = {};
+    const trimmedName = formData.name.trim();
+
+    if (!trimmedName) {
+      newErrors.name = "Amenity name is required";
+    } else if (trimmedName.length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
+    }
+
+    if (!formData.icon) {
+      newErrors.icon = "Icon identifier is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, name: e.target.value }));
+    if (errors.name) {
+      setErrors(prev => ({ ...prev, name: undefined }));
+    }
+  };
+
+  const handleIconSelect = (iconKey: string) => {
+    setFormData(prev => ({ ...prev, icon: iconKey }));
+    setIsIconSelectorOpen(false);
+    if (errors.icon) {
+      setErrors(prev => ({ ...prev, icon: undefined }));
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!formData.name.trim()) {
-      toast.error("Amenity name is required");
+    if (!validate()) {
+      toast.error("Please fix the errors first");
       return;
     }
 
     try {
       setIsLoading(true);
+      
       if (initialData?._id) {
-        // Edit Mode (Mocked)
-        // await api.put(`/api/v1/amenities/${initialData._id}`, formData);
+        await api.put(`/amenities/${initialData._id}`, formData);
         toast.success("Amenity updated successfully!");
       } else {
-        // Add Mode (Mocked)
-        // await api.post("/api/v1/amenities", formData);
+        await api.post("/amenities", formData);
         toast.success("Amenity created successfully!");
       }
+      
       onSuccess();
       onClose();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to save amenity");
+    } catch (error: unknown) {
+      let errorMsg = "Failed to save amenity";
+      
+      if (error instanceof AxiosError) {
+        errorMsg = error.response?.data?.message;
+      } else if (error instanceof Error) {
+        errorMsg = error.message;
+      }
+      
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +129,10 @@ export default function AmenityModal({ isOpen, onClose, onSuccess, initialData }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={!isLoading ? onClose : undefined} />
+      <div 
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
+        onClick={!isLoading ? onClose : undefined} 
+      />
 
       {/* Modal Content */}
       <div className="bg-card rounded-2xl shadow-modal w-full max-w-[40%] relative z-10 animate-fade-in flex flex-col">
@@ -93,7 +141,11 @@ export default function AmenityModal({ isOpen, onClose, onSuccess, initialData }
           <h2 className="text-xl font-bold text-text-primary">
             {initialData ? 'Edit Amenity' : 'Add New Amenity'}
           </h2>
-          <button onClick={onClose} className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors">
+          <button 
+            onClick={onClose} 
+            disabled={isLoading}
+            className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors disabled:opacity-50"
+          >
             <X size={20} />
           </button>
         </div>
@@ -106,9 +158,15 @@ export default function AmenityModal({ isOpen, onClose, onSuccess, initialData }
               type="text" 
               placeholder="e.g. Infinity Pool" 
               value={formData.name} 
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} 
-              className="input-field" 
+              onChange={handleNameChange}
+              disabled={isLoading}
+              className={`input-field disabled:opacity-70 disabled:cursor-not-allowed ${
+                errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
+              }`} 
             />
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-1.5 font-medium animate-fade-in">{errors.name}</p>
+            )}
           </div>
 
           <div>
@@ -116,28 +174,33 @@ export default function AmenityModal({ isOpen, onClose, onSuccess, initialData }
             <div className="relative">
               {/* Dropdown Trigger */}
               <button 
+                type="button"
+                disabled={isLoading}
                 onClick={() => setIsIconSelectorOpen(!isIconSelectorOpen)}
-                className="input-field w-full flex items-center justify-between cursor-pointer bg-background"
+                className={`input-field w-full flex items-center justify-between bg-background disabled:opacity-70 disabled:cursor-not-allowed ${
+                  errors.icon ? 'border-red-500' : ''
+                }`}
               >
                 <div className="flex items-center gap-3 text-primary">
                   <SelectedIcon size={18} />
                   <span className="text-text-primary text-sm font-medium capitalize">{formData.icon}</span>
                 </div>
               </button>
+              {errors.icon && (
+                <p className="text-red-500 text-xs mt-1.5 font-medium animate-fade-in">{errors.icon}</p>
+              )}
 
               {/* Expandable Icon Grid */}
-              {isIconSelectorOpen && (
-                <div className="absolute top-full left-0 w-full mt-2 p-3 bg-card border border-border rounded-xl shadow-card z-20 animate-fade-in grid grid-cols-4 gap-2">
+              {isIconSelectorOpen && !isLoading && (
+                <div className="absolute top-full left-0 w-full mt-2 p-3 bg-card border border-border rounded-xl shadow-card z-20 animate-fade-in grid grid-cols-4 gap-2 max-h-50 overflow-y-auto no-scrollbar">
                   {AVAILABLE_ICONS.map((iconKey) => {
                     const IconComp = ICON_MAP[iconKey];
                     const isSelected = formData.icon === iconKey;
                     return (
                       <button
                         key={iconKey}
-                        onClick={() => {
-                          setFormData(prev => ({ ...prev, icon: iconKey }));
-                          setIsIconSelectorOpen(false);
-                        }}
+                        type="button"
+                        onClick={() => handleIconSelect(iconKey)}
                         className={`p-3 rounded-lg flex items-center justify-center transition-colors ${
                           isSelected 
                             ? 'bg-primary/10 text-primary border border-primary/20' 
@@ -156,10 +219,18 @@ export default function AmenityModal({ isOpen, onClose, onSuccess, initialData }
 
         {/* Footer */}
         <div className="bg-background p-6 flex items-center gap-3 border-t border-border rounded-b-2xl">
-          <button onClick={onClose} disabled={isLoading} className="btn-secondary flex-1 py-2.5">
+          <button 
+            onClick={onClose} 
+            disabled={isLoading} 
+            className="btn-secondary flex-1 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Cancel
           </button>
-          <button onClick={handleSubmit} disabled={isLoading} className="btn-primary flex-1 py-2.5">
+          <button 
+            onClick={handleSubmit} 
+            disabled={isLoading} 
+            className="btn-primary flex-1 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {isLoading ? "Saving..." : "Confirm Amenity"}
           </button>
         </div>

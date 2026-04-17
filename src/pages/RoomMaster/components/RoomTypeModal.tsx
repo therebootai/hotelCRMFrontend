@@ -23,8 +23,10 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
     name: '',
     description: '',
   });
+  const [errors, setErrors] = useState<{ name?: string }>({});
 
   useEffect(() => {
+    setErrors({});
     if (initialData) {
       setFormData({
         name: initialData.name,
@@ -37,13 +39,32 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
 
   if (!isOpen) return null;
 
+  const validate = () => {
+    const newErrors: { name?: string } = {};
+    const trimmedName = formData.name.trim();
+
+    if (!trimmedName) {
+      newErrors.name = "Room Type name is required";
+    } else if (trimmedName.length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim()) {
-      toast.error("Type Name is required");
+    if (!validate()) {
+      toast.error("Please fix the errors first");
       return;
     }
 
@@ -114,8 +135,13 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
               value={formData.name} 
               onChange={handleChange}
               disabled={isLoading}
-              className="input-field disabled:opacity-70 disabled:cursor-not-allowed" 
+              className={`input-field disabled:opacity-70 disabled:cursor-not-allowed ${
+                errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
+              }`} 
             />
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-1.5 font-medium animate-fade-in">{errors.name}</p>
+            )}
           </div>
 
           <div>

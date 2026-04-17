@@ -3,6 +3,7 @@ import { Loader2, Info } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../../lib/axios";
 import { AxiosError } from "axios";
+import type { Room } from "./RoomTable";
 
 export interface Amenity {
   _id: string;
@@ -29,9 +30,10 @@ export interface TaxGst {
 interface AddRoomFormProps {
   onCancel: () => void;
   onSuccess: () => void;
+  initialData?: Room | null;
 }
 
-export default function AddRoomForm({ onCancel, onSuccess }: AddRoomFormProps) {
+export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoomFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingDeps, setIsFetchingDeps] = useState(true);
 
@@ -73,6 +75,27 @@ export default function AddRoomForm({ onCancel, onSuccess }: AddRoomFormProps) {
         setRoomTypes(rtRes.data?.data || []);
         setTaxes(taxRes.data?.data  || []);
         setAmenitiesList(amRes.data?.data || []);
+
+        if (initialData) {
+          setFormData({
+            roomNumber: initialData.roomNumber || "",
+            roomType: initialData.roomType?._id || "",
+            building: initialData.building || "",
+            floor: initialData.floor || "",
+            maxAdults: initialData.maxAdults?.toString() || "1",
+            maxChildren: initialData.maxChildren?.toString() || "0",
+            extraBedAllowed: initialData.extraBedAllowed || false,
+            extraBedCharge: initialData.extraBedCharge?.toString() || "0",
+            basePrice: initialData.basePrice?.toString() || "",
+            discountPercentage: initialData.discountPercentage?.toString() || "0",
+            gstId: initialData.gstId?._id || "",
+            roomSize: initialData.roomSize?.toString() || "",
+            viewType: initialData.viewType || "",
+            status: initialData.status || "Active",
+            description: initialData.description || "",
+            amenities: initialData.amenities?.map((a) => a._id) || [],
+          });
+        }
       } catch (error) {
         toast.error("Failed to load form options");
       } finally {
@@ -81,13 +104,9 @@ export default function AddRoomForm({ onCancel, onSuccess }: AddRoomFormProps) {
     };
 
     fetchDependencies();
-  }, []);
+  }, [initialData]);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
 
     if (type === "checkbox") {
@@ -115,8 +134,7 @@ export default function AddRoomForm({ onCancel, onSuccess }: AddRoomFormProps) {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.roomNumber.trim())
-      newErrors.roomNumber = "Room Number is required";
+    if (!formData.roomNumber.trim()) newErrors.roomNumber = "Room Number is required";
     if (!formData.roomType) newErrors.roomType = "Room Type is required";
 
     const basePriceNum = Number(formData.basePrice);
@@ -150,11 +168,7 @@ export default function AddRoomForm({ onCancel, onSuccess }: AddRoomFormProps) {
 
     if (formData.extraBedAllowed) {
       const extraBedNum = Number(formData.extraBedCharge);
-      if (
-        formData.extraBedCharge === "" ||
-        isNaN(extraBedNum) ||
-        extraBedNum < 0
-      ) {
+      if (formData.extraBedCharge === "" || isNaN(extraBedNum) || extraBedNum < 0) {
         newErrors.extraBedCharge = "Valid charge >= 0 required";
       }
     }
@@ -188,12 +202,17 @@ export default function AddRoomForm({ onCancel, onSuccess }: AddRoomFormProps) {
       if (!payload.viewType) delete payload.viewType;
       if (!payload.description) delete payload.description;
 
-      await api.post("/rooms", payload);
-
-      toast.success("Room created successfully!");
+      if (initialData?._id) {
+        await api.put(`/rooms/${initialData._id}`, payload);
+        toast.success("Room updated successfully!");
+      } else {
+        await api.post("/rooms", payload);
+        toast.success("Room created successfully!");
+      }
+      
       onSuccess();
     } catch (error: unknown) {
-      let errorMsg = "Failed to create room";
+      let errorMsg = initialData ? "Failed to update room" : "Failed to create room";
       if (error instanceof AxiosError) {
         errorMsg = error.response?.data?.message;
       }
@@ -207,7 +226,7 @@ export default function AddRoomForm({ onCancel, onSuccess }: AddRoomFormProps) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-text-secondary">
         <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
-        <p>Loading form data...</p>
+        <p>Loading room data...</p>
       </div>
     );
   }
@@ -622,6 +641,8 @@ export default function AddRoomForm({ onCancel, onSuccess }: AddRoomFormProps) {
               >
                 {isLoading ? (
                   <Loader2 size={18} className="animate-spin" />
+                ) : initialData ? (
+                  "Update Room"
                 ) : (
                   "Save Room"
                 )}
@@ -632,7 +653,7 @@ export default function AddRoomForm({ onCancel, onSuccess }: AddRoomFormProps) {
             <div className="bg-warning/10 border border-warning/20 rounded-xl p-4 flex items-start gap-3 text-text-secondary text-xs leading-relaxed">
               <Info size={16} className="shrink-0 mt-0.5 text-warning" />
               <p>
-                Prices are automatically calculated including selected tax
+                Prices are automatically calculated including selected tax.
               </p>
             </div>
           </div>

@@ -526,7 +526,7 @@ export default function AddRoomForm({ onCancel, onSuccess }: AddRoomFormProps) {
         {/* RIGHT COLUMN: PREVIEW CARD (Sticky & Fit Content) */}
         {/* ========================================== */}
         <div className="xl:col-span-1 sticky top-6 h-fit">
-          <div className="bg-card border border-border rounded-[24px] shadow-card p-6 xl:p-8">
+          <div className="bg-card border border-border rounded-3xl shadow-card p-6 xl:p-8">
             {/* Header */}
             <div className="mb-8 border-b border-border pb-4">
               <h2 className="text-[24px] font-bold text-text-primary leading-tight">

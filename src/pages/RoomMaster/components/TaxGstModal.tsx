@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '../../../lib/axios';
+import { AxiosError } from 'axios';
 
 interface TaxGstData {
   _id?: string;
@@ -21,15 +23,18 @@ export default function TaxGstModal({ isOpen, onClose, onSuccess, initialData }:
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<{
     name: string;
-    percentage: string; // Using string for controlled input before parsing to number
+    percentage: string; 
     type: 'Room' | 'Food' | 'Service';
   }>({
     name: '',
     percentage: '',
     type: 'Room',
   });
+  
+  const [errors, setErrors] = useState<{ name?: string; percentage?: string; type?: string }>({});
 
   useEffect(() => {
+    setErrors({});
     if (initialData) {
       setFormData({
         name: initialData.name,
@@ -43,32 +48,76 @@ export default function TaxGstModal({ isOpen, onClose, onSuccess, initialData }:
 
   if (!isOpen) return null;
 
+  const validate = () => {
+    const newErrors: { name?: string; percentage?: string; type?: string } = {};
+    const trimmedName = formData.name.trim();
+
+    if (!trimmedName) {
+      newErrors.name = "Tax/GST name is required";
+    } else if (trimmedName.length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
+    }
+
+    const pct = Number(formData.percentage);
+    if (formData.percentage === '') {
+      newErrors.percentage = "Percentage is required";
+    } else if (isNaN(pct)) {
+      newErrors.percentage = "Must be a valid number";
+    } else if (pct < 0) {
+      newErrors.percentage = "Cannot be negative";
+    } else if (pct > 100) {
+      newErrors.percentage = "Cannot exceed 100%";
+    }
+
+    if (!['Room', 'Food', 'Service'].includes(formData.type)) {
+      newErrors.type = "Invalid type selected";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.percentage) {
-      toast.error("Name and Percentage are required");
+    if (!validate()) {
+      toast.error("Please fix the errors first");
       return;
     }
 
     try {
       setIsLoading(true);
-      // const payload = { ...formData, percentage: Number(formData.percentage) };
+      const payload = { 
+        ...formData, 
+        percentage: Number(formData.percentage) 
+      };
       
       if (initialData?._id) {
-        // await api.put(`/api/v1/tax-gst/${initialData._id}`, payload);
+        await api.put(`/tax-gst/${initialData._id}`, payload);
         toast.success("Tax/GST updated successfully!");
       } else {
-        // await api.post("/api/v1/tax-gst", payload);
+        await api.post("/tax-gst", payload);
         toast.success("Tax/GST created successfully!");
       }
       onSuccess();
       onClose();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to save Tax/GST");
+    } catch (error: unknown) {
+      let errorMsg = "Failed to save Tax/GST";
+      
+      if (error instanceof AxiosError) {
+        errorMsg = error.response?.data?.message;
+      } else if (error instanceof Error) {
+        errorMsg = error.message;
+      }
+      
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +138,11 @@ export default function TaxGstModal({ isOpen, onClose, onSuccess, initialData }:
             </h2>
             <p className="text-sm text-text-secondary mt-0.5">Configure tax rules for your property departments.</p>
           </div>
-          <button onClick={onClose} className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors self-start">
+          <button 
+            onClick={onClose} 
+            disabled={isLoading}
+            className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors self-start disabled:opacity-50"
+          >
             <X size={20} />
           </button>
         </div>
@@ -104,8 +157,14 @@ export default function TaxGstModal({ isOpen, onClose, onSuccess, initialData }:
               placeholder="e.g. Service Charge, GST" 
               value={formData.name} 
               onChange={handleChange} 
-              className="input-field" 
+              disabled={isLoading}
+              className={`input-field disabled:opacity-70 disabled:cursor-not-allowed ${
+                errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
+              }`} 
             />
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-1.5 font-medium animate-fade-in">{errors.name}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -118,33 +177,54 @@ export default function TaxGstModal({ isOpen, onClose, onSuccess, initialData }:
                   placeholder="0.00" 
                   value={formData.percentage} 
                   onChange={handleChange} 
-                  className="input-field pr-8" 
+                  disabled={isLoading}
+                  className={`input-field pr-8 disabled:opacity-70 disabled:cursor-not-allowed ${
+                    errors.percentage ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
+                  }`} 
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary font-medium">%</span>
               </div>
+              {errors.percentage && (
+                <p className="text-red-500 text-xs mt-1.5 font-medium animate-fade-in">{errors.percentage}</p>
+              )}
             </div>
+            
             <div>
               <label className="input-label uppercase tracking-wider text-[10px]">Type</label>
               <select 
                 name="type"
                 value={formData.type} 
                 onChange={handleChange} 
-                className="input-field cursor-pointer"
+                disabled={isLoading}
+                className={`input-field cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed ${
+                  errors.type ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
+                }`}
               >
                 <option value="Room">Room</option>
                 <option value="Food">Food</option>
                 <option value="Service">Service</option>
               </select>
+              {errors.type && (
+                <p className="text-red-500 text-xs mt-1.5 font-medium animate-fade-in">{errors.type}</p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="bg-background p-6 flex items-center gap-3 border-t border-border rounded-b-2xl">
-          <button onClick={onClose} disabled={isLoading} className="btn-secondary flex-1 py-2.5">
+          <button 
+            onClick={onClose} 
+            disabled={isLoading} 
+            className="btn-secondary flex-1 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Cancel
           </button>
-          <button onClick={handleSubmit} disabled={isLoading} className="btn-primary flex-1 py-2.5">
+          <button 
+            onClick={handleSubmit} 
+            disabled={isLoading} 
+            className="btn-primary flex-1 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {isLoading ? "Saving..." : "Save Tax"}
           </button>
         </div>

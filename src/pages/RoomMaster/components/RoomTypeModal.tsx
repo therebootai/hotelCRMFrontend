@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
-// import api from '../../../lib/axios';
+import api from '../../../lib/axios';
 import { AxiosError } from 'axios';
 
 interface RoomTypeData {
@@ -24,7 +24,6 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
     description: '',
   });
 
-  // Populate form if editing
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -50,21 +49,26 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
 
     try {
       setIsLoading(true);
+      
       if (initialData?._id) {
-        // Edit Mode (Mocked API call)
-        // await api.put(`/room-types/${initialData._id}`, formData);
+        await api.put(`/room-types/${initialData._id}`, formData);
         toast.success("Room Type updated successfully!");
       } else {
-        // Add Mode (Mocked API call)
-        // await api.post("/room-types", formData);
+        await api.post("/room-types", formData);
         toast.success("Room Type created successfully!");
       }
+      
       onSuccess();
       onClose();
     } catch (error: unknown) {
       let errorMsg = "Failed to save room type";
-      if (error instanceof Error) errorMsg = error.message;
-      if (error instanceof AxiosError) errorMsg = error.response?.data.message;
+      
+      if (error instanceof AxiosError) {
+        errorMsg = error.response?.data?.message || error.response?.data?.error || error.message;
+      } else if (error instanceof Error) {
+        errorMsg = error.message;
+      }
+      
       toast.error(errorMsg);
     } finally {
       setIsLoading(false);
@@ -74,7 +78,10 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
   return (
     <div className="fixed inset-0 z-99 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={!isLoading ? onClose : undefined} />
+      <div 
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
+        onClick={!isLoading ? onClose : undefined} 
+      />
 
       {/* Modal Content */}
       <div className="bg-card rounded-2xl shadow-modal w-full max-w-[40%] relative z-10 animate-fade-in flex flex-col">
@@ -83,7 +90,11 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
           <h2 className="text-xl font-bold text-text-primary">
             {initialData ? 'Edit Room Type' : 'Add New Room Type'}
           </h2>
-          <button onClick={onClose} className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors">
+          <button 
+            onClick={onClose} 
+            disabled={isLoading}
+            className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors disabled:opacity-50"
+          >
             <X size={20} />
           </button>
         </div>
@@ -101,8 +112,9 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
               name="name" 
               placeholder="e.g. Presidential Penthouse" 
               value={formData.name} 
-              onChange={handleChange} 
-              className="input-field" 
+              onChange={handleChange}
+              disabled={isLoading}
+              className="input-field disabled:opacity-70 disabled:cursor-not-allowed" 
             />
           </div>
 
@@ -112,18 +124,27 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
               name="description" 
               placeholder="Describe the room features, view, and specific amenities..." 
               value={formData.description} 
-              onChange={handleChange} 
-              className="input-field min-h-25 resize-none py-3" 
+              onChange={handleChange}
+              disabled={isLoading}
+              className="input-field min-h-25 resize-none py-3 disabled:opacity-70 disabled:cursor-not-allowed" 
             />
           </div>
         </div>
 
         {/* Footer */}
         <div className="bg-background p-6 flex items-center gap-3 border-t border-border rounded-b-2xl">
-          <button onClick={onClose} disabled={isLoading} className="btn-secondary flex-1 py-2.5">
+          <button 
+            onClick={onClose} 
+            disabled={isLoading} 
+            className="btn-secondary flex-1 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Cancel
           </button>
-          <button onClick={handleSubmit} disabled={isLoading} className="btn-primary flex-1 py-2.5">
+          <button 
+            onClick={handleSubmit} 
+            disabled={isLoading} 
+            className="btn-primary flex-1 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {isLoading ? "Saving..." : "Save Room Type"}
           </button>
         </div>

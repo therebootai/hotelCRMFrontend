@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Edit2, Trash2, BedDouble, Sparkles } from 'lucide-react';
+import { Search, Edit2, Trash2, BedDouble } from 'lucide-react';
 import RoomTypeModal from './RoomTypeModal';
 import DeleteModal from '../../StaffMaster/Components/DeleteModal'; 
 import toast from 'react-hot-toast';
@@ -138,32 +138,6 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
           <div className="flex items-center gap-2">
             <button className="px-3 py-1.5 border border-border rounded hover:bg-card transition-colors disabled:opacity-50">Previous</button>
             <button className="px-3 py-1.5 border border-border rounded hover:bg-card transition-colors disabled:opacity-50">Next</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Pro Tip Card (Matching UI) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Placeholder div to push the tip to the right if you had a 2-col layout, or just make it take full width. Let's make it an elegant banner. */}
-        <div className="col-span-full lg:col-span-1 lg:col-start-2">
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 relative overflow-hidden">
-            <div className="relative z-10">
-              <h3 className="text-lg font-bold text-text-primary mb-2 flex items-center gap-2">
-                Pro Tip: Strategic Naming
-              </h3>
-              <p className="text-sm text-text-secondary leading-relaxed mb-4">
-                Using evocative names like "Panorama Suite" instead of "Large Room 402" increases guest engagement and allows for premium pricing tiers.
-              </p>
-              <div className="flex items-center gap-3 pt-4 border-t border-primary/10">
-                <Sparkles size={18} className="text-primary" />
-                <div className="text-sm">
-                  <span className="font-bold text-text-primary block">AI Description Generator</span>
-                  <span className="text-text-secondary">Coming soon: Let our engine draft enticing room bios.</span>
-                </div>
-              </div>
-            </div>
-            {/* Decorative background shape */}
-            <div className="absolute -right-6 -top-6 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
           </div>
         </div>
       </div>

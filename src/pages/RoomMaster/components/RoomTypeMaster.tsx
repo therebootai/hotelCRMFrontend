@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
-import { Search, Edit2, Trash2, BedDouble } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Edit2, Trash2, BedDouble, Loader2 } from 'lucide-react';
 import RoomTypeModal from './RoomTypeModal';
 import DeleteModal from '../../StaffMaster/Components/DeleteModal'; 
 import toast from 'react-hot-toast';
+import api from '../../../lib/axios';
+import { AxiosError } from 'axios';
 
-// Mock Data
-const MOCK_ROOM_TYPES = [
-  { _id: '1', name: 'Deluxe King', description: 'Spacious room with king-size bed and city view. Features high-speed Wi-Fi, smart TV, and premium bath products.' },
-  { _id: '2', name: 'Executive Suite', description: 'Premium suite with separate living area and balcony. Includes butler service, minibar, and airport transfer.' },
-  { _id: '3', name: 'Standard Twin', description: 'Classic comfort with two twin beds. Perfect for friends or business travelers. Includes essential amenities.' }
-];
+export interface RoomType {
+  _id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
 
 interface RoomTypeMasterProps {
   isAddModalOpen: boolean;
@@ -17,38 +19,76 @@ interface RoomTypeMasterProps {
 }
 
 export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: RoomTypeMasterProps) {
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Modal States
-  const [editingData, setEditingData] = useState<any>(null);
+  const [editingData, setEditingData] = useState<RoomType | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [typeToDelete, setTypeToDelete] = useState<any>(null);
+  const [typeToDelete, setTypeToDelete] = useState<RoomType | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const fetchRoomTypes = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get('/room-types');
+      const data = response.data?.data || []; 
+      setRoomTypes(data);
+    } catch (error: unknown) {
+      let errorMsg = "Failed to fetch room types";
+      if (error instanceof AxiosError) {
+        errorMsg = error.response?.data?.message;
+      }
+      toast.error(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoomTypes();
+  }, []);
 
   // Handlers
-  const handleEditClick = (roomType: any) => {
+  const handleEditClick = (roomType: RoomType) => {
     setEditingData(roomType);
     setIsAddModalOpen(true);
   };
 
-  const handleDeleteClick = (roomType: any) => {
+  const handleDeleteClick = (roomType: RoomType) => {
     setTypeToDelete(roomType);
-    setIsDeleteModalOpen(true);
+    setIsDeleteModalOpen(false);
+    setTimeout(() => setIsDeleteModalOpen(true), 0);
   };
 
   const confirmDelete = async () => {
-    // Mock API Call
-    toast.success(`${typeToDelete.name} deleted successfully!`);
-    setIsDeleteModalOpen(false);
-    setTypeToDelete(null);
+    if (!typeToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      await api.delete(`/room-types/${typeToDelete._id}`);
+      toast.success(`${typeToDelete.name} deleted successfully!`);
+      
+      setIsDeleteModalOpen(false);
+      setTypeToDelete(null);
+      fetchRoomTypes();
+    } catch (error: unknown) {
+      let errorMsg = "Failed to delete room type";
+      if (error instanceof AxiosError) {
+        errorMsg = error.response?.data?.message;
+      }
+      toast.error(errorMsg);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleModalClose = () => {
     setIsAddModalOpen(false);
-    setTimeout(() => setEditingData(null), 200); // Wait for modal exit animation before clearing data
+    setTimeout(() => setEditingData(null), 200);
   };
 
-  // Filtering
-  const filteredTypes = MOCK_ROOM_TYPES.filter(rt => 
+  const filteredTypes = roomTypes.filter(rt => 
     rt.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -63,6 +103,11 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
           <div className="flex items-center gap-2 text-text-primary">
             <BedDouble size={20} className="text-primary" />
             <h2 className="text-lg font-bold">Registered Room Types</h2>
+            {!isLoading && (
+              <span className="bg-background px-2.5 py-0.5 rounded-full text-xs font-medium text-text-secondary border border-border">
+                {filteredTypes.length}
+              </span>
+            )}
           </div>
           
           <div className="relative w-full sm:w-72">
@@ -73,6 +118,7 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="input-field pl-9 py-2"
+              disabled={isLoading}
             />
           </div>
         </div>
@@ -88,57 +134,58 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredTypes.map((rt) => (
-                <tr key={rt._id} className="hover:bg-background/50 transition-colors group">
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                        <BedDouble size={18} />
-                      </div>
-                      <span className="font-bold text-text-primary text-sm">{rt.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <p className="text-sm text-text-secondary leading-relaxed max-w-[60%]">
-                      {rt.description}
-                    </p>
-                  </td>
-                  <td className="px-6 py-5">
-                    <div className="flex items-center justify-end gap-2 ">
-                      <button 
-                        onClick={() => handleEditClick(rt)}
-                        className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteClick(rt)}
-                        className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-12 text-center text-text-secondary">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      <span className="text-sm">Loading room types...</span>
                     </div>
                   </td>
                 </tr>
-              ))}
-              {filteredTypes.length === 0 && (
+              ) : filteredTypes.length > 0 ? (
+                filteredTypes.map((rt) => (
+                  <tr key={rt._id} className="hover:bg-background/50 transition-colors group">
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <BedDouble size={18} />
+                        </div>
+                        <span className="font-bold text-text-primary text-sm">{rt.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <p className="text-sm text-text-secondary leading-relaxed max-w-[60%]">
+                        {rt.description || <span className="italic text-text-secondary/50">No description provided</span>}
+                      </p>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={() => handleEditClick(rt)}
+                          className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteClick(rt)}
+                          className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
                   <td colSpan={3} className="px-6 py-12 text-center text-text-secondary">
-                    No room types found matching "{searchQuery}"
+                    {searchQuery ? `No room types found matching "${searchQuery}"` : "No room types registered yet."}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
-        </div>
-        
-        {/* Simple Footer/Pagination */}
-        <div className="px-6 py-4 border-t border-border bg-background flex items-center justify-between text-sm text-text-secondary">
-          <span>Showing {filteredTypes.length} of {MOCK_ROOM_TYPES.length} room types</span>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 border border-border rounded hover:bg-card transition-colors disabled:opacity-50">Previous</button>
-            <button className="px-3 py-1.5 border border-border rounded hover:bg-card transition-colors disabled:opacity-50">Next</button>
-          </div>
         </div>
       </div>
 
@@ -146,8 +193,8 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
       <RoomTypeModal 
         isOpen={isAddModalOpen} 
         onClose={handleModalClose}
-        onSuccess={() => { /* Refresh data here */ }}
-        initialData={editingData}
+        onSuccess={fetchRoomTypes} 
+        initialData={editingData as any} 
       />
 
       <DeleteModal
@@ -156,7 +203,7 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
         onConfirm={confirmDelete}
         title="Delete Room Type"
         message={`Are you sure you want to delete the "${typeToDelete?.name}" room type? This action cannot be undone.`}
-        isLoading={false}
+        isLoading={isDeleting}
       />
     </div>
   );

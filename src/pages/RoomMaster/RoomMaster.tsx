@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Plus, ArrowLeft, Loader2 } from "lucide-react";
+import { Plus, ArrowLeft, Loader2, CalendarRange } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 import { AxiosError } from "axios";
@@ -9,7 +10,6 @@ import RoomTable, { type Room } from "./components/RoomTable";
 import RoomTabs from "./components/RoomTabs";
 import RoomFilters from "./components/RoomFilters";
 import ComingSoon from "./components/ComingSoon";
-import BulkUpdatePanel from "./components/BulkUpdatePanel";
 import AddRoomForm from "./components/AddRoomForm";
 import RoomTypeMaster from "./components/RoomTypeMaster";
 import AmenitiesMaster from "./components/AmenitiesMaster";
@@ -17,6 +17,7 @@ import TaxGstMaster from "./components/TaxGstMaster";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 
 export default function RoomMaster() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Room Master");
   const [view, setView] = useState<"list" | "add">("list");
 
@@ -29,10 +30,6 @@ export default function RoomMaster() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 40;
-
-  // Selection & Bulk Actions
-  const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
-  const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
 
   // Edit/Delete State
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
@@ -47,16 +44,15 @@ export default function RoomMaster() {
 
   const [filters, setFilters] = useState({ roomType: '', status: '' });
 
-  
   const fetchRooms = async () => {
     try {
       setIsLoadingRooms(true);
       const queryParams = new URLSearchParams({
-      page: currentPage.toString(),
-      limit: itemsPerPage.toString(),
-      ...(filters.status && { status: filters.status }),
-      ...(filters.roomType && { roomType: filters.roomType }),
-    });
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.roomType && { roomType: filters.roomType }),
+      });
       const res = await api.get(`/rooms?${queryParams.toString()}`);
 
       const payload = res.data?.data;
@@ -86,20 +82,13 @@ export default function RoomMaster() {
     }
   }, [activeTab, currentPage, filters]);
 
-  
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-  };
-
-  const handleCloseBulkUpdate = () => {
-    setIsBulkUpdateOpen(false);
-    setSelectedRoomIds([]);
   };
 
   const handleEditRoom = (room: Room) => {
     setEditingRoom(room);
     setView("add");
-    setIsBulkUpdateOpen(false);
   };
 
   const handleDeleteClick = (room: Room) => {
@@ -134,7 +123,6 @@ export default function RoomMaster() {
   const handleOpenAddForm = () => {
     setEditingRoom(null);
     setView("add");
-    setIsBulkUpdateOpen(false);
   };
 
   const handleCloseForm = () => {
@@ -173,14 +161,10 @@ export default function RoomMaster() {
             {activeTab === "Room Master" && (
               <>
                 <button
-                  onClick={() => setIsBulkUpdateOpen(!isBulkUpdateOpen)}
-                  className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-colors border ${
-                    isBulkUpdateOpen
-                      ? "bg-primary/5 border-primary text-primary"
-                      : "bg-card border-border text-text-primary hover:bg-background"
-                  }`}
+                  onClick={() => navigate('/master/rooms/rates')}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors border bg-card border-border text-text-primary hover:bg-background"
                 >
-                  {isBulkUpdateOpen ? "Cancel Selection" : "Enter Bulk Mode"}
+                  <CalendarRange size={16} /> Manage Rates
                 </button>
                 <button
                   onClick={handleOpenAddForm}
@@ -230,11 +214,11 @@ export default function RoomMaster() {
             filters={filters}
             onFilterChange={(key, value) => {
               setFilters((prev) => ({ ...prev, [key]: value }));
-              setCurrentPage(1); // Reset to page 1 when changing filters
+              setCurrentPage(1);
             }}
           />
           <div className="mt-4 flex flex-col lg:flex-row items-start gap-6">
-            <div className="flex-1 min-w-0 transition-all duration-300">
+            <div className="flex-1 min-w-0 transition-all duration-300 w-full">
               {isLoadingRooms ? (
                 <div className="bg-card border border-border rounded-xl p-12 flex flex-col items-center justify-center text-text-secondary">
                   <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
@@ -243,9 +227,9 @@ export default function RoomMaster() {
               ) : (
                 <RoomTable
                   rooms={rooms}
-                  selectedRoomIds={selectedRoomIds}
-                  onSelectionChange={setSelectedRoomIds}
-                  isSelectionMode={isBulkUpdateOpen}
+                  selectedRoomIds={[]}
+                  onSelectionChange={() => {}}
+                  isSelectionMode={false}
                   onEdit={handleEditRoom}
                   onDelete={handleDeleteClick}
                   currentPage={currentPage}
@@ -256,12 +240,6 @@ export default function RoomMaster() {
                 />
               )}
             </div>
-            {isBulkUpdateOpen && (
-              <BulkUpdatePanel
-                onClose={handleCloseBulkUpdate}
-                selectedRoomCount={selectedRoomIds.length}
-              />
-            )}
           </div>
         </>
       ) : activeTab === "Room Type Master" ? (

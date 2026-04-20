@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Edit2, Trash2, Loader2, Plus } from 'lucide-react';
-import ExtraServiceModal from './omponents/ExtraServiceModal';
+import ExtraServiceModal from './components/ExtraServiceModal';
 import DeleteModal from '../StaffMaster/Components/DeleteModal';
 import toast from 'react-hot-toast';
 import api from '../../lib/axios';
 import { AxiosError } from 'axios';
 
-// Matching your Mongoose Schema
 export interface ExtraService {
   _id: string;
   name: string;
@@ -14,20 +13,16 @@ export interface ExtraService {
 }
 
 export default function ExtraServiceMaster() {
-  // Page-level Modal State (Moved inside the component)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Data States
   const [extraServices, setExtraServices] = useState<ExtraService[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Specific Action Modal States
   const [editingData, setEditingData] = useState<ExtraService | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<ExtraService | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch Data
   const fetchExtraServices = async () => {
     try {
       setIsLoading(true);
@@ -49,7 +44,6 @@ export default function ExtraServiceMaster() {
     fetchExtraServices();
   }, []);
 
-  // Handlers
   const handleEditClick = (service: ExtraService) => {
     setEditingData(service);
     setIsAddModalOpen(true);

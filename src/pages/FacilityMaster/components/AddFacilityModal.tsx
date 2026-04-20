@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Building, IndianRupee, Settings, ChevronDown, CheckCircle } from "lucide-react";
+import { Building, IndianRupee, Settings, ChevronDown, CheckCircle, ListChecks } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../../lib/axios";
 import { isAxiosError } from "axios";
 import type { Facility } from "../FacilityMaster";
+
+interface Amenity {
+  _id: string;
+  name: string;
+}
 
 interface AddFacilityModalProps {
   isOpen: boolean;
@@ -14,6 +19,7 @@ interface AddFacilityModalProps {
 
 const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [amenitiesList, setAmenitiesList] = useState<Amenity[]>([]);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -23,6 +29,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
     basePrice: "",
     description: "",
     status: "Active",
+    amenities: [] as string[],
   });
 
   const [errors, setErrors] = useState({
@@ -37,6 +44,15 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
   useEffect(() => {
     if (isOpen) {
       setErrors({ name: "", type: "", capacity: "", basePrice: "" });
+
+      api.get("/amenities?activeOnly=true")
+        .then((res) => {
+          setAmenitiesList(res.data?.data || []);
+        })
+        .catch(() => {
+          toast.error("Failed to load amenities list");
+        });
+
       if (editData) {
         setFormData({
           name: editData.name,
@@ -46,6 +62,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
           basePrice: editData.basePrice.toString(),
           description: editData.description || "",
           status: editData.status,
+          amenities: editData.amenities?.map((a: any) => a._id || a) || [],
         });
       } else {
         setFormData({
@@ -56,6 +73,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
           basePrice: "",
           description: "",
           status: "Active",
+          amenities: [],
         });
       }
     }
@@ -64,6 +82,16 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setErrors({ ...errors, [e.target.name]: "" });
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleAmenityToggle = (amenityId: string) => {
+    setFormData((prev) => {
+      const current = prev.amenities;
+      const updated = current.includes(amenityId)
+        ? current.filter((id) => id !== amenityId)
+        : [...current, amenityId];
+      return { ...prev, amenities: updated };
+    });
   };
 
   const validateForm = () => {
@@ -214,7 +242,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
 
               <hr className="border-border mb-8" />
 
-              {/* Pricing & Description */}
+              {/* Pricing details */}
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-5">
                   <IndianRupee size={20} className="text-primary" />
@@ -259,6 +287,41 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
                     placeholder="Add specific details, dimensions, or included items here..."
                     className="input-field py-3 min-h-20 resize-y"
                   />
+                </div>
+              </div>
+
+              <hr className="border-border mb-8" />
+
+              {/* Amenities Section */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-5">
+                  <ListChecks size={20} className="text-primary" />
+                  <h3 className="text-lg font-bold text-text-primary">Amenities Included</h3>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {amenitiesList.map((amenity) => {
+                    const isSelected = formData.amenities.includes(amenity._id);
+                    return (
+                      <div
+                        key={amenity._id}
+                        onClick={() => handleAmenityToggle(amenity._id)}
+                        className={`flex items-center justify-center p-3 rounded-lg border cursor-pointer transition-all ${
+                          isSelected
+                            ? "bg-primary/10 border-primary text-primary"
+                            : "bg-background border-border text-text-secondary hover:border-primary/50"
+                        }`}
+                      >
+                        <span className="text-sm font-medium text-center">
+                          {amenity.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {amenitiesList.length === 0 && (
+                    <p className="col-span-full text-sm text-text-secondary">
+                      No active amenities found.
+                    </p>
+                  )}
                 </div>
               </div>
 

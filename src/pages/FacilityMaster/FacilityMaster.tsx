@@ -12,8 +12,7 @@ import toast from "react-hot-toast";
 import api from "../../lib/axios";
 import { isAxiosError } from "axios";
 
-import AddFacilityModal from "./Components/AddFacilityModal";
-// Assuming you have this reusable DeleteModal from your StaffMaster
+import AddFacilityModal from "./components/AddFacilityModal";
 import DeleteModal from "../StaffMaster/Components/DeleteModal"; 
 import { useDebounce } from "../../hooks/useDebounce";
 
@@ -26,6 +25,7 @@ export interface Facility {
   basePrice: number;
   description?: string;
   status: "Active" | "Maintenance" | "Blocked";
+  amenities:string[];
   createdAt?: string;
 }
 

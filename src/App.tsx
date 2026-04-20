@@ -9,6 +9,7 @@ import { Toaster } from "react-hot-toast";
 import { FileQuestion } from "lucide-react";
 import { useAuth } from "./context/AuthContext";
 import RoomMaster from "./pages/RoomMaster/RoomMaster";
+import BookingFullPage from "./pages/booking/BookingFullPage";
 import RoomRates from "./pages/RoomMaster/RoomRates";
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
@@ -98,6 +99,11 @@ export default function App() {
               <Route path="rates" element={<RoomRates />} /> 
             </Route>
           </Route>
+
+             <Route path="/bookings" element={<BookingFullPage/>}/>
+          
+
+
 
           <Route path="*" element={<NotFound />} />
         </Route>

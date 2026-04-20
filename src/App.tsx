@@ -12,6 +12,7 @@ import RoomMaster from "./pages/RoomMaster/RoomMaster";
 import BookingFullPage from "./pages/booking/BookingFullPage";
 import RoomRates from "./pages/RoomMaster/RoomRates";
 import FacilityMaster from "./pages/FacilityMaster/FacilityMaster";
+import ExtraServiceMaster from "./pages/ExtraService/ExtraServices";
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -100,6 +101,7 @@ export default function App() {
               <Route path="rates" element={<RoomRates />} /> 
             </Route>
             <Route path="facilities" element={<FacilityMaster/>}/>
+            <Route path="extra-services" element={<ExtraServiceMaster/>}/>
           </Route>
 
              <Route path="/bookings" element={<BookingFullPage/>}/>

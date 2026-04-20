@@ -8,6 +8,7 @@ import {
   BedDouble,
   User,
   Loader2,
+  UploadCloud,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
@@ -41,16 +42,18 @@ export default function RoomRates() {
   const [startDate, endDate] = dateRange;
 
   const [categories, setCategories] = useState<RoomCategory[]>([]);
+  
   const [prices, setPrices] = useState<Record<string, number>>({});
   
+  const [editedPrices, setEditedPrices] = useState<Record<string, number>>({});
+  
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [editFormValues, setEditFormValues] = useState<Record<string, number>>({});
 
-  // --- Helpers ---
   const getDatesInRange = useCallback((start: Date, end: Date) => {
     const dates = [];
     let current = new Date(start);
@@ -64,7 +67,8 @@ export default function RoomRates() {
   const formatDateKey = (date: Date) => format(date, "yyyy-MM-dd");
   const currentDates = getDatesInRange(startDate, endDate || startDate);
 
-  // --- Fetch Data from Real API ---
+  const hasUnsavedChanges = Object.keys(editedPrices).length > 0;
+
   const fetchGridData = useCallback(async () => {
     if (!startDate || !endDate) return;
 
@@ -81,41 +85,38 @@ export default function RoomRates() {
       const initialPrices: Record<string, number> = {};
       const datesToMap = getDatesInRange(startDate, endDate);
 
-      // 1. Populate Base Prices
+      // 1. Populate Base Prices for Rooms
       fetchedCategories.forEach((cat: RoomCategory) => {
         cat.rooms.forEach((room: Room) => {
           datesToMap.forEach((date) => {
             const dateKey = formatDateKey(date);
             initialPrices[`${room.id}_${dateKey}`] = room.basePrice;
-            
-            // Set a default for the category row (we'll overwrite if needed)
-            if (!initialPrices[`${cat.id}_${dateKey}`]) {
-              initialPrices[`${cat.id}_${dateKey}`] = room.basePrice;
-            }
           });
         });
       });
 
       // 2. Apply Database Overrides
-      overrides.forEach((override: { roomId: string; date: string; price: number }) => {
-        // override.date from backend should be "YYYY-MM-DD"
-        initialPrices[`${override.roomId}_${override.date}`] = override.price;
-      });
+      overrides.forEach((override: any) => {
+        // Skip if the backend sent empty data
+        if (!override || !override.date) return; 
 
-      // 3. Sync Category UI price (if all rooms in a category share the same price, show it, otherwise show base)
-      fetchedCategories.forEach((cat: RoomCategory) => {
-        datesToMap.forEach((date) => {
-          const dateKey = formatDateKey(date);
-          if (cat.rooms.length > 0) {
-            const roomPrices = cat.rooms.map(r => initialPrices[`${r.id}_${dateKey}`]);
-            const allSame = roomPrices.every(p => p === roomPrices[0]);
-            initialPrices[`${cat.id}_${dateKey}`] = allSame ? roomPrices[0] : cat.rooms[0].basePrice;
-          }
-        });
+        let safeDateStr = "";
+        
+        // Handle if backend sends an array: ["2026-04-18", "00:00:00.000Z"]
+        if (Array.isArray(override.date) && override.date.length > 0) {
+          // Grab the index and force it to be a String before splitting
+          safeDateStr = String(override.date[0]).split("T")[0];
+        } 
+        if (safeDateStr) {
+          const cellKey = `${override.roomId}_${safeDateStr}`;
+          initialPrices[cellKey] = override.price;
+        }
       });
-
       setPrices(initialPrices);
+      // Clear any pending edits when we fetch fresh data
+      setEditedPrices({});
     } catch (error: unknown) {
+      console.log(error)
       let errorMsg = "Failed to load rate grid";
       if (error instanceof AxiosError) errorMsg = error.response?.data?.message || errorMsg;
       toast.error(errorMsg);
@@ -124,7 +125,6 @@ export default function RoomRates() {
     }
   }, [startDate, endDate, getDatesInRange]);
 
-  // Trigger fetch on date change
   useEffect(() => {
     fetchGridData();
   }, [fetchGridData]);
@@ -155,13 +155,20 @@ export default function RoomRates() {
     setDateRange([start || new Date(), end]);
   };
 
-  // --- Editing Logic ---
+  // --- Inline Editing Logic (Draft Mode) ---
   const startEditing = (id: string, isRoom: boolean) => {
     const currentValues: Record<string, number> = {};
+    
     currentDates.forEach((date) => {
       const dateKey = formatDateKey(date);
-      currentValues[dateKey] = prices[`${id}_${dateKey}`] || 0;
+      if (isRoom) {
+         const cellKey = `${id}_${dateKey}`;
+         currentValues[dateKey] = editedPrices[cellKey] ?? prices[cellKey] ?? 0;
+      } else {
+         currentValues[dateKey] = 0; 
+      }
     });
+
     setEditFormValues(currentValues);
     if (isRoom) {
       setEditingRoomId(id);
@@ -178,40 +185,62 @@ export default function RoomRates() {
     setEditFormValues({});
   };
 
-  const saveEditing = async (id: string, isRoom: boolean) => {
-    setIsSaving(true);
-    try {
-      const ratesPayload: { roomId: string; date: string; price: number }[] = [];
-      const updatedPrices = { ...prices };
+  const saveEditing = () => {
+    const newEdits = { ...editedPrices };
 
-      Object.entries(editFormValues).forEach(([dateKey, newPrice]) => {
-        updatedPrices[`${id}_${dateKey}`] = newPrice;
+    Object.entries(editFormValues).forEach(([dateKey, newPrice]) => {
+      if (!newPrice) return; 
+
+      if (editingRoomId) {
+        const cellKey = `${editingRoomId}_${dateKey}`;
         
-        if (isRoom) {
-          // Saving an individual room
-          ratesPayload.push({ roomId: id, date: dateKey, price: newPrice });
+        // Only flag as edited if the price is ACTUALLY different from the saved API price
+        if (newPrice !== prices[cellKey]) {
+          newEdits[cellKey] = newPrice;
         } else {
-          // Saving a category - cascade to all rooms inside it
-          const category = categories.find((c) => c.id === id);
-          category?.rooms.forEach((room) => {
-            updatedPrices[`${room.id}_${dateKey}`] = newPrice;
-            ratesPayload.push({ roomId: room.id, date: dateKey, price: newPrice });
-          });
+          // If they changed it back to the original price, remove the edit flag
+          delete newEdits[cellKey];
         }
+      } else if (editingCategoryId) {
+        // Cascade to all rooms
+        const category = categories.find((c) => c.id === editingCategoryId);
+        category?.rooms.forEach((room) => {
+          const cellKey = `${room.id}_${dateKey}`;
+          
+          if (newPrice !== prices[cellKey]) {
+            newEdits[cellKey] = newPrice;
+          } else {
+            delete newEdits[cellKey];
+          }
+        });
+      }
+    });
+
+    setEditedPrices(newEdits);
+    cancelEditing();
+  };
+
+  // --- Publish Logic (Send to API) ---
+  const handlePublish = async () => {
+    if (!hasUnsavedChanges) return;
+    
+    setIsPublishing(true);
+    try {
+      const ratesPayload = Object.entries(editedPrices).map(([key, price]) => {
+        const [roomId, date] = key.split("_");
+        return { roomId, date, price };
       });
 
-      // Call API
-      await api.post("/rates/bulk", { rates: ratesPayload });
-
-      setPrices(updatedPrices);
-      cancelEditing();
-      toast.success(`${isRoom ? "Room" : "Category"} rates updated successfully`);
+      await api.post("/pricing-rules/bulk", { rates: ratesPayload });
+      
+      toast.success(`Successfully published rates for ${ratesPayload.length} slots`);
+      await fetchGridData();
     } catch (error: unknown) {
-      let errorMsg = "Failed to save rates";
+      let errorMsg = "Failed to publish rates";
       if (error instanceof AxiosError) errorMsg = error.response?.data?.message || errorMsg;
       toast.error(errorMsg);
     } finally {
-      setIsSaving(false);
+      setIsPublishing(false);
     }
   };
 
@@ -225,39 +254,50 @@ export default function RoomRates() {
 
   return (
     <div className="page-container py-8 animate-fade-in">
-      {/* Header & Date Controls */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-text-primary mb-1">Rates & Inventory</h1>
           <p className="text-text-secondary text-sm">Update pricing for categories or specific rooms</p>
         </div>
 
-        <div className="flex items-center gap-2 bg-card border border-border p-1.5 rounded-lg shadow-sm">
-          <button onClick={handlePrev} className="p-2 text-text-secondary hover:bg-background rounded-md transition-colors disabled:opacity-50" disabled={isLoading}>
-            <ChevronLeft size={18} />
-          </button>
+        <div className="flex items-center gap-3">
+          {hasUnsavedChanges && (
+            <button 
+              onClick={handlePublish}
+              disabled={isPublishing}
+              className="flex items-center gap-2 px-4 py-2 bg-success text-white rounded-lg font-medium shadow-sm hover:bg-success/90 transition-colors animate-fade-in disabled:opacity-50"
+            >
+              {isPublishing ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+              Publish Changes ({Object.keys(editedPrices).length})
+            </button>
+          )}
 
-          <div className="flex items-center px-1">
-            <DatePicker
-              selectsRange={true}
-              startDate={startDate}
-              endDate={endDate}
-              onChange={handleDateChange}
-              customInput={<CustomDateInput />}
-              dateFormat="MMM dd, yyyy"
-              calendarClassName="border-border rounded-xl shadow-modal font-sans"
-              disabled={isLoading}
-            />
+          <div className="flex items-center gap-2 bg-card border border-border p-1.5 rounded-lg shadow-sm">
+            <button onClick={handlePrev} className="p-2 text-text-secondary hover:bg-background rounded-md transition-colors disabled:opacity-50" disabled={isLoading}>
+              <ChevronLeft size={18} />
+            </button>
+
+            <div className="flex items-center px-1">
+              <DatePicker
+                selectsRange={true}
+                startDate={startDate}
+                endDate={endDate}
+                onChange={handleDateChange}
+                customInput={<CustomDateInput />}
+                dateFormat="MMM dd, yyyy"
+                calendarClassName="border-border rounded-xl shadow-modal font-sans"
+                disabled={isLoading}
+              />
+            </div>
+
+            <button onClick={handleNext} className="p-2 text-text-secondary hover:bg-background rounded-md transition-colors disabled:opacity-50" disabled={isLoading}>
+              <ChevronRight size={18} />
+            </button>
           </div>
-
-          <button onClick={handleNext} className="p-2 text-text-secondary hover:bg-background rounded-md transition-colors disabled:opacity-50" disabled={isLoading}>
-            <ChevronRight size={18} />
-          </button>
         </div>
       </div>
 
-      {/* Table Area */}
-      <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden w-full relative min-h-[400px]">
+      <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden w-full relative min-h-100">
         {isLoading && (
           <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[1px] flex flex-col items-center justify-center text-text-secondary">
             <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
@@ -295,14 +335,14 @@ export default function RoomRates() {
                 <tr className="bg-background/40 group">
                   <td className="px-4 py-3 border-r border-border font-semibold truncate">
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2 truncate pr-2">
+                      <span className="flex items-center gap-2 truncate pr-2 text-text-primary">
                         <BedDouble size={16} className="text-primary shrink-0" />
                         <span className="truncate">{category.name}</span>
                       </span>
                       {editingCategoryId === category.id ? (
                         <div className="flex gap-1 bg-white rounded shadow-sm border border-border p-0.5 shrink-0">
-                          <button disabled={isSaving} onClick={() => saveEditing(category.id, false)} className="p-1 text-success hover:bg-success/10 rounded disabled:opacity-50"><Check size={14} /></button>
-                          <button disabled={isSaving} onClick={cancelEditing} className="p-1 text-danger hover:bg-danger/10 rounded disabled:opacity-50"><X size={14} /></button>
+                          <button onClick={() => saveEditing()} className="p-1 text-success hover:bg-success/10 rounded"><Check size={14} /></button>
+                          <button onClick={cancelEditing} className="p-1 text-danger hover:bg-danger/10 rounded"><X size={14} /></button>
                         </div>
                       ) : (
                         <button onClick={() => startEditing(category.id, false)} className="p-1 text-text-secondary opacity-0 group-hover:opacity-100 hover:text-primary transition-all shrink-0">
@@ -318,15 +358,13 @@ export default function RoomRates() {
                         {editingCategoryId === category.id ? (
                           <input
                             type="number"
+                            placeholder="Set All"
                             value={editFormValues[dateKey] || ""}
                             onChange={(e) => setEditFormValues({ ...editFormValues, [dateKey]: Number(e.target.value) })}
                             className="w-[90%] mx-auto text-center text-xs border border-primary/40 rounded py-1.5 focus:ring-1 focus:ring-primary focus:outline-none shadow-sm"
-                            disabled={isSaving}
                           />
                         ) : (
-                          <span className="text-sm font-bold text-text-primary block truncate">
-                            ₹{(prices[`${category.id}_${dateKey}`] || 0).toLocaleString("en-IN")}
-                          </span>
+                          <span className="text-text-secondary/30 block">—</span>
                         )}
                       </td>
                     );
@@ -341,8 +379,8 @@ export default function RoomRates() {
                         <span className="flex items-center gap-2"><User size={12} /> Room {room.roomNumber}</span>
                         {editingRoomId === room.id ? (
                           <div className="flex gap-1 bg-white rounded shadow-sm border border-border p-0.5">
-                            <button disabled={isSaving} onClick={() => saveEditing(room.id, true)} className="p-1 text-success hover:bg-success/10 rounded disabled:opacity-50"><Check size={14} /></button>
-                            <button disabled={isSaving} onClick={cancelEditing} className="p-1 text-danger hover:bg-danger/10 rounded disabled:opacity-50"><X size={14} /></button>
+                            <button onClick={() => saveEditing()} className="p-1 text-success hover:bg-success/10 rounded"><Check size={14} /></button>
+                            <button onClick={cancelEditing} className="p-1 text-danger hover:bg-danger/10 rounded"><X size={14} /></button>
                           </div>
                         ) : (
                           <button onClick={() => startEditing(room.id, true)} className="p-1 text-text-secondary opacity-0 group-hover/room:opacity-100 hover:text-primary transition-all">
@@ -353,19 +391,28 @@ export default function RoomRates() {
                     </td>
                     {currentDates.map((date, idx) => {
                       const dateKey = formatDateKey(date);
+                      const cellKey = `${room.id}_${dateKey}`;
+                      
+                      const isEdited = cellKey in editedPrices;
+                      const displayPrice = isEdited ? editedPrices[cellKey] : (prices[cellKey] ?? room.basePrice);
+
                       return (
-                        <td key={idx} className="px-2 py-2.5 border-r border-border text-center">
+                        <td 
+                          key={idx} 
+                          className={`px-2 py-2.5 border-r border-border text-center transition-colors
+                            ${isEdited && editingRoomId !== room.id ? 'bg-primary/5 border border-primary/20 shadow-[inset_0_0_0_1px_rgba(255,90,60,0.2)]' : ''}
+                          `}
+                        >
                           {editingRoomId === room.id ? (
                             <input
                               type="number"
                               value={editFormValues[dateKey] || ""}
                               onChange={(e) => setEditFormValues({ ...editFormValues, [dateKey]: Number(e.target.value) })}
                               className="w-full max-w-17.5 mx-auto text-center text-[11px] border border-primary/20 rounded py-1 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm"
-                              disabled={isSaving}
                             />
                           ) : (
-                            <span className="text-xs text-text-secondary">
-                              ₹{(prices[`${room.id}_${dateKey}`] || 0).toLocaleString("en-IN")}
+                            <span className={`text-xs font-medium ${isEdited ? 'text-primary' : 'text-text-secondary'}`}>
+                              ₹{displayPrice.toLocaleString("en-IN")}
                             </span>
                           )}
                         </td>

@@ -9,6 +9,7 @@ import { Toaster } from "react-hot-toast";
 import { FileQuestion } from "lucide-react";
 import { useAuth } from "./context/AuthContext";
 import RoomMaster from "./pages/RoomMaster/RoomMaster";
+import BookingFullPage from "./pages/booking/BookingFullPage";
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -94,6 +95,11 @@ export default function App() {
             <Route path="staffs" element={<StaffMaster />} />
             <Route path="rooms" element={<RoomMaster/>}/>
           </Route>
+
+             <Route path="/bookings" element={<BookingFullPage/>}/>
+          
+
+
 
           <Route path="*" element={<NotFound />} />
         </Route>

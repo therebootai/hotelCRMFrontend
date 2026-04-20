@@ -12,6 +12,7 @@
   /* Brand Colors */
   --color-primary: #FF5A3C;
   --color-primary-hover: #E5492E; /* Slightly darker for subtle hover */
+  --color-light-orange:#FE8F79;
 
   /* Background & UI Colors */
   --color-background: #F9FAFB; /* Very subtle light grey */
@@ -93,6 +94,8 @@ small, .text-small {
 button {
   cursor: pointer;
 }
+
+
 
 /* ========================================
   3. COMPONENT CLASSES (Reusable SaaS-grade)

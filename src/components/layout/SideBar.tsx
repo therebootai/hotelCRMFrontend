@@ -35,13 +35,10 @@ const NavItem = ({ to, icon: Icon, label }) => (
 const SideBar = () => {
   const location = useLocation();
   
-  // Check if current URL is inside the master route to keep menu open on reload
   const isMasterActive = location.pathname.includes('/master');
   
-  // State to handle the dropdown toggle
   const [isMastersOpen, setIsMastersOpen] = useState(isMasterActive);
 
-  // Auto-expand if navigating to a master route from somewhere else
   useEffect(() => {
     if (isMasterActive) {
       setIsMastersOpen(true);
@@ -97,7 +94,7 @@ const SideBar = () => {
             {/* Sub-menu Items */}
             <div 
               className={`flex flex-col gap-1 overflow-hidden transition-all duration-200 ease-in-out ${
-                isMastersOpen ? "max-h-40 opacity-100 mt-1" : "max-h-0 opacity-0"
+                isMastersOpen ? "max-h-60 opacity-100 mt-1" : "max-h-0 opacity-0"
               }`}
             >
               <div className="ml-6 pl-4 border-l border-border flex flex-col gap-1">
@@ -125,6 +122,19 @@ const SideBar = () => {
                   }
                 >
                   Staff Directory
+                </NavLink>
+
+                <NavLink
+                  to="/master/facilities"
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${
+                      isActive
+                        ? 'text-primary font-medium bg-primary/10'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-background'
+                    }`
+                  }
+                >
+                  Facility Master
                 </NavLink>
               </div>
             </div>

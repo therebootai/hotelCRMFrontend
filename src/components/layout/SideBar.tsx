@@ -62,7 +62,7 @@ const SideBar = () => {
           <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
           <NavItem to="/room-calendar" icon={CalendarDays} label="Room Calendar" />
           <NavItem to="/bookings" icon={BookOpen} label="Bookings" />
-          <NavItem to="/check-in" icon={ArrowRightToLine} label="Check-in" />
+          <NavItem to="/checkin" icon={ArrowRightToLine} label="Check-in" />
           <NavItem to="/active-guests" icon={Users} label="Active Guests" />
           <NavItem to="/checkout" icon={ArrowLeftFromLine} label="Checkout" />
 

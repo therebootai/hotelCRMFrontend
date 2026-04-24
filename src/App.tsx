@@ -10,9 +10,13 @@ import { FileQuestion } from "lucide-react";
 import { useAuth } from "./context/AuthContext";
 import RoomMaster from "./pages/RoomMaster/RoomMaster";
 import BookingFullPage from "./pages/booking/BookingFullPage";
+
+import CheckInFullPage from "./pages/checkin/CheckInFullPage";
+
 import RoomRates from "./pages/RoomMaster/RoomRates";
 import FacilityMaster from "./pages/FacilityMaster/FacilityMaster";
 import ExtraServiceMaster from "./pages/ExtraService/ExtraServices";
+
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -105,6 +109,8 @@ export default function App() {
           </Route>
 
              <Route path="/bookings" element={<BookingFullPage/>}/>
+             <Route path="/checkin" element={<CheckInFullPage/>}/>
+
           
 
 

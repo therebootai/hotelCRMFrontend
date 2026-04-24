@@ -1,154 +1,135 @@
-import React, { useState, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Snowflake, Wrench, User } from 'lucide-react';
-import NewBookingButton from '../../components/ui/NewBookingButton';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  Snowflake,
+  Wrench,
+  User,
+} from "lucide-react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
-// --- HELPER CONSTANTS & FUNCTIONS ---
+import api from "../../lib/axios";
+import NewBookingButton from "../../components/ui/NewBookingButton";
+import ExtendStayModal from "../../components/checkinComp/ExtendStayModal";
+
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 const toISODate = (date: Date) => {
   const d = new Date(date);
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().split('T')[0];
+  return d.toISOString().split("T")[0];
 };
 
 const getDaysArray = (start: Date, end: Date) => {
-  const arr = [];
-  for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
-    arr.push(new Date(dt));
+  const arr: Date[] = [];
+  const current = new Date(start);
+
+  while (current <= end) {
+    arr.push(new Date(current));
+    current.setDate(current.getDate() + 1);
   }
+
   return arr;
 };
 
-// --- DYNAMIC DEFAULT DATES (Current Week) ---
-const today = new Date();
-today.setHours(0, 0, 0, 0); // Reset time to midnight to avoid timezone bugs
-
-// Calculate Monday of the current week
-const defaultStart = new Date(today);
-const dayOfWeek = defaultStart.getDay();
-// JS getDay() returns 0 for Sunday. We adjust so Monday is the start of the week.
-const diffToMonday = defaultStart.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-defaultStart.setDate(diffToMonday);
-
-// Calculate Sunday of the current week (Monday + 6 days)
-const defaultEnd = new Date(defaultStart);
-defaultEnd.setDate(defaultStart.getDate() + 6);
-
-// Helper function to keep our mock data visible in the current week!
-const offsetDate = (days: number) => {
-  const d = new Date(defaultStart);
-  d.setDate(d.getDate() + days);
-  return toISODate(d);
+const startOfToday = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
 };
 
-// --- INITIAL MOCK DATA (Dynamically shifted to this week) ---
-const initialTimelineData = [
-  {
-    category: "AC Deluxe Room",
-    rooms: [
-      {
-        id: "101", status: "Cleaned", isClean: true,
-        bookings: [
-          // Starts Tuesday (offset 1), Ends Thursday (offset 3)
-          { id: 1, guest: "Puja Agarwal", phone: "+91 8906605355", plan: "EP", start: offsetDate(1), end: offsetDate(3), color: "red" }
-        ]
-      },
-      {
-        id: "102", status: "Dirty", isClean: false,
-        bookings: [
-          { id: 2, guest: "Puja Agarwal", source: "Expedia", plan: "CP", start: offsetDate(3), end: offsetDate(5), color: "cyan" },
-          { id: 3, isBlocked: true, text: "BLOCKED", start: offsetDate(6), end: offsetDate(7), color: "gray" }
-        ]
-      }
-    ]
-  },
-  {
-    category: "Suite Room",
-    rooms: [
-      {
-        id: "987", status: "Cleaned", isClean: true,
-        bookings: [
-          { id: 4, guest: "VIP Guest", source: "Direct Booking", plan: "MAP", price: "₹350/n", start: offsetDate(5), end: offsetDate(7), color: "red" }
-        ]
-      }
-    ]
-  },
-  {
-    category: "Banquet Hall",
-    rooms: [
-      {
-        id: "547", status: "Cleaned", isClean: true,
-        bookings: [
-          { id: 5, guest: "VIP Guest", source: "Direct Booking", plan: "MAP", price: "₹350/n", start: offsetDate(5), end: offsetDate(7), color: "red" }
-        ]
-      }
-    ]
-  }
-];
-
-// --- SUB-COMPONENTS ---
-
-const SummaryCard = ({ title, value, total }: any) => (
+const SummaryCard = ({
+  title,
+  value,
+  total,
+}: {
+  title: string;
+  value: number;
+  total: number;
+}) => (
   <div className="card p-4! flex flex-col gap-2">
-    <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">{title}</span>
+    <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">
+      {title}
+    </span>
+
     <div className="flex items-baseline gap-1">
       <span className="text-[24px] font-bold text-text-primary">{value}</span>
-      <span className="text-[16px] font-bold text-text-secondary">/{total}</span>
+      <span className="text-[16px] font-bold text-text-secondary">
+        /{total}
+      </span>
     </div>
   </div>
 );
 
-const BookingBlock = ({ booking, onDragStart, onResizeStart, startCol, span, actualSpan }: any) => {
-  const colorStyles = {
+const BookingBlock = ({
+  booking,
+  startCol,
+  span,
+  actualSpan,
+  onDragStart,
+  onResizeStart,
+}: any) => {
+  const colorStyles: any = {
     red: "bg-primary/10 border-primary/20",
     cyan: "bg-cyan-100 border-cyan-300",
-    gray: "bg-gray-200 border-gray-300"
+    gray: "bg-gray-200 border-gray-300",
   };
-  const theme = colorStyles[booking.color as keyof typeof colorStyles];
+
+  const theme = colorStyles[booking.color] || colorStyles.red;
 
   if (booking.isBlocked) {
     return (
-      <div 
-        className={`z-10 m-1.5 rounded-lg border ${theme} flex items-center justify-center gap-2 opacity-80 cursor-not-allowed overflow-hidden`}
+      <div
+        className={`z-10 m-1.5 rounded-lg border ${theme} flex items-center justify-center gap-2 opacity-80 overflow-hidden`}
         style={{ gridColumn: `${startCol} / span ${span}` }}
       >
         <Wrench size={14} className="text-text-secondary shrink-0" />
-        <span className="text-[12px] font-bold text-text-secondary tracking-wide truncate">{booking.text}</span>
+        <span className="text-[12px] font-bold text-text-secondary truncate">
+          BLOCKED
+        </span>
       </div>
     );
   }
 
   return (
-    <div 
+    <div
       draggable
       onDragStart={onDragStart}
       className={`z-10 m-1.5 rounded-lg border ${theme} p-2 flex flex-col justify-center relative overflow-hidden group cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow`}
       style={{ gridColumn: `${startCol} / span ${span}` }}
     >
-      <div className="flex justify-between items-start pointer-events-none gap-2">
+      <div className="flex justify-between items-start gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
-          {booking.color === 'cyan' && <User size={12} className="text-cyan-700 shrink-0" />}
-          {booking.guest === 'VIP Guest' && <span className="text-primary text-[10px] shrink-0">⭐</span>}
-          <span className="text-[13px] font-bold text-text-primary leading-tight truncate">{booking.guest}</span>
+          <User size={12} className="text-primary shrink-0" />
+
+          <span className="text-[13px] font-bold text-text-primary truncate">
+            {booking.guest}
+          </span>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="text-[9px] font-bold text-text-secondary hidden sm:inline-block">{actualSpan} Days</span>
-          <span className="text-[9px] font-bold bg-white/60 px-1.5 py-0.5 rounded text-text-primary">{booking.plan}</span>
-        </div>
-      </div>
-      
-      <div className="flex justify-between items-end mt-1 pointer-events-none gap-2">
-        <span className="text-[11px] text-text-secondary truncate">{booking.phone || booking.source}</span>
-        {booking.price ? (
-          <span className="text-[11px] font-bold text-primary shrink-0">{booking.price}</span>
-        ) : (
-          <User size={12} className="text-primary opacity-50 shrink-0" />
-        )}
+
+        <span className="text-[9px] font-bold text-text-secondary hidden sm:inline-block">
+          {actualSpan} Days
+        </span>
       </div>
 
-      <div 
-        onMouseDown={(e) => { e.stopPropagation(); onResizeStart(e, booking.id); }}
-        className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize hover:bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex items-center justify-center"
+      <div className="flex justify-between items-end mt-1 gap-2">
+        <span className="text-[11px] text-text-secondary truncate">
+          {booking.phone}
+        </span>
+
+        <span className="text-[11px] font-bold text-primary shrink-0">
+          ₹{booking.price || 0}
+        </span>
+      </div>
+
+      <div
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          onResizeStart(e, booking);
+        }}
+        className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize opacity-0 group-hover:opacity-100 transition-opacity z-20 flex items-center justify-center"
       >
         <div className="w-0.5 h-3 bg-black/20 rounded-full"></div>
       </div>
@@ -156,276 +137,477 @@ const BookingBlock = ({ booking, onDragStart, onResizeStart, startCol, span, act
   );
 };
 
-// --- MAIN COMPONENT ---
-
 const StayOverview = () => {
-  const [timelineData, setTimelineData] = useState(initialTimelineData);
-  
-  // --- DATE VIEW STATE (Initialized to current week) ---
-  const [viewStart, setViewStart] = useState<Date>(new Date(defaultStart)); 
-  const [viewEnd, setViewEnd] = useState<Date>(new Date(defaultEnd)); 
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const today = startOfToday();
 
-  // Generate dynamic array of dates for the headers
-  const datesArray = getDaysArray(viewStart, viewEnd);
+  const [viewStart, setViewStart] = useState<Date>(today);
+  const [viewEnd, setViewEnd] = useState<Date>(() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + 9);
+    return d;
+  });
 
-  // Action: "<" button subtracts 1 day from the "From" date, extending the grid left
-  const handlePrevDay = () => {
-    setViewStart(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() - 1);
-      return d;
-    });
-  };
+  const [timelineData, setTimelineData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Action: ">" button adds 1 day to the "To" date, extending the grid right
-  const handleNextDay = () => {
-    setViewEnd(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() + 1);
-      return d;
-    });
-  };
+  const [showPicker, setShowPicker] = useState(false);
 
-  const formattedDateRange = `${viewStart.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} - ${viewEnd.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  const [selectedCheckIn, setSelectedCheckIn] = useState<any>(null);
+  const [extendOpen, setExtendOpen] = useState(false);
 
-  // --- DRAG TO MOVE LOGIC ---
-  const handleDragStart = (e: React.DragEvent, bookingId: number, sourceRoomId: string, categoryIndex: number) => {
-    e.dataTransfer.setData("bookingId", bookingId.toString());
-    e.dataTransfer.setData("sourceRoomId", sourceRoomId);
-    e.dataTransfer.setData("categoryIndex", categoryIndex.toString());
-  };
-
-  const handleDrop = (e: React.DragEvent, targetRoomId: string, targetCategoryIndex: number, newStartCol: number) => {
-    e.preventDefault();
-    const bookingId = parseInt(e.dataTransfer.getData("bookingId"));
-    const sourceRoomId = e.dataTransfer.getData("sourceRoomId");
-    const sourceCategoryIndex = parseInt(e.dataTransfer.getData("categoryIndex"));
-
-    if (!bookingId || !sourceRoomId) return;
-
-    setTimelineData(prevData => {
-      const newData = [...prevData];
-      let movingBooking = null;
-
-      const sourceCategory = newData[sourceCategoryIndex];
-      const sourceRoom = sourceCategory.rooms.find(r => r.id === sourceRoomId);
-      if (sourceRoom) {
-        movingBooking = sourceRoom.bookings.find(b => b.id === bookingId);
-        sourceRoom.bookings = sourceRoom.bookings.filter(b => b.id !== bookingId);
-      }
-
-      if (movingBooking) {
-        const targetCategory = newData[targetCategoryIndex];
-        const targetRoom = targetCategory.rooms.find(r => r.id === targetRoomId);
-        
-        if (targetRoom) {
-          const daysFromViewStart = newStartCol - 2; 
-          const newStartDate = new Date(viewStart);
-          newStartDate.setDate(newStartDate.getDate() + daysFromViewStart);
-          
-          const currentSpanDays = Math.round((new Date(movingBooking.end).getTime() - new Date(movingBooking.start).getTime()) / MS_PER_DAY);
-          const newEndDate = new Date(newStartDate);
-          newEndDate.setDate(newEndDate.getDate() + currentSpanDays);
-
-          movingBooking.start = toISODate(newStartDate);
-          movingBooking.end = toISODate(newEndDate);
-          targetRoom.bookings.push(movingBooking);
-        }
-      }
-      return newData;
-    });
-  };
-
-  // --- DRAG TO RESIZE LOGIC ---
   const gridRef = useRef<HTMLDivElement>(null);
-  const [isResizing, setIsResizing] = useState<{ id: number; startX: number; originalEnd: string } | null>(null);
 
-  const handleResizeStart = (e: React.MouseEvent, bookingId: number) => {
-    let originalEnd = "";
-    timelineData.forEach(cat => cat.rooms.forEach(room => room.bookings.forEach(b => {
-      if(b.id === bookingId) originalEnd = b.end;
-    })));
+  const datesArray = useMemo(
+    () => getDaysArray(viewStart, viewEnd),
+    [viewStart, viewEnd]
+  );
 
-    setIsResizing({ id: bookingId, startX: e.clientX, originalEnd });
-    
-    document.addEventListener('mousemove', handleResizeMove);
-    document.addEventListener('mouseup', handleResizeEnd);
-  };
+  const gridTemplate = `180px repeat(${datesArray.length}, minmax(0, 1fr))`;
+  const [roomTypes, setRoomTypes] = useState<any[]>([]);
 
-  const handleResizeMove = (e: MouseEvent) => {
-    setIsResizing(currentResizeState => {
-      if (!currentResizeState || !gridRef.current) return currentResizeState;
+  const fetchRoomTypes = async () => {
+  try {
+    const res = await api.get("/room-types");
+    setRoomTypes(res.data.data || []);
+  } catch (error) {
+    console.error("room types fetch failed", error);
+  }
+};
 
-      const columnWidth = (gridRef.current.offsetWidth - 180) / datesArray.length;
-      const deltaX = e.clientX - currentResizeState.startX;
-      const deltaCols = Math.round(deltaX / columnWidth);
+useEffect(() => {
+  fetchRoomTypes();
+}, []);
 
-      setTimelineData(prevData => {
-        const newData = [...prevData];
-        newData.forEach(category => {
-          category.rooms.forEach(room => {
-            const booking = room.bookings.find(b => b.id === currentResizeState.id);
-            if (booking && !booking.isBlocked) {
-              const newEndDate = new Date(currentResizeState.originalEnd);
-              newEndDate.setDate(newEndDate.getDate() + deltaCols);
-              
-              if (newEndDate > new Date(booking.start)) {
-                booking.end = toISODate(newEndDate);
-              }
-            }
-          });
-        });
-        return newData;
+  // =====================================================
+  // FETCH DATA
+  // =====================================================
+  const fetchOverview = async () => {
+    try {
+      setLoading(true);
+
+      const res = await api.get("/checkin/stay-overview", {
+        params: {
+          from: toISODate(viewStart),
+          to: toISODate(viewEnd),
+        },
       });
 
-      return currentResizeState;
+      setTimelineData(res.data.data || []);
+    } catch (error) {
+      console.error("overview failed", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOverview();
+  }, [viewStart, viewEnd]);
+
+  // =====================================================
+  // SUMMARY
+  // =====================================================
+  const summary = useMemo(() => {
+    let total = 0;
+    let occupied = 0;
+
+    timelineData.forEach((cat: any) => {
+      cat.rooms.forEach((room: any) => {
+        total++;
+        if (room.bookings?.length > 0) occupied++;
+      });
     });
+
+    return {
+      total,
+      occupied,
+      available: total - occupied,
+    };
+  }, [timelineData]);
+
+  // =====================================================
+  // NAVIGATION
+  // =====================================================
+  const goPrev = () => {
+    const s = new Date(viewStart);
+    const e = new Date(viewEnd);
+
+    s.setDate(s.getDate() - 1);
+    e.setDate(e.getDate() - 1);
+
+    setViewStart(s);
+    setViewEnd(e);
   };
 
-  const handleResizeEnd = () => {
-    setIsResizing(null);
-    document.removeEventListener('mousemove', handleResizeMove);
-    document.removeEventListener('mouseup', handleResizeEnd);
+  const goNext = () => {
+    const s = new Date(viewStart);
+    const e = new Date(viewEnd);
+
+    s.setDate(s.getDate() + 1);
+    e.setDate(e.getDate() + 1);
+
+    setViewStart(s);
+    setViewEnd(e);
   };
 
-  // --- DYNAMIC GRID STYLING ---
-  const gridTemplate = `180px repeat(${datesArray.length}, minmax(0, 1fr))`;
+  // =====================================================
+  // DRAG
+  // =====================================================
+  const handleDragStart = (
+    e: React.DragEvent,
+    booking: any,
+    roomId: string
+  ) => {
+    e.dataTransfer.setData(
+      "booking",
+      JSON.stringify({
+        booking,
+        sourceRoomId: roomId,
+      })
+    );
+  };
+
+const handleDrop = (
+  e: React.DragEvent,
+  targetRoom: any,
+  colIndex: number
+) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const raw = e.dataTransfer.getData("booking");
+  if (!raw) return;
+
+  const { booking } = JSON.parse(raw);
+
+  // ✅ Direct index use, no +1 offset bug
+  const dropDate = new Date(datesArray[colIndex]);
+  dropDate.setHours(12, 0, 0, 0);
+
+  const isSameRoom = booking.roomId === targetRoom.id;
+
+  setSelectedCheckIn({
+    _id: booking.id,
+    guests: [{ name: booking.guest, mobileNo: booking.phone }],
+    expectedCheckOutTime: dropDate,
+    roomDetails: [
+      {
+        roomId: isSameRoom ? booking.roomId : targetRoom.id,
+        roomNumber: isSameRoom ? booking.roomNumber : targetRoom.roomNumber,
+        // ✅ Always send both current and target room type
+        roomType: targetRoom.roomType?._id || targetRoom.roomType || "",
+        appliedPrice: targetRoom.basePrice || booking.price || 0,
+      },
+    ],
+    totalAdvanceAmount: booking.totalAdvanceAmount || 0,
+    // ✅ Pass target room info separately for prefill
+    _targetRoomId: isSameRoom ? null : targetRoom.id,
+    _targetRoomType: isSameRoom ? null : (targetRoom.roomType?._id || targetRoom.roomType || ""),
+  });
+
+  setExtendOpen(true);
+};
+
+  // =====================================================
+  // RESIZE TO EXTEND
+  // =====================================================
+  const handleResizeStart = (e: React.MouseEvent, booking: any) => {
+    const startX = e.clientX;
+
+    const move = (ev: MouseEvent) => {
+      if (!gridRef.current) return;
+
+      const width = gridRef.current.offsetWidth - 180;
+      const colWidth = width / datesArray.length;
+
+      const diff = ev.clientX - startX;
+      const cols = Math.round(diff / colWidth);
+
+      const newDate = new Date(booking.end);
+      newDate.setDate(newDate.getDate() + cols);
+
+      if (newDate <= new Date(booking.start)) return;
+
+      setSelectedCheckIn({
+        _id: booking.id,
+        guests: [{ name: booking.guest }],
+        expectedCheckOutTime: newDate,
+        roomDetails: [
+          {
+            roomId: booking.roomId,
+            roomNumber: booking.roomNumber,
+            appliedPrice: booking.price || 0,
+          },
+        ],
+        totalAdvanceAmount: booking.totalAdvanceAmount || 0,
+      });
+    };
+
+  const up = () => {
+  setTimeout(() => {
+    setExtendOpen(true);
+  }, 50);
+
+  document.removeEventListener("mousemove", move);
+  document.removeEventListener("mouseup", up);
+};
+
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", up);
+  };
 
   return (
-    <div className="page-container flex flex-col py-[32px] gap-[24px] w-full animate-fade-in relative pb-10">
-      
-      {/* 1. Top Header */}
+    <div className="page-container flex flex-col py-[32px] gap-[24px] w-full pb-10">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-[22px] font-bold text-text-primary">Stay Overview</h2>
+        <h2 className="text-[22px] font-bold text-text-primary">
+          Stay Overview
+        </h2>
+
         <div className="flex items-center gap-4 relative">
-          
-          <div className="flex items-center gap-3 bg-white border border-border rounded-lg px-2 py-1.5 shadow-sm relative">
-            <button onClick={handlePrevDay} className="p-1 hover:bg-gray-100 rounded-md text-text-secondary transition-colors"><ChevronLeft size={18} /></button>
-            
-            <button 
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex items-center gap-2 text-[13px] font-bold text-text-primary px-3 py-1 hover:bg-gray-50 rounded-md transition-colors"
+          <div className="flex items-center gap-2 bg-white border border-border rounded-lg px-2 py-1.5 shadow-sm">
+            <button
+              onClick={goPrev}
+              className="p-1 hover:bg-gray-100 rounded-md"
             >
-              <CalendarIcon size={16} className="text-primary" />
-              <span>{formattedDateRange}</span>
+              <ChevronLeft size={18} />
             </button>
 
-            <button onClick={handleNextDay} className="p-1 hover:bg-gray-100 rounded-md text-text-secondary transition-colors"><ChevronRight size={18} /></button>
-            
-            {showDatePicker && (
-              <div className="absolute top-full mt-2 right-0 bg-white border border-border p-4 shadow-xl rounded-xl z-50 flex gap-4 w-[320px] animate-slide-up">
-                <div className="flex flex-col gap-1 w-full">
-                  <span className="text-[11px] font-bold text-text-secondary uppercase">From</span>
-                  <input type="date" value={toISODate(viewStart)} onChange={e => setViewStart(new Date(e.target.value))} className="input-field text-sm" />
-                </div>
-                <div className="flex flex-col gap-1 w-full">
-                  <span className="text-[11px] font-bold text-text-secondary uppercase">To</span>
-                  <input type="date" value={toISODate(viewEnd)} onChange={e => setViewEnd(new Date(e.target.value))} className="input-field text-sm" />
-                </div>
-              </div>
-            )}
+            <button
+              onClick={() => setShowPicker(!showPicker)}
+              className="flex items-center gap-2 text-[13px] font-bold px-3 py-1 hover:bg-gray-50 rounded-md"
+            >
+              <CalendarIcon size={16} className="text-primary" />
+
+              <span>
+                {viewStart.toLocaleDateString()} -{" "}
+                {viewEnd.toLocaleDateString()}
+              </span>
+            </button>
+
+            <button
+              onClick={goNext}
+              className="p-1 hover:bg-gray-100 rounded-md"
+            >
+              <ChevronRight size={18} />
+            </button>
           </div>
 
           <NewBookingButton />
+
+          {showPicker && (
+            <div className="absolute top-full right-0 mt-2 bg-white border rounded-xl shadow-xl z-50 p-4 flex gap-3">
+              <DatePicker
+                selected={viewStart}
+                onChange={(date: Date) => setViewStart(date)}
+                selectsStart
+                startDate={viewStart}
+                endDate={viewEnd}
+                className="input-field"
+              />
+
+              <DatePicker
+                selected={viewEnd}
+                onChange={(date: Date) => setViewEnd(date)}
+                selectsEnd
+                startDate={viewStart}
+                endDate={viewEnd}
+                minDate={viewStart}
+                className="input-field"
+              />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 2. Summary KPI Cards */}
-      <div className="grid grid-cols-4 gap-[24px]">
-        <SummaryCard title="TOTAL AVAILABILITY" value="12" total="20" />
-        <SummaryCard title="AC DELUXE AVAIL" value="2" total="20" />
-        <SummaryCard title="SUITE AVAIL" value="4" total="8" />
-        <SummaryCard title="BANQUET HALL" value="14" total="20" />
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-[24px]">
+        <SummaryCard
+          title="TOTAL ROOMS"
+          value={summary.total}
+          total={summary.total}
+        />
+
+        <SummaryCard
+          title="OCCUPIED"
+          value={summary.occupied}
+          total={summary.total}
+        />
+
+        <SummaryCard
+          title="AVAILABLE"
+          value={summary.available}
+          total={summary.total}
+        />
       </div>
 
-      {/* 3. Gantt Chart / Timeline Area */}
-      <div className={`card !p-0 w-full overflow-hidden ${isResizing ? 'cursor-col-resize select-none' : ''}`}>
-        <div className="flex flex-col w-full" ref={gridRef}>
-          
-          <div className="grid bg-white border-b border-border z-20" style={{ gridTemplateColumns: gridTemplate }}>
-            <div className="p-4 flex items-center justify-between border-r border-border bg-white z-30">
-              <span className="text-[11px] font-bold text-text-secondary uppercase">Rooms</span>
+      {/* Timeline */}
+      <div className="card !p-0 overflow-hidden">
+        <div ref={gridRef}>
+          {/* Header Row */}
+          <div
+            className="grid bg-white border-b border-border"
+            style={{ gridTemplateColumns: gridTemplate }}
+          >
+            <div className="p-4 border-r border-border text-[11px] font-bold uppercase text-text-secondary">
+              Rooms
             </div>
-            
+
             {datesArray.map((d, i) => {
-              const isToday = toISODate(d) === toISODate(new Date()); 
+              const isToday = toISODate(d) === toISODate(new Date());
+
               return (
-                <div key={i} className={`flex flex-col items-center justify-center py-2 border-r border-border last:border-0 min-w-0 ${isToday ? 'border-b-2 border-b-primary text-primary' : 'text-text-secondary'}`}>
-                  <span className={`text-[10px] font-bold uppercase tracking-wide truncate ${isToday ? 'text-primary' : ''}`}>{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                  <span className={`text-[14px] font-bold truncate ${isToday ? 'text-primary' : 'text-text-primary'}`}>{d.getDate()}</span>
+                <div
+                  key={i}
+                  className={`flex flex-col items-center justify-center py-2 border-r last:border-0 ${
+                    isToday ? "text-primary border-b-2 border-b-primary" : ""
+                  }`}
+                >
+                  <span className="text-[10px] font-bold uppercase">
+                    {d.toLocaleDateString("en-US", {
+                      weekday: "short",
+                    })}
+                  </span>
+
+                  <span className="text-[14px] font-bold">{d.getDate()}</span>
                 </div>
               );
             })}
           </div>
 
-          {timelineData.map((category, cIdx) => (
-            <div key={cIdx} className="flex flex-col">
-              
-              <div className="bg-gray-50 px-4 py-2 border-b border-border w-full inline-block">
-                <span className="text-[12px] font-bold text-text-primary">{category.category}</span>
-              </div>
-
-              {category.rooms.map((room) => (
-                <div key={room.id} className="grid border-b border-border last:border-0 relative min-h-[70px]" style={{ gridTemplateColumns: gridTemplate }}>
-                  
-                  <div className="p-3 border-r border-border flex flex-col justify-center bg-white z-30 overflow-hidden">
-                    <div className="flex items-center gap-1.5 mb-1 min-w-0">
-                      <span className="text-[14px] font-bold text-text-primary truncate">{room.id}</span>
-                      <Snowflake size={12} className="text-cyan-600 shrink-0" />
-                    </div>
-                    <div className="flex items-center gap-1 min-w-0">
-                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${room.isClean ? 'bg-gray-400' : 'bg-primary'}`}></div>
-                      <span className="text-[10px] text-text-secondary truncate">{room.status}</span>
-                    </div>
-                  </div>
-
-                  {datesArray.map((_, i) => (
-                    <div 
-                      key={i} 
-                      className="border-r border-border last:border-0 bg-white hover:bg-gray-50 transition-colors" 
-                      style={{ gridColumn: i + 2 }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => handleDrop(e, room.id, cIdx, i + 2)}
-                    ></div>
-                  ))}
-
-                  {room.bookings.map((booking: any) => {
-                    const bStart = new Date(booking.start);
-                    const bEnd = new Date(booking.end);
-                    
-                    const startOffset = Math.round((bStart.getTime() - viewStart.getTime()) / MS_PER_DAY);
-                    const endOffset = Math.round((bEnd.getTime() - viewStart.getTime()) / MS_PER_DAY);
-
-                    const visualStartCol = startOffset < 0 ? 2 : 2 + startOffset;
-                    const visualEndCol = endOffset >= datesArray.length ? 1 + datesArray.length : 2 + endOffset;
-                    const visualSpan = visualEndCol - visualStartCol + 1;
-
-                    const actualSpan = Math.round((bEnd.getTime() - bStart.getTime()) / MS_PER_DAY) + 1;
-
-                    if (visualSpan <= 0 || startOffset >= datesArray.length || endOffset < 0) return null;
-
-                    return (
-                      <BookingBlock 
-                        key={booking.id} 
-                        booking={booking}
-                        startCol={visualStartCol}
-                        span={visualSpan} 
-                        actualSpan={actualSpan} 
-                        onDragStart={(e: React.DragEvent) => handleDragStart(e, booking.id, room.id, cIdx)}
-                        onResizeStart={handleResizeStart}
-                      />
-                    );
-                  })}
-
-                </div>
-              ))}
+          {/* Rows */}
+          {loading ? (
+            <div className="p-10 text-center font-bold text-gray-400">
+              Loading...
             </div>
-          ))}
+          ) : (
+            timelineData.map((category: any, cIdx: number) => (
+              <div key={cIdx}>
+                <div className="bg-gray-50 px-4 py-2 border-b text-[12px] font-bold">
+                  {category.category}
+                </div>
 
+                {category.rooms.map((room: any) => (
+                  <div
+                    key={room.id}
+                    className="grid border-b min-h-[70px] relative"
+                    style={{ gridTemplateColumns: gridTemplate }}
+                  >
+                    {/* Room Cell */}
+                    <div className="p-3 border-r bg-white z-20 flex flex-col justify-center">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[14px] font-bold">
+                          {room.roomNumber}
+                        </span>
+
+                        <Snowflake
+                          size={12}
+                          className="text-cyan-600 shrink-0"
+                        />
+                      </div>
+
+                      <span className="text-[10px] text-text-secondary">
+                        {room.status}
+                      </span>
+                    </div>
+
+                    {/* Blank Cells */}
+                  {datesArray.map((_, i) => (
+  <div
+    key={i}
+    className="border-r bg-white hover:bg-orange-50 min-h-[70px] relative z-30"
+    style={{ gridColumn: i + 2 }}
+    onDragOver={(e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    }}
+    onDrop={(e) => handleDrop(e, room, i)}
+  />
+))}
+
+                    {/* Booking Blocks */}
+                    {room.bookings.map((booking: any) => {
+                      const bStart = new Date(booking.start);
+                      const bEnd = new Date(booking.end);
+
+                      const startOffset = Math.floor(
+                        (bStart.getTime() - viewStart.getTime()) / MS_PER_DAY
+                      );
+
+                      const endOffset = Math.floor(
+                        (bEnd.getTime() - viewStart.getTime()) / MS_PER_DAY
+                      );
+
+                      const visualStartCol =
+                        startOffset < 0 ? 2 : 2 + startOffset;
+
+                      const visualEndCol =
+                        endOffset >= datesArray.length
+                          ? datesArray.length + 1
+                          : 2 + endOffset;
+
+                      const visualSpan =
+                        visualEndCol - visualStartCol + 1;
+
+                      const actualSpan =
+                        Math.floor(
+                          (bEnd.getTime() - bStart.getTime()) /
+                            MS_PER_DAY
+                        ) + 1;
+
+                      if (
+                        visualSpan <= 0 ||
+                        startOffset >= datesArray.length ||
+                        endOffset < 0
+                      )
+                        return null;
+
+                      return (
+                        <BookingBlock
+                          key={booking.id}
+                          booking={{
+                            ...booking,
+                            roomId: room.id,
+                            roomNumber: room.roomNumber,
+                          }}
+                          startCol={visualStartCol}
+                          span={visualSpan}
+                          actualSpan={actualSpan}
+                          onDragStart={(e: React.DragEvent) =>
+                            handleDragStart(e, booking, room.id)
+                          }
+                          onResizeStart={handleResizeStart}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
+      {/* Extend Modal */}
+      {extendOpen && selectedCheckIn && (
+        <ExtendStayModal
+          checkIn={selectedCheckIn}
+          onClose={() => {
+            setExtendOpen(false);
+            setSelectedCheckIn(null);
+          }}
+          onSuccess={() => {
+            fetchOverview();
+            setExtendOpen(false);
+            setSelectedCheckIn(null);
+          }}
+        roomTypes={roomTypes}
+            prefillRoomId={selectedCheckIn?.roomDetails?.[0]?.roomId}
+  prefillRoomType={selectedCheckIn?.roomDetails?.[0]?.roomType}
+  prefillCheckout={selectedCheckIn?.expectedCheckOutTime}
+  triggeredFromOverview={true}
+        />
+      )}
     </div>
   );
 };

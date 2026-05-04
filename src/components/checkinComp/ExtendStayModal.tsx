@@ -26,11 +26,10 @@ const ExtendStayModal = ({   checkIn,
   prefillRoomType,
   prefillCheckout,
   triggeredFromOverview = false }: ExtendStayModalProps ) => {
-const [newCheckout, setNewCheckout] = useState(
-  prefillCheckout
-    ? new Date(prefillCheckout)
-    : new Date(checkIn.expectedCheckOutTime)
-);
+const [newCheckout, setNewCheckout] = useState<Date>(() => {
+  if (prefillCheckout) return new Date(prefillCheckout);
+  return new Date(checkIn.expectedCheckOutTime);
+});
 
 const [selectedRoomType, setSelectedRoomType] = useState(
   prefillRoomType || ""
@@ -96,32 +95,6 @@ const [selectedRoomType, setSelectedRoomType] = useState(
     setIsChangingRoom(true);
   }
 }, []);
-
-useEffect(() => {
-  if (!checkIn) return;
-
-  const room = checkIn.roomDetails?.[0];
-
-  setNewCheckout(
-    prefillCheckout
-      ? new Date(prefillCheckout)
-      : new Date(checkIn.expectedCheckOutTime)
-  );
-
-  setSelectedRoomType(
-    prefillRoomType ||
-      room?.roomType ||
-      ""
-  );
-
-  setManualPrice(room?.appliedPrice || 0);
-
-  if (prefillRoomId && prefillRoomId !== room?.roomId) {
-    setIsChangingRoom(true);
-  } else {
-    setIsChangingRoom(false);
-  }
-}, [checkIn]);
 
   // Logic: Nights Calculation
 const totalNights = Math.max(

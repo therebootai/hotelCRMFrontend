@@ -22,6 +22,7 @@ import api from "../../lib/axios";
 import Pagination from "../../components/layout/Pagination";
 import { FaEye } from "react-icons/fa";
 import ExtendStayModal from "../../components/checkinComp/ExtendStayModal";
+import GenerateBillModal from "../../components/checkinComp/GanerateBillModel";
 
 const CheckInFullPage = () => {
   const [activeTab, setActiveTab] = useState<"Individual" | "Corporate">(
@@ -54,6 +55,15 @@ const CheckInFullPage = () => {
 
 const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
 const [selectedItem, setSelectedItem] = useState(null);
+
+const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+const [selectedCheckIn, setSelectedCheckIn] = useState<any>(null);
+
+// 2. Checkout Click Handler
+const handleCheckoutClick = (item: any) => {
+  setSelectedCheckIn(item);
+  setIsBillingModalOpen(true);
+};
 
   useEffect(() => {
     const getRoomTypes = async () => {
@@ -399,7 +409,7 @@ const [selectedItem, setSelectedItem] = useState(null);
                       >
                         <CalendarDays size={16} />
                       </button>
-                      <button className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 shadow-md transform active:scale-95 transition-all ml-2">
+                      <button onClick={() => handleCheckoutClick(item)} className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 shadow-md transform active:scale-95 transition-all ml-2">
                         <LogOut size={14} /> Checkout
                       </button>
                     </div>
@@ -429,9 +439,20 @@ const [selectedItem, setSelectedItem] = useState(null);
     roomTypes={roomTypes}
   />
 )}
+
+
+{isBillingModalOpen && selectedCheckIn && (
+  <GenerateBillModal 
+    checkIn={selectedCheckIn} 
+    onClose={() => setIsBillingModalOpen(false)} 
+    onSuccess={fetchCheckins} // Data refresh hobe checkout shesh hole
+  />
+)}
     </div>
   );
 };
+
+
 
 // Difference helper (jodi add kora na thake)
 function differenceInDays(dateLeft: Date, dateRight: Date) {

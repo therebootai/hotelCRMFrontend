@@ -3,10 +3,12 @@ import { FaPlus } from "react-icons/fa";
 import api from "../../lib/axios";
 import CreateBooking from "../../components/bookingComp/CreateBooking";
 import ManageBooking from "../../components/bookingComp/ManageBooking";
+import BookingOverview from "../../components/bookingComp/BookingOverview";
 import CheckInForm from "../../components/checkinComp/CheckinForm";
 
 const BookingFullPage = () => {
   const [showPopup, setShowPopup] = useState(false);
+  const [bookingKey, setBookingKey] = useState(0);
 
   // Data States
   const [bookings, setBookings] = useState([]);
@@ -82,7 +84,7 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
   }, [fetchBookingList, fetchOverview]);
 
   return (
-    <div className="flex flex-col gap-10 p-8 min-h-screen bg-[#F8F9FA] scroll-smooth">
+    <div className="flex flex-col gap-4 p-8 min-h-screen bg-[#F8F9FA] scroll-smooth">
       {/* Header (Sticky thakle bhalo hoy) */}
       <div className="sticky top-0 z-50 bg-[#F8F9FA]/80 backdrop-blur-md py-4 flex flex-row justify-between items-center border-b border-gray-100">
         <div className="flex flex-col">
@@ -94,7 +96,10 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
           </p>
         </div>
         <button
-          onClick={() => setShowPopup(true)}
+          onClick={() => {
+            setBookingKey(prev => prev + 1);
+            setShowPopup(true);
+          }}
           className="h-[2.8rem] px-6 flex justify-center items-center bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 transition-all rounded-xl text-white font-bold gap-2 shadow-lg shadow-orange-100 active:scale-95"
         >
           <FaPlus /> New Booking
@@ -102,15 +107,10 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
       </div>
 
       <section className="flex flex-col gap-4">
-        {/* <BookingTimeline data={overviewData} filters={filters} setFilters={setFilters} /> */}
+        <BookingOverview />
       </section>
 
-      <section className="flex flex-col gap-4 pt-4">
-        <div className="flex items-center gap-3 px-2">
-          <h2 className="text-lg font-black text-gray-800 uppercase tracking-wider">
-            Recent Booking
-          </h2>
-        </div>
+      <section className="flex flex-col gap-4">
         <ManageBooking
           data={bookings}
           loading={loading}
@@ -127,11 +127,13 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
       {/* Booking Popup */}
       {showPopup && (
         <CreateBooking
+          key={bookingKey}
           onClose={() => {
             setShowPopup(false);
             fetchBookingList();
             fetchOverview();
           }}
+          refreshBookings={fetchBookingList}
         />
       )}
 

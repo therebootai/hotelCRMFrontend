@@ -16,6 +16,7 @@ import CheckInFullPage from "./pages/checkin/CheckInFullPage";
 import RoomRates from "./pages/RoomMaster/RoomRates";
 import FacilityMaster from "./pages/FacilityMaster/FacilityMaster";
 import ExtraServiceMaster from "./pages/ExtraService/ExtraServices";
+import BillingPage from "./pages/billing/BillingPage";
 
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
@@ -110,6 +111,7 @@ export default function App() {
 
              <Route path="/bookings" element={<BookingFullPage/>}/>
              <Route path="/checkin" element={<CheckInFullPage/>}/>
+             <Route path="/billing" element={<BillingPage/>}/>
 
           
 

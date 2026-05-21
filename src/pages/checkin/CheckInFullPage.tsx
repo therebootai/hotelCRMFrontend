@@ -23,6 +23,8 @@ import Pagination from "../../components/layout/Pagination";
 import { FaEye } from "react-icons/fa";
 import ExtendStayModal from "../../components/checkinComp/ExtendStayModal";
 import GenerateBillModal from "../../components/checkinComp/GanerateBillModel";
+import ViewCheckin from "../../components/checkinComp/ViewCheckin";
+import CheckinForm from "../../components/checkinComp/CheckinForm";
 
 const CheckInFullPage = () => {
   const [activeTab, setActiveTab] = useState<"Individual" | "Corporate">(
@@ -58,6 +60,12 @@ const [selectedItem, setSelectedItem] = useState(null);
 
 const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
 const [selectedCheckIn, setSelectedCheckIn] = useState<any>(null);
+
+// View & Edit Modal States
+const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+const [viewCheckInData, setViewCheckInData] = useState<any>(null);
+const [isEditMode, setIsEditMode] = useState(false);
+const [editCheckInData, setEditCheckInData] = useState<any>(null);
 
 // 2. Checkout Click Handler
 const handleCheckoutClick = (item: any) => {
@@ -256,28 +264,14 @@ const handleCheckoutClick = (item: any) => {
       <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-gray-50/50 border-b border-gray-50">
-              <th className="p-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                Room No
-              </th>
-              <th className="p-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                Guest Details
-              </th>
-              <th className="p-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                Check-in
-              </th>
-              <th className="p-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">
-                Stay Duration
-              </th>
-              <th className="p-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                Expected Checkout
-              </th>
-              <th className="p-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                Status
-              </th>
-              <th className="p-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">
-                Actions
-              </th>
+            <tr className="bg-gray-50/50 border-b border-gray-100">
+              <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest">Room</th>
+              <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest">Guest</th>
+              <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest">Check-in</th>
+              <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Nights</th>
+              <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest">Checkout</th>
+              <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+              <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -292,125 +286,42 @@ const handleCheckoutClick = (item: any) => {
               </tr>
             ) : (
               checkins.map((item: any) => (
-                <tr
-                  key={item._id}
-                  className="border-b border-gray-50 hover:bg-gray-50/30 transition-all group"
-                >
-                  {/* Room Info */}
-                  <td className="p-3">
-                    <div className="flex flex-col">
-                      <span className="text-s, font-black text-gray-800 tracking-tighter">
-                        {item.roomDetails.map((r: any) => r.roomNumber).join(", ")}
-                      </span>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">
-                        {item.roomDetails[0]?.roomType?.name}
-                      </span>
-                    </div>
+                <tr key={item._id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-all">
+                  <td className="p-2">
+                    <span className="text-xs font-black text-gray-800">{item.roomDetails.map((r: any) => r.roomNumber).join(", ")}</span>
                   </td>
-
-                  {/* Guest/Corporate Details */}
-                  <td className="p-3">
-                    <div className="flex items-center gap-3">
-                      {/* <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-xs uppercase">
-                      {activeTab === 'Individual' ? item.guests[0]?.name.charAt(0) : 'C'}
-                    </div> */}
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black text-gray-800">
-                          {activeTab === "Individual"
-                            ? item.guests[0]?.name
-                            : item.corporateCheckInDetails?.companyName}
-                        </span>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                          {activeTab === "Individual"
-                            ? item.guests[0]?.mobileNo
-                            : `${item.roomIds.length} Rooms Allocated`}
-                        </span>
-                      </div>
-                    </div>
+                  <td className="p-2">
+                    <span className="text-xs font-bold text-gray-800">{activeTab === "Individual" ? item.guests[0]?.name : item.corporateCheckInDetails?.companyName}</span>
+                    <span className="text-[10px] text-gray-400 block">{activeTab === "Individual" ? item.guests[0]?.mobileNo : `${item.roomIds?.length || item.roomDetails?.length} Rooms`}</span>
                   </td>
-
-                  {/* Check-in Time */}
-                  <td className="p-3">
-                    <div className="text-sm font-bold text-gray-700">
-                      {format(new Date(item.checkInTime), "MMM dd, HH:mm")}
-                    </div>
+                  <td className="p-2">
+                    <span className="text-xs font-bold text-gray-700">{format(new Date(item.checkInTime), "dd MMM HH:mm")}</span>
                   </td>
-
-                  {/* Stay Duration - Figma Style */}
-                  <td className="p-3">
-                    <div className="flex flex-col items-center justify-center border-x border-gray-100 px-4">
-                      <span className="text-sm font-black text-gray-800">
-                        {Math.max(
-                          1,
-                          differenceInDays(
-                            new Date(item.expectedCheckOutTime),
-                            new Date(item.checkInTime),
-                          ),
-                        )}{" "}
-                        Night
-                      </span>
-                      <span className="text-[10px] font-bold text-orange-400 uppercase italic">
-                        Departs{" "}
-                        {format(new Date(item.expectedCheckOutTime), "MMM dd")}
-                      </span>
-                    </div>
+                  <td className="p-2 text-center">
+                    <span className="text-xs font-black text-gray-800">{Math.max(1, differenceInDays(new Date(item.expectedCheckOutTime), new Date(item.checkInTime)))}N</span>
                   </td>
-
-                  {/* Expected Checkout */}
-                  <td className="p-3">
-                    <div className="text-sm font-bold text-gray-700">
-                      {format(
-                        new Date(item.expectedCheckOutTime),
-                        "MMM dd, HH:mm",
-                      )}
-                    </div>
+                  <td className="p-2">
+                    <span className="text-xs font-bold text-gray-700">{format(new Date(item.expectedCheckOutTime), "dd MMM HH:mm")}</span>
                   </td>
-
-                  {/* Status Badge */}
-                  <td className="p-3">
-                    <div
-                      className={`flex items-center gap-2 px-4 py-1.5 rounded-full w-fit ${item.status === "Active" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}
-                    >
-                      <div
-                        className={`w-1.5 h-1.5 rounded-full ${item.status === "Active" ? "bg-green-500 animate-pulse" : "bg-gray-400"}`}
-                      ></div>
-                      <span className="text-[10px] font-black uppercase tracking-widest">
-                        {item.status}
-                      </span>
-                    </div>
+                  <td className="p-2">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${item.status === "Active" ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"}`}>
+                      <span className={`w-1 h-1 rounded-full ${item.status === "Active" ? "bg-green-500 animate-pulse" : "bg-gray-400"}`}></span>
+                      {item.status}
+                    </span>
                   </td>
-
-                  {/* Actions - Figma Wise */}
-                  <td className="p-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all border border-blue-100"
-                        title="View Guest Details"
-                      >
-                        <FaEye />
+                  <td className="p-2 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => { setViewCheckInData(item); setIsViewModalOpen(true); }} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all border border-blue-100" title="View">
+                        <FaEye size={12} />
                       </button>
-
-                      <button
-                        className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all border border-indigo-100"
-                        title="Edit Information"
-                      >
-                        <Edit3 size={16} />
+                      <button onClick={() => { setEditCheckInData(item); setIsEditMode(true); }} className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all border border-indigo-100" title="Edit">
+                        <Edit3 size={12} />
                       </button>
-                      <button
-                        className="p-2.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all"
-                        title="Add Food/Amenity"
-                      >
-                        <Utensils size={16} />
+                      <button onClick={() => { setSelectedItem(item); setIsExtendModalOpen(true); }} className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all" title="Extend">
+                        <CalendarDays size={12} />
                       </button>
-                      <button
-                      onClick={() => { setSelectedItem(item); setIsExtendModalOpen(true); }}
-                        className="p-2.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all"
-                        title="Extend Stay"
-                      >
-                        <CalendarDays size={16} />
-                      </button>
-                      <button onClick={() => handleCheckoutClick(item)} className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 shadow-md transform active:scale-95 transition-all ml-2">
-                        <LogOut size={14} /> Checkout
+                      <button onClick={() => handleCheckoutClick(item)} className="px-3 py-1.5 bg-orange-500 text-white rounded-lg font-bold text-[9px] uppercase hover:bg-orange-600 shadow-sm transition-all">
+                        Checkout
                       </button>
                     </div>
                   </td>
@@ -421,7 +332,7 @@ const handleCheckoutClick = (item: any) => {
         </table>
 
         {/* Pagination Section */}
-        <div className="p-3 bg-gray-50/50 border-t border-gray-50">
+        <div className="p-2 bg-gray-50/50 border-t border-gray-100">
           <Pagination
             currentPage={filters.page}
             totalPages={pagination.totalPages}
@@ -432,20 +343,35 @@ const handleCheckoutClick = (item: any) => {
 
 
 {isExtendModalOpen && selectedItem && (
-  <ExtendStayModal 
-    checkIn={selectedItem} 
-    onClose={() => setIsExtendModalOpen(false)} 
-    onSuccess={fetchCheckins} 
+  <ExtendStayModal
+    checkIn={selectedItem}
+    onClose={() => setIsExtendModalOpen(false)}
+    onSuccess={fetchCheckins}
     roomTypes={roomTypes}
   />
 )}
 
-
 {isBillingModalOpen && selectedCheckIn && (
-  <GenerateBillModal 
-    checkIn={selectedCheckIn} 
-    onClose={() => setIsBillingModalOpen(false)} 
-    onSuccess={fetchCheckins} // Data refresh hobe checkout shesh hole
+  <GenerateBillModal
+    checkIn={selectedCheckIn}
+    onClose={() => setIsBillingModalOpen(false)}
+    onSuccess={fetchCheckins}
+  />
+)}
+
+{isViewModalOpen && viewCheckInData && (
+  <ViewCheckin
+    checkIn={viewCheckInData}
+    onClose={() => { setIsViewModalOpen(false); setViewCheckInData(null); }}
+  />
+)}
+
+{isEditMode && editCheckInData && (
+  <CheckinForm
+    editMode={true}
+    existingCheckIn={editCheckInData}
+    onClose={() => { setIsEditMode(false); setEditCheckInData(null); }}
+    onSuccess={() => { setIsEditMode(false); setEditCheckInData(null); fetchCheckins(); }}
   />
 )}
     </div>

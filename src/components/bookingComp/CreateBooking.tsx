@@ -1,653 +1,776 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   X,
   User,
   Briefcase,
+  CreditCard,
+  CheckCircle,
+  Search,
+  Loader2,
+  Wifi,
+  Wind,
+  Tv,
+  Coffee,
+  Bath,
   Calendar,
   BedDouble,
-  CreditCard,
+  Car,
+  FileText,
+  MessageSquare,
   Plus,
-  Trash2,
-  CheckCircle,
-  Info,
-  Clock,
 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import {
-  addDays,
-  addWeeks,
-  addMonths,
-  format,
-  differenceInDays,
-} from "date-fns";
+import { format, differenceInDays, addDays } from "date-fns";
+import toast from "react-hot-toast";
 import api from "../../lib/axios";
 
-const CreateBooking = ({ onClose }: { onClose: () => void }) => {
-  // --- STATE MANAGEMENT ---
-  const [bookingType, setBookingType] = useState<"Individual" | "Corporate">(
-    "Individual",
-  );
-  const [durationValue, setDurationValue] = useState<string>("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const suggestionRef = useRef<HTMLDivElement>(null);
+// Amenity icon mapping
+const amenityIcons: Record<string, any> = {
+  wifi: Wifi,
+  tv: Tv,
+  ac: Wind,
+  coffee: Coffee,
+  bath: Bath,
+};
 
-  // Master Room Selection State
-  const [selectedRooms, setSelectedRooms] = useState<any[]>([
-    {
-      roomType: "",
-      roomId: "",
-      adults: 2,
-      children: 0,
-      pricePerNight: 0,
-      hasExtraBed: false,
-      extraBedCharge: 0,
-      extraBedAllowed: false,
-    },
-  ]);
+interface RoomSearchResult {
+  room: {
+    _id: string;
+    roomNumber: string;
+    floor: string;
+    maxAdults: number;
+    maxChildren: number;
+    basePrice: number;
+    extraBedAllowed: boolean;
+    extraBedCharge: number;
+  };
+  roomType: { _id: string; name: string; description?: string };
+  amenities: { _id: string; name: string; icon: string }[];
+  pricing: {
+    nightlyBreakdown: { date: string; finalPrice: number; isOverridden: boolean }[];
+    totalNights: number;
+    totalPrice: number;
+  };
+  isAvailable: boolean;
+  unavailableReason?: string;
+}
 
-  const [formData, setFormData] = useState({
-    customerDetails: { name: "", phone: "", email: "", address: "" },
-    corporateDetails: {
-      companyName: "",
-      gstNumber: "",
-      contactPerson: "",
-      mobile: "",
-      totalGuests: 0,
-      expectedRooms: 0,
-      negotiatedRate: 0,
-      notes: "",
-    },
-    checkInDate: new Date(),
-    checkOutDate: addDays(new Date(), 1),
-    source: "Phone",
-    advanceAmount: 0,
+interface SelectedRoom extends RoomSearchResult {
+  hasExtraBed: boolean;
+  extraBedChargeTotal: number;
+}
+
+const CreateBooking = ({ onClose, refreshBookings }: { onClose: () => void; refreshBookings?: () => void }) => {
+  // State
+  const [loading, setLoading] = useState(false);
+  const [searchingRooms, setSearchingRooms] = useState(false);
+
+  // Booking Type
+  const [bookingType, setBookingType] = useState<"Individual" | "Corporate">("Individual");
+
+  // Search & Dates
+  const [checkInDate, setCheckInDate] = useState<Date>(new Date());
+  const [checkOutDate, setCheckOutDate] = useState<Date>(addDays(new Date(), 1));
+  const [totalNights, setTotalNights] = useState(1);
+
+  // Search Filters
+  const [roomTypeFilter, setRoomTypeFilter] = useState("");
+  const [adultsFilter, setAdultsFilter] = useState(1);
+  const [childrenFilter, setChildrenFilter] = useState(0);
+
+  // Search Results
+  const [searchResults, setSearchResults] = useState<RoomSearchResult[]>([]);
+  const [selectedRooms, setSelectedRooms] = useState<SelectedRoom[]>([]);
+
+  // Customer Details
+  const [customerForm, setCustomerForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
   });
 
-  const [roomTypes, setRoomTypes] = useState([]);
-  const [availableRoomsMap, setAvailableRoomsMap] = useState<{
-    [key: string]: any[];
-  }>({});
+  // Corporate Details
+  const [corporateForm, setCorporateForm] = useState({
+    companyName: "",
+    gstNumber: "",
+    contactPerson: "",
+    mobile: "",
+    negotiatedRate: 0,
+  });
 
-  // --- API FETCHING ---
+  // Source & Preferences
+  const [source, setSource] = useState("Walk-in");
+  const [specialRequests, setSpecialRequests] = useState("");
+  const [internalNotes, setInternalNotes] = useState("");
+
+  // Vehicles
+  const [vehicles, setVehicles] = useState<{ vehicleNumber: string; vehicleType: string; driverName: string; driverContact: string }[]>([]);
+
+  // Payment
+  const [paymentForm, setPaymentForm] = useState({
+    advanceAmount: 0,
+    paymentMode: "Cash",
+  });
+
+  // Room Types List
+  const [roomTypes, setRoomTypes] = useState<any[]>([]);
+
+  // Load room types
   useEffect(() => {
-    api
-      .get("/room-types?activeOnly=true")
-      .then((res) => setRoomTypes(res.data.data));
+    const fetchRoomTypes = async () => {
+      try {
+        const res = await api.get("/room-types");
+        setRoomTypes(res.data.data || []);
+      } catch (err) {
+        console.error("Error fetching room types:", err);
+      }
+    };
+    fetchRoomTypes();
   }, []);
 
-  const fetchAvailableRooms = async (roomTypeId: string) => {
-    if (!roomTypeId || !formData.checkInDate || !formData.checkOutDate) return;
+  // Update total nights
+  useEffect(() => {
+    const nights = differenceInDays(checkOutDate, checkInDate);
+    setTotalNights(nights > 0 ? nights : 1);
+  }, [checkInDate, checkOutDate]);
+
+  // Search available rooms
+  const searchRooms = async () => {
+    if (!customerForm.name || !customerForm.phone) {
+      toast.error("Please fill guest name and phone first");
+      return;
+    }
+    setSearchingRooms(true);
     try {
-      const res = await api.get(`/rooms/available`, {
-        params: {
-          roomType: roomTypeId,
-          checkIn: formData.checkInDate,
-          checkOut: formData.checkOutDate,
-        },
-      });
-      setAvailableRoomsMap((prev) => ({
-        ...prev,
-        [roomTypeId]: res.data.data.rooms,
-      }));
-    } catch (err) {
-      console.error("Error fetching rooms", err);
-    }
-  };
-
-  // --- HANDLERS ---
-  const addRoomRow = () => {
-    setSelectedRooms([
-      ...selectedRooms,
-      {
-        roomType: "",
-        roomId: "",
-        adults: 2,
-        children: 0,
-        pricePerNight: 0,
-        hasExtraBed: false,
-        extraBedCharge: 0,
-        extraBedAllowed: false,
-      },
-    ]);
-  };
-
-  const handleInputChange = (section: string, field: string, value: any) => {
-  setFormData((prev: any) => ({
-    ...prev,
-    [section]: {
-      ...prev[section],
-      [field]: value,
-    },
-  }));
-};
-  const removeRoomRow = (index: number) => {
-    const list = [...selectedRooms];
-    list.splice(index, 1);
-    setSelectedRooms(list);
-  };
-
-  const handleRoomChange = async (index: number, field: string, value: any) => {
-    const list = [...selectedRooms];
-    list[index][field] = value;
-
-    if (field === "roomType") {
-      await fetchAvailableRooms(value);
-      list[index].roomId = ""; // Reset room ID if type changes
-    }
-
-    if (field === "roomId") {
-      const room = availableRoomsMap[list[index].roomType]?.find(
-        (r: any) => r._id === value,
-      );
-      if (room) {
-        list[index].pricePerNight = room.basePrice;
-        list[index].extraBedCharge = room.extraBedCharge;
-        list[index].extraBedAllowed = room.extraBedAllowed;
-      }
-    }
-    setSelectedRooms(list);
-  };
-
-  const handleDurationSelect = (
-    val: number,
-    unit: "days" | "weeks" | "months",
-  ) => {
-    setDurationValue(val.toString());
-    setShowSuggestions(false);
-    let newOut =
-      unit === "days"
-        ? addDays(formData.checkInDate, val)
-        : unit === "weeks"
-          ? addWeeks(formData.checkInDate, val)
-          : addMonths(formData.checkInDate, val);
-    setFormData({ ...formData, checkOutDate: newOut });
-  };
-
-  const calculateTotal = () => {
-    const nights =
-      differenceInDays(formData.checkOutDate, formData.checkInDate) || 1;
-    if (bookingType === "Corporate") {
-      return (
-        (formData.corporateDetails.negotiatedRate || 0) *
-        (formData.corporateDetails.expectedRooms || 0) *
-        nights
-      );
-    }
-    return selectedRooms.reduce((sum, r) => {
-      const roomTotal =
-        (r.pricePerNight + (r.hasExtraBed ? r.extraBedCharge : 0)) * nights;
-      return sum + roomTotal;
-    }, 0);
-  };
-
-  const submitBooking = async (isDirectCheckIn: boolean) => {
-    try {
-      const payload = {
-        bookingId: `BK-${Date.now().toString().slice(-6)}`,
-        customerDetails: formData.customerDetails,
-        bookingType,
-        corporateDetails:
-          bookingType === "Corporate" ? formData.corporateDetails : undefined,
-        rooms:
-          bookingType === "Individual"
-            ? selectedRooms.map((r) => ({
-                roomType: r.roomType,
-                roomId: r.roomId,
-                checkInDate: formData.checkInDate,
-                checkOutDate: formData.checkOutDate,
-                adults: r.adults,
-                children: r.children,
-                pricePerNight:
-                  r.pricePerNight + (r.hasExtraBed ? r.extraBedCharge : 0),
-              }))
-            : [], // Corporate rooms are handled at check-in
-        status: isDirectCheckIn ? "Checked-In" : "Confirmed",
-        source: formData.source,
-        advanceAmount: formData.advanceAmount,
-        totalEstimatedAmount: calculateTotal(),
-        isDirectCheckIn,
+      const params: any = {
+        checkIn: checkInDate.toISOString(),
+        checkOut: checkOutDate.toISOString(),
       };
-      await api.post("/bookings/create", payload);
+      if (roomTypeFilter) params.roomType = roomTypeFilter;
+
+      const res = await api.get("/bookings/available", { params });
+      setSearchResults(res.data.data?.availableRooms || []);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to search rooms");
+    } finally {
+      setSearchingRooms(false);
+    }
+  };
+
+  // Toggle room selection with extra bed
+  const toggleRoomSelection = (room: RoomSearchResult) => {
+    const isSelected = selectedRooms.find((r) => r.room._id === room.room._id);
+    if (isSelected) {
+      setSelectedRooms(selectedRooms.filter((r) => r.room._id !== room.room._id));
+    } else {
+      setSelectedRooms([...selectedRooms, {
+        ...room,
+        hasExtraBed: false,
+        extraBedChargeTotal: 0,
+      }]);
+    }
+  };
+
+  // Toggle extra bed
+  const toggleExtraBed = (roomId: string) => {
+    setSelectedRooms(selectedRooms.map(r => {
+      if (r.room._id === roomId) {
+        const newHasExtraBed = !r.hasExtraBed;
+        return {
+          ...r,
+          hasExtraBed: newHasExtraBed,
+          extraBedChargeTotal: newHasExtraBed ? r.room.extraBedCharge * totalNights : 0,
+        };
+      }
+      return r;
+    }));
+  };
+
+  // Calculate totals
+  const calculateTotals = useCallback(() => {
+    const roomTotal = selectedRooms.reduce((sum, r) => sum + r.pricing.totalPrice, 0);
+    const extraBedTotal = selectedRooms.reduce((sum, r) => sum + r.extraBedChargeTotal, 0);
+    const subtotal = roomTotal + extraBedTotal;
+    const taxAmount = Math.round(subtotal * 0.12);
+    const grandTotal = subtotal + taxAmount;
+    const paidAmount = paymentForm.advanceAmount || 0;
+    const dueAmount = grandTotal - paidAmount;
+
+    return { roomTotal, extraBedTotal, subtotal, taxAmount, grandTotal, paidAmount, dueAmount };
+  }, [selectedRooms, paymentForm.advanceAmount, totalNights]);
+
+  const { roomTotal, extraBedTotal, subtotal, taxAmount, grandTotal, paidAmount, dueAmount } = calculateTotals();
+
+  // Add vehicle
+  const addVehicle = () => {
+    setVehicles([...vehicles, { vehicleNumber: "", vehicleType: "", driverName: "", driverContact: "" }]);
+  };
+
+  // Remove vehicle
+  const removeVehicle = (index: number) => {
+    setVehicles(vehicles.filter((_, i) => i !== index));
+  };
+
+  // Update vehicle
+  const updateVehicle = (index: number, field: string, value: string) => {
+    const updated = [...vehicles];
+    (updated[index] as any)[field] = value;
+    setVehicles(updated);
+  };
+
+  // Submit booking
+  const submitBooking = async () => {
+    if (!customerForm.name || !customerForm.phone) {
+      toast.error("Please fill guest name and phone");
+      return;
+    }
+    if (selectedRooms.length === 0) {
+      toast.error("Please select at least one room");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const rooms = selectedRooms.map((r) => ({
+        roomType: r.roomType?._id || r.roomType,
+        roomId: r.room._id,
+        checkInDate: checkInDate.toISOString(),
+        checkOutDate: checkOutDate.toISOString(),
+        adults: adultsFilter,
+        children: childrenFilter,
+        pricePerNight: (r.pricing.totalPrice + r.extraBedChargeTotal) / totalNights,
+        hasExtraBed: r.hasExtraBed,
+        extraBedCharge: r.hasExtraBed ? r.room.extraBedCharge : 0,
+      }));
+
+      const payload: any = {
+        customerDetails: customerForm,
+        rooms,
+        bookingType,
+        source,
+        advanceAmount: paymentForm.advanceAmount,
+        paymentMode: paymentForm.advanceAmount > 0 ? paymentForm.paymentMode : undefined,
+        specialRequests,
+        internalNotes,
+        vehicleDetails: vehicles,
+      };
+
+      if (bookingType === "Corporate") {
+        payload.corporateDetails = corporateForm;
+      }
+
+      const res = await api.post("/bookings/create", payload);
+      toast.success(res.data.message || "Booking created successfully");
+
+      if (refreshBookings) refreshBookings();
       onClose();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Submission Failed");
+      toast.error(err.response?.data?.message || "Failed to create booking");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-6xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-modal overflow-hidden flex flex-col max-h-[95vh]">
         {/* Header */}
-        <div className="px-10 py-6 border-b flex justify-between items-center bg-white">
-          <div>
-            <h2 className="text-2xl font-black text-gray-800 tracking-tight">
-              New Reservation
-            </h2>
-            <div className="flex gap-4 mt-3">
+        <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-primary text-white">
+          <div className="flex items-center gap-4">
+            <div>
+              <h2 className="text-lg font-bold">New Reservation</h2>
+              <p className="text-xs text-white/70">{format(checkInDate, "dd MMM")} - {format(checkOutDate, "dd MMM")} • {totalNights} Night(s)</p>
+            </div>
+            <div className="flex gap-2">
               <button
                 onClick={() => setBookingType("Individual")}
-                className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all ${bookingType === "Individual" ? "bg-orange-500 text-white shadow-lg shadow-orange-100" : "bg-gray-100 text-gray-400"}`}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${bookingType === "Individual" ? "bg-white text-primary" : "bg-primary/50 text-white"}`}
               >
-                <User size={16} /> Individual
+                <User size={12} className="inline mr-1" /> Individual
               </button>
               <button
                 onClick={() => setBookingType("Corporate")}
-                className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all ${bookingType === "Corporate" ? "bg-blue-600 text-white shadow-lg shadow-blue-100" : "bg-gray-100 text-gray-400"}`}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${bookingType === "Corporate" ? "bg-white text-blue-600" : "bg-blue-400 text-white"}`}
               >
-                <Briefcase size={16} /> Corporate
+                <Briefcase size={12} className="inline mr-1" /> Corporate
               </button>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-3 hover:bg-gray-100 rounded-full transition-all"
-          >
-            <X size={24} className="text-gray-400" />
+          <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-lg transition-all">
+            <X size={20} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-10 bg-gray-50/30 flex flex-col lg:flex-row gap-10">
-          <div className="flex-1 space-y-8">
-            {/* 1. Contact & Stay Info */}
-            <section className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                <Info size={18} className="text-orange-500" /> Contact &
-                Schedule
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-orange-500/10"
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        customerDetails: {
-                          ...formData.customerDetails,
-                          name: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                    Mobile
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none"
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        customerDetails: {
-                          ...formData.customerDetails,
-                          phone: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                </div>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* SECTION 1: Guest Info */}
+          <div className="bg-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <User size={14} className="text-primary" />
+              <h3 className="font-bold text-text-primary text-sm">Guest Information</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Name *</label>
+                <input
+                  type="text"
+                  value={customerForm.name}
+                  onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
+                  className="w-full border border-border rounded-lg p-2 text-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                  placeholder="Guest Name"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Phone *</label>
+                <input
+                  type="text"
+                  value={customerForm.phone}
+                  onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })}
+                  className="w-full border border-border rounded-lg p-2 text-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                  placeholder="Mobile"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Email</label>
+                <input
+                  type="email"
+                  value={customerForm.email}
+                  onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })}
+                  className="w-full border border-border rounded-lg p-2 text-sm bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                  placeholder="Email"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Source</label>
+                <select
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
+                  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
+                >
+                  <option value="Walk-in">Walk-in</option>
+                  <option value="Phone">Phone</option>
+                  <option value="Website">Website</option>
+                  <option value="Booking.com">Booking.com</option>
+                  <option value="Agoda">Agoda</option>
+                  <option value="Goibibo">Goibibo</option>
+                  <option value="MakeMyTrip">MakeMyTrip</option>
+                  <option value="Corporate">Corporate</option>
+                  <option value="Travel Agent">Travel Agent</option>
+                </select>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-3 md:col-span-2 gap-4 border-t pt-6">
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                      Check-in
-                    </label>
-                    <DatePicker
-                      selected={formData.checkInDate}
-                      onChange={(d) =>
-                        setFormData({
-                          ...formData,
-                          checkInDate: d || new Date(),
-                        })
-                      }
-                      className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none"
-                      dateFormat="dd/MM/yyyy"
-                    />
-                  </div>
-                  <div className="relative" ref={suggestionRef}>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                      Stay Duration
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={durationValue}
-                      onChange={(e) => {
-                        setDurationValue(e.target.value.replace(/\D/g, ""));
-                        setShowSuggestions(true);
-                      }}
-                      className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none"
-                      placeholder="e.g. 2"
-                    />
-                    {showSuggestions && durationValue && (
-                      <div className="absolute top-full left-0 w-full bg-white border border-gray-100 shadow-2xl rounded-2xl z-50 mt-2 overflow-hidden">
-                        {["days", "weeks", "months"].map((u) => (
-                          <div
-                            key={u}
-                            onClick={() =>
-                              handleDurationSelect(
-                                parseInt(durationValue),
-                                u as any,
-                              )
-                            }
-                            className="p-4 hover:bg-orange-50 cursor-pointer font-bold text-xs capitalize"
-                          >
-                            {durationValue} {u}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                      Check-out (Auto)
-                    </label>
-                    <div className="p-3 bg-orange-50 text-orange-700 font-black rounded-xl border border-orange-100">
-                      {format(formData.checkOutDate, "dd MMM, yyyy")}
-                    </div>
-                  </div>
+            {/* Corporate Details */}
+            {bookingType === "Corporate" && (
+              <div className="mt-3 pt-3 border-t border-border grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-text-secondary uppercase">Company *</label>
+                  <input
+                    type="text"
+                    value={corporateForm.companyName}
+                    onChange={(e) => setCorporateForm({ ...corporateForm, companyName: e.target.value })}
+                    className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
+                    placeholder="Company"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-text-secondary uppercase">GST</label>
+                  <input
+                    type="text"
+                    value={corporateForm.gstNumber}
+                    onChange={(e) => setCorporateForm({ ...corporateForm, gstNumber: e.target.value })}
+                    className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
+                    placeholder="GST No."
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-text-secondary uppercase">Contact Person *</label>
+                  <input
+                    type="text"
+                    value={corporateForm.contactPerson}
+                    onChange={(e) => setCorporateForm({ ...corporateForm, contactPerson: e.target.value })}
+                    className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
+                    placeholder="Contact"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-text-secondary uppercase">Mobile</label>
+                  <input
+                    type="text"
+                    value={corporateForm.mobile}
+                    onChange={(e) => setCorporateForm({ ...corporateForm, mobile: e.target.value })}
+                    className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
+                    placeholder="Mobile"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-text-secondary uppercase">Rate/Night</label>
+                  <input
+                    type="number"
+                    value={corporateForm.negotiatedRate}
+                    onChange={(e) => setCorporateForm({ ...corporateForm, negotiatedRate: Number(e.target.value) })}
+                    className="w-full border border-border rounded-lg p-2 text-sm font-bold text-primary bg-white outline-none"
+                    placeholder="0"
+                  />
                 </div>
               </div>
-            </section>
-
-            {/* 2. Dynamic Room / Corporate Logic */}
-            {bookingType === "Individual" ? (
-              <section className="space-y-4">
-                <div className="flex justify-between items-center px-2">
-                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                    <BedDouble size={18} className="text-orange-500" />{" "}
-                    Individual Room Allocation
-                  </h3>
-                  <button
-                    onClick={addRoomRow}
-                    className="flex items-center gap-1 text-orange-600 font-bold text-xs bg-white border border-orange-100 px-4 py-2 rounded-xl hover:bg-orange-50 transition-all"
-                  >
-                    <Plus size={14} /> Add Another Room
-                  </button>
-                </div>
-                {selectedRooms.map((room, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative group animate-in slide-in-from-top-4"
-                  >
-                    {selectedRooms.length > 1 && (
-                      <button
-                        onClick={() => removeRoomRow(idx)}
-                        className="absolute -top-2 -right-2 bg-red-50 text-red-500 p-2 rounded-full hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">
-                          Room Type
-                        </label>
-                        <select
-                          value={room.roomType}
-                          onChange={(e) =>
-                            handleRoomChange(idx, "roomType", e.target.value)
-                          }
-                          className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold"
-                        >
-                          <option value="">Type</option>
-                          {roomTypes.map((t: any) => (
-                            <option key={t._id} value={t._id}>
-                              {t.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">
-                          Room No.
-                        </label>
-                        <select
-                          value={room.roomId}
-                          onChange={(e) =>
-                            handleRoomChange(idx, "roomId", e.target.value)
-                          }
-                          className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold"
-                        >
-                          <option value="">No.</option>
-                          {(availableRoomsMap[room.roomType] || []).map(
-                            (r: any) => (
-                              <option key={r._id} value={r._id}>
-                                {r.roomNumber}
-                              </option>
-                            ),
-                          )}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">
-                          Adults/Child
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            type="number"
-                            value={room.adults}
-                            onChange={(e) =>
-                              handleRoomChange(
-                                idx,
-                                "adults",
-                                Number(e.target.value),
-                              )
-                            }
-                            className="w-full p-3 bg-gray-50 rounded-xl text-center font-bold"
-                          />
-                          <input
-                            type="number"
-                            value={room.children}
-                            onChange={(e) =>
-                              handleRoomChange(
-                                idx,
-                                "children",
-                                Number(e.target.value),
-                              )
-                            }
-                            className="w-full p-3 bg-gray-50 rounded-xl text-center font-bold"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-end pb-1">
-                        {room.extraBedAllowed && (
-                          <label className="flex items-center gap-2 cursor-pointer text-[10px] font-black text-orange-600">
-                            <input
-                              type="checkbox"
-                              checked={room.hasExtraBed}
-                              onChange={(e) =>
-                                handleRoomChange(
-                                  idx,
-                                  "hasExtraBed",
-                                  e.target.checked,
-                                )
-                              }
-                              className="w-4 h-4 accent-orange-500"
-                            />{" "}
-                            Extra Bed
-                          </label>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </section>
-            ) : (
-              <section className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-                <h3 className="font-bold text-blue-700 flex items-center gap-2">
-                  <Briefcase size={18} /> Corporate Master Details
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                      Company Name
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none"
-                      onChange={(e) =>
-                        handleInputChange(
-                          "corporateDetails",
-                          "companyName",
-                          e.target.value,
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                      Contact Person
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none"
-                      onChange={(e) =>
-                        handleInputChange(
-                          "corporateDetails",
-                          "contactPerson",
-                          e.target.value,
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                      Expected Rooms
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none"
-                      onChange={(e) =>
-                        handleInputChange(
-                          "corporateDetails",
-                          "expectedRooms",
-                          Number(e.target.value),
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                      Negotiated Rate / Night
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full p-3 bg-blue-50 border border-blue-100 rounded-xl outline-none font-bold text-blue-700"
-                      onChange={(e) =>
-                        handleInputChange(
-                          "corporateDetails",
-                          "negotiatedRate",
-                          Number(e.target.value),
-                        )
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                      Room Type Requested
-                    </label>
-                    <select
-                      className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold"
-                      onChange={(e) =>
-                        handleInputChange(
-                          "stayDetails",
-                          "roomType",
-                          e.target.value,
-                        )
-                      }
-                    >
-                      <option value="">Select Type</option>
-                      {roomTypes.map((t: any) => (
-                        <option key={t._id} value={t._id}>
-                          {t.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </section>
             )}
           </div>
 
-          {/* Sidebar Summary */}
-          <div className="lg:w-80 space-y-6">
-            <section className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                <CreditCard size={18} className="text-orange-500" /> Pricing
-              </h3>
+          {/* SECTION 2: Date & Search */}
+          <div className="bg-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar size={14} className="text-primary" />
+              <h3 className="font-bold text-text-primary text-sm">Stay Details & Room Search</h3>
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-7 gap-2">
               <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                  Advance Payment
-                </label>
-                <input
-                  type="number"
-                  className="w-full p-4 bg-orange-50 border border-orange-100 rounded-2xl text-orange-600 font-black text-xl"
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      advanceAmount: Number(e.target.value),
-                    })
-                  }
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Check In</label>
+                <DatePicker
+                  selected={checkInDate}
+                  onChange={(d) => setCheckInDate(d || new Date())}
+                  className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
+                  dateFormat="dd MMM"
                 />
               </div>
-              <div
-                className={`p-8 rounded-[3rem] text-white shadow-2xl transition-all ${bookingType === "Individual" ? "bg-orange-600" : "bg-blue-700"}`}
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Check Out</label>
+                <DatePicker
+                  selected={checkOutDate}
+                  onChange={(d) => setCheckOutDate(d || addDays(new Date(), 1))}
+                  className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
+                  dateFormat="dd MMM"
+                  minDate={addDays(checkInDate, 1)}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Adults</label>
+                <select
+                  value={adultsFilter}
+                  onChange={(e) => setAdultsFilter(Number(e.target.value))}
+                  className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
+                >
+                  {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Children</label>
+                <select
+                  value={childrenFilter}
+                  onChange={(e) => setChildrenFilter(Number(e.target.value))}
+                  className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
+                >
+                  {[0, 1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Room Type</label>
+                <select
+                  value={roomTypeFilter}
+                  onChange={(e) => setRoomTypeFilter(e.target.value)}
+                  className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
+                >
+                  <option value="">All Types</option>
+                  {roomTypes.map((t: any) => <option key={t._id} value={t._id}>{t.name}</option>)}
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={searchRooms}
+                  disabled={searchingRooms || !customerForm.name || !customerForm.phone}
+                  className="w-full py-2 bg-primary hover:bg-primary-hover text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1 disabled:opacity-50 transition-all"
+                >
+                  {searchingRooms ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
+                  {searchingRooms ? "Searching..." : "Search"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 3: Available Rooms */}
+          {searchResults.length > 0 && (
+            <div className="bg-card border border-border rounded-xl p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold text-text-primary text-sm flex items-center gap-2">
+                  <BedDouble size={14} className="text-primary" />
+                  Available Rooms ({searchResults.length})
+                </h4>
+                <span className="text-xs text-text-secondary">{selectedRooms.length} selected</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[250px] overflow-y-auto">
+                {searchResults.map((result) => {
+                  const isSelected = selectedRooms.find((r) => r.room._id === result.room._id);
+                  return (
+                    <div
+                      key={result.room._id}
+                      onClick={() => toggleRoomSelection(result)}
+                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${isSelected ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-bold text-text-primary text-sm">Room {result.room.roomNumber}</h4>
+                          <p className="text-[10px] text-text-secondary">{result.roomType.name}</p>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${isSelected ? "bg-primary text-white" : "bg-gray-100 text-text-secondary"}`}>
+                          {isSelected ? "✓" : "+"}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {result.amenities.slice(0, 3).map((a) => {
+                          const Icon = amenityIcons[a.icon] || Wifi;
+                          return (
+                            <span key={a._id} className="px-1.5 py-0.5 bg-gray-100 rounded text-[9px] text-text-secondary flex items-center gap-0.5">
+                              <Icon size={8} /> {a.name}
+                            </span>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-border flex justify-between items-center">
+                        <span className="text-[10px] text-text-secondary">Base: ₹{result.room.basePrice}</span>
+                        <span className="font-bold text-primary text-sm">₹{result.pricing.totalPrice.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 4: Selected Rooms with Extra Bed */}
+          {selectedRooms.length > 0 && (
+            <div className="bg-success/5 border border-success/20 rounded-xl p-4">
+              <h4 className="font-bold text-text-primary text-sm mb-2">Selected Rooms</h4>
+              <div className="space-y-2">
+                {selectedRooms.map((r) => (
+                  <div key={r.room._id} className="flex justify-between items-start p-3 bg-white border border-border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-text-primary text-sm">Room {r.room.roomNumber}</span>
+                        <span className="text-xs text-text-secondary">{r.roomType.name}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {r.amenities.slice(0, 3).map((a) => (
+                          <span key={a._id} className="px-1.5 py-0.5 bg-gray-100 rounded text-[9px] text-text-secondary">{a.name}</span>
+                        ))}
+                      </div>
+                      {/* Extra Bed Option */}
+                      {r.room.extraBedAllowed && (
+                        <label className="flex items-center gap-2 mt-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={r.hasExtraBed}
+                            onChange={() => toggleExtraBed(r.room._id)}
+                            className="w-4 h-4 accent-primary rounded"
+                          />
+                          <span className="text-xs font-medium text-text-primary">
+                            Extra Bed (+₹{r.room.extraBedCharge}/night = ₹{r.room.extraBedCharge * totalNights} for {totalNights} nights)
+                          </span>
+                        </label>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <span className="text-sm font-bold text-text-primary">₹{r.pricing.totalPrice.toLocaleString()}</span>
+                        {r.hasExtraBed && (
+                          <p className="text-[10px] text-primary font-bold">+₹{r.extraBedChargeTotal.toLocaleString()} (Extra Bed)</p>
+                        )}
+                        <p className="text-[9px] text-text-secondary">{totalNights} nights</p>
+                      </div>
+                      <button
+                        onClick={() => setSelectedRooms(selectedRooms.filter((s) => s.room._id !== r.room._id))}
+                        className="p-1.5 text-danger hover:bg-danger/10 rounded-lg transition-all"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 5: Special Requests & Internal Notes */}
+          <div className="bg-card border border-border rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageSquare size={14} className="text-primary" />
+              <h3 className="font-bold text-text-primary text-sm">Special Requests & Notes</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase flex items-center gap-1">
+                  <FileText size={10} /> Special Requests (Guest)
+                </label>
+                <textarea
+                  value={specialRequests}
+                  onChange={(e) => setSpecialRequests(e.target.value)}
+                  className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none resize-none"
+                  rows={2}
+                  placeholder="Guest's special requests..."
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase flex items-center gap-1">
+                  <MessageSquare size={10} /> Internal Notes (Staff Only)
+                </label>
+                <textarea
+                  value={internalNotes}
+                  onChange={(e) => setInternalNotes(e.target.value)}
+                  className="w-full border border-border rounded-lg p-2 text-xs bg-gray-50 outline-none resize-none"
+                  rows={2}
+                  placeholder="Internal notes (not visible to guest)..."
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 6: Vehicle Details */}
+          <div className="bg-card border border-border rounded-xl p-4">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="font-bold text-text-primary text-sm flex items-center gap-2">
+                <Car size={14} className="text-primary" />
+                Vehicle Details
+              </h4>
+              <button
+                onClick={addVehicle}
+                className="text-xs font-bold text-primary hover:text-primary-hover flex items-center gap-1"
               >
-                <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">
-                  Estimated Total
-                </p>
-                <h2 className="text-4xl font-black">₹{calculateTotal()}</h2>
-                <div className="mt-6 pt-6 border-t border-white/10 space-y-2 text-[10px] font-medium opacity-80">
-                  <p>
-                    Duration:{" "}
-                    {differenceInDays(
-                      formData.checkOutDate,
-                      formData.checkInDate,
-                    ) || 1}{" "}
-                    Night(s)
-                  </p>
-                  <p>
-                    Allocated:{" "}
-                    {bookingType === "Individual"
-                      ? selectedRooms.length
-                      : formData.corporateDetails.expectedRooms}{" "}
-                    Room(s)
-                  </p>
+                <Plus size={12} /> Add Vehicle
+              </button>
+            </div>
+            {vehicles.length > 0 ? (
+              <div className="space-y-2">
+                {vehicles.map((vehicle, idx) => (
+                  <div key={idx} className="grid grid-cols-4 gap-2 p-2 bg-gray-50 rounded-lg">
+                    <input
+                      type="text"
+                      placeholder="Vehicle No."
+                      value={vehicle.vehicleNumber}
+                      onChange={(e) => updateVehicle(idx, "vehicleNumber", e.target.value)}
+                      className="p-1.5 border border-border rounded text-xs bg-white outline-none"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Type (Car/Bike)"
+                      value={vehicle.vehicleType}
+                      onChange={(e) => updateVehicle(idx, "vehicleType", e.target.value)}
+                      className="p-1.5 border border-border rounded text-xs bg-white outline-none"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Driver Name"
+                      value={vehicle.driverName}
+                      onChange={(e) => updateVehicle(idx, "driverName", e.target.value)}
+                      className="p-1.5 border border-border rounded text-xs bg-white outline-none"
+                    />
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        placeholder="Contact"
+                        value={vehicle.driverContact}
+                        onChange={(e) => updateVehicle(idx, "driverContact", e.target.value)}
+                        className="flex-1 p-1.5 border border-border rounded text-xs bg-white outline-none"
+                      />
+                      <button
+                        onClick={() => removeVehicle(idx)}
+                        className="p-1.5 text-danger hover:bg-danger/10 rounded transition-all"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-text-secondary text-center py-2">No vehicles added</p>
+            )}
+          </div>
+
+          {/* SECTION 7: Payment */}
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <CreditCard size={14} className="text-primary" />
+              <h3 className="font-bold text-text-primary text-sm">Payment Details</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Advance Amount</label>
+                <input
+                  type="number"
+                  value={paymentForm.advanceAmount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, advanceAmount: Number(e.target.value) })}
+                  className="w-full border border-border rounded-lg p-2 text-sm font-bold text-primary bg-white outline-none"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Payment Mode</label>
+                <select
+                  value={paymentForm.paymentMode}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paymentMode: e.target.value })}
+                  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Card">Card</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Wallet">Wallet</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Price Summary</label>
+                <div className="p-2 bg-white border border-border rounded-lg space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-text-secondary">Room Total</span>
+                    <span className="font-bold">₹{roomTotal.toLocaleString()}</span>
+                  </div>
+                  {extraBedTotal > 0 && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-text-secondary">Extra Bed ({totalNights} nights)</span>
+                      <span className="font-bold">₹{extraBedTotal.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xs">
+                    <span className="text-text-secondary">Tax (12%)</span>
+                    <span className="font-bold">₹{taxAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-xs pt-1 border-t border-border">
+                    <span className="font-bold text-success">Grand Total</span>
+                    <span className="font-bold text-success">₹{grandTotal.toLocaleString()}</span>
+                  </div>
+                  {paymentForm.advanceAmount > 0 && (
+                    <div className="flex justify-between text-xs text-primary">
+                      <span>Advance ({paymentForm.paymentMode})</span>
+                      <span className="font-bold">-₹{paidAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {paymentForm.advanceAmount > 0 && (
+                    <div className="flex justify-between text-xs pt-1 border-t border-border text-danger">
+                      <span className="font-bold">Due Amount</span>
+                      <span className="font-bold">₹{dueAmount.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
               </div>
-            </section>
+            </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-10 py-6 border-t flex justify-end gap-5 bg-white">
+        <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-gray-50">
           <button
             onClick={onClose}
-            className="text-gray-400 font-bold hover:text-gray-600 transition-colors"
+            className="px-6 py-2 text-sm font-bold text-text-secondary hover:text-text-primary transition-colors"
           >
-            Discard
+            Cancel
           </button>
           <button
-            onClick={() => submitBooking(false)}
-            className="px-10 py-4 border-2 border-gray-100 text-gray-800 rounded-2xl font-black hover:bg-gray-50 transition-all"
+            onClick={submitBooking}
+            disabled={loading || !customerForm.name || !customerForm.phone || selectedRooms.length === 0}
+            className="px-8 py-2 bg-success hover:bg-success/90 text-white rounded-lg font-bold text-sm flex items-center gap-2 disabled:opacity-50 transition-all"
           >
-            Save Booking
-          </button>
-          <button
-            onClick={() => submitBooking(true)}
-            className={`px-10 py-4 rounded-2xl font-black text-white shadow-xl transform active:scale-95 transition-all flex items-center gap-2 ${bookingType === "Individual" ? "bg-orange-600" : "bg-blue-700"}`}
-          >
-            <CheckCircle size={18} />{" "}
-            {bookingType === "Individual"
-              ? "Confirm & Check-in"
-              : "Process Group"}
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+            {loading ? "Creating..." : "Confirm Booking"}
           </button>
         </div>
       </div>

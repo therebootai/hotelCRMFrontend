@@ -61,7 +61,7 @@ const SideBar = () => {
           <NavItem to="/bookings" icon={BookOpen} label="Bookings" />
           <NavItem to="/checkin" icon={ArrowRightToLine} label="Check-in" />
           <NavItem to="/active-guests" icon={Users} label="Active Guests" />
-          <NavItem to="/checkout" icon={ArrowLeftFromLine} label="Checkout" />
+          <NavItem to="/billing" icon={ArrowLeftFromLine} label="Billing & Checkout" />
 
           {/* Admin Section */}
           <div className="mt-6 mb-2 px-4">

@@ -17,6 +17,7 @@ import RoomRates from "./pages/RoomMaster/RoomRates";
 import FacilityMaster from "./pages/FacilityMaster/FacilityMaster";
 import ExtraServiceMaster from "./pages/ExtraService/ExtraServices";
 import BillingPage from "./pages/billing/BillingPage";
+import AccessPackages from "./pages/AccessPackage/AccessPackages";
 
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
@@ -107,6 +108,7 @@ export default function App() {
             </Route>
             <Route path="facilities" element={<FacilityMaster/>}/>
             <Route path="extra-services" element={<ExtraServiceMaster/>}/>
+            <Route path="access-packages" element={<AccessPackages/>}/>
           </Route>
 
              <Route path="/bookings" element={<BookingFullPage/>}/>

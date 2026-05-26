@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -50,7 +50,7 @@ const SideBar = () => {
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {/* Logo Area */}
         <div className="h-17.5 flex flex-col justify-center px-6 border-b border-border sticky top-0 bg-card z-10">
-          <h1 className="text-xl font-bold text-text-primary tracking-tight">REBOO ERP</h1>
+          <h1 className="text-xl font-bold text-text-primary tracking-tight">REBOOT ERP</h1>
           <span className="text-[10px] text-primary font-semibold tracking-widest uppercase">Premium Management</span>
         </div>
 
@@ -147,6 +147,18 @@ const SideBar = () => {
                   }
                 >
                   Extra Services
+                </NavLink>
+                <NavLink
+                  to="/master/access-packages"
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${
+                      isActive
+                        ? 'text-primary font-medium bg-primary/10'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-background'
+                    }`
+                  }
+                >
+                  Access Packages
                 </NavLink>
               </div>
             </div>

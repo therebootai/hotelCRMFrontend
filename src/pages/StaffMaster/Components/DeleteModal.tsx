@@ -1,5 +1,12 @@
-import React from "react";
-import { AlertTriangle } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  FiSearch,
+  FiUserPlus,
+  FiList,
+  FiEdit2,
+  FiTrash2,
+  FiChevronDown,
+} from "react-icons/fi";
 
 interface DeleteModalProps {
   isOpen: boolean;
@@ -26,7 +33,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, title, message, isLoading }: 
         <div className="p-6 sm:p-8 text-center flex flex-col items-center">
           
           <div className="w-16 h-16 bg-red-50 text-danger rounded-full flex items-center justify-center mb-6">
-            <AlertTriangle size={32} />
+            <FiAlertTriangle size={32} />
           </div>
           
           <h2 className="text-xl font-bold text-text-primary mb-2">{title}</h2>

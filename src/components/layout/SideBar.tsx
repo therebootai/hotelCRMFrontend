@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  CalendarDays, 
-  BookOpen, 
-  ArrowRightToLine, 
-  Users, 
-  ArrowLeftFromLine,
-  BarChart3,
-  Database,
-  Settings,
-  PlusCircle,
-  ChevronDown,
-  ChevronRight
-} from 'lucide-react';
+import {
+  FiLayout,
+  FiCalendar,
+  FiBookOpen,
+  FiLogIn,
+  FiUsers,
+  FiLogOut,
+  FiBarChart2,
+  FiDatabase,
+  FiSettings,
+  FiPlusCircle,
+  FiChevronDown,
+  FiChevronRight,
+  FiPhone
+} from 'react-icons/fi';
 
 // Helper component for standard, single-level links
 const NavItem = ({ to, icon: Icon, label }) => (
@@ -56,19 +57,20 @@ const SideBar = () => {
 
         {/* Navigation Links */}
         <nav className="flex flex-col gap-1 px-4 mt-6">
-          <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
-          <NavItem to="/room-calendar" icon={CalendarDays} label="Room Calendar" />
-          <NavItem to="/bookings" icon={BookOpen} label="Bookings" />
-          <NavItem to="/checkin" icon={ArrowRightToLine} label="Check-in" />
-          <NavItem to="/active-guests" icon={Users} label="Active Guests" />
-          <NavItem to="/billing" icon={ArrowLeftFromLine} label="Billing & Checkout" />
+          <NavItem to="/dashboard" icon={FiLayout} label="Dashboard" />
+          <NavItem to="/room-calendar" icon={FiCalendar} label="Room Calendar" />
+          <NavItem to="/bookings" icon={FiBookOpen} label="Bookings" />
+          <NavItem to="/checkin" icon={FiLogIn} label="Check-in" />
+          <NavItem to="/active-guests" icon={FiUsers} label="Active Guests" />
+          <NavItem to="/customers" icon={FiPhone} label="Customer Directory" />
+          <NavItem to="/billing" icon={FiLogOut} label="Billing & Checkout" />
 
           {/* Admin Section */}
           <div className="mt-6 mb-2 px-4">
             <span className="text-[11px] font-semibold text-text-secondary opacity-70 uppercase tracking-wider">Admin</span>
           </div>
           
-          <NavItem to="/reports" icon={BarChart3} label="Reports" />
+          <NavItem to="/reports" icon={FiBarChart2} label="Reports" />
 
           {/* Collapsible Masters Menu */}
           <div className="flex flex-col gap-1">
@@ -81,13 +83,13 @@ const SideBar = () => {
               }`}
             >
               <div className="flex items-center gap-3">
-                <Database size={18} className={isMasterActive ? "text-primary" : ""} />
+                <FiDatabase size={18} className={isMasterActive ? "text-primary" : ""} />
                 <span className={`text-sm ${isMasterActive ? "text-primary font-medium" : ""}`}>Masters</span>
               </div>
               {isMastersOpen ? (
-                <ChevronDown size={16} className={isMasterActive ? "text-primary" : ""} />
+                <FiChevronDown size={16} className={isMasterActive ? "text-primary" : ""} />
               ) : (
-                <ChevronRight size={16} className={isMasterActive ? "text-primary" : ""} />
+                <FiChevronRight size={16} className={isMasterActive ? "text-primary" : ""} />
               )}
             </button>
 
@@ -164,7 +166,7 @@ const SideBar = () => {
             </div>
           </div>
 
-          <NavItem to="/settings" icon={Settings} label="Settings" />
+          <NavItem to="/settings" icon={FiSettings} label="Settings" />
         </nav>
       </div>
 
@@ -172,7 +174,7 @@ const SideBar = () => {
       <div className="p-6 border-t border-border bg-card">
         {/* Replaced manual styling with your global .btn-primary class */}
         <button className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-base">
-          <PlusCircle size={18} />
+          <FiPlusCircle size={18} />
           <span>New Booking</span>
         </button>
       </div>

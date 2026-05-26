@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { User, Briefcase, Key, Eye, Camera, ChevronDown, EyeOff } from "lucide-react";
+import { FiUser, FiBriefcase, FiKey, FiEye, FiCamera, FiChevronDown, FiEyeOff } from "react-icons/fi";
 import toast from "react-hot-toast";
 import api from "../../../lib/axios";
 import { isAxiosError } from "axios";
@@ -178,7 +178,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
               {/* Basic Info */}
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-5">
-                  <User size={20} className="text-primary" />
+                  <FiUser size={20} className="text-primary" />
                   <h3 className="text-lg font-bold text-text-primary">Basic Info</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -214,7 +214,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
               {/* Role & Access */}
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-5">
-                  <Briefcase size={20} className="text-primary" />
+                  <FiBriefcase size={20} className="text-primary" />
                   <h3 className="text-lg font-bold text-text-primary">Role & Access</h3>
                 </div>
                 <div>
@@ -230,7 +230,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                       <option value="admin">Admin</option>
                       <option value="receptionist">Receptionist</option>
                     </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+                    <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
                   </div>
                   {errors.role && <p className="text-xs text-danger mt-1.5 font-medium">{errors.role}</p>}
                 </div>
@@ -242,7 +242,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                   <hr className="border-border mb-8" />
                   <div className="mb-2 md:mb-4">
                     <div className="flex items-center gap-3 mb-5">
-                      <Key size={20} className="text-primary" />
+                      <FiKey size={20} className="text-primary" />
                       <h3 className="text-lg font-bold text-text-primary">Login Details</h3>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -274,7 +274,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
                           >
-                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                           </button>
                         </div>
                         {errors.password && <p className="text-xs text-danger mt-1.5 font-medium">{errors.password}</p>}
@@ -332,10 +332,10 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess, editData }: AddStaffModalPr
             {/* Avatar Card */}
             <div className="bg-primary rounded-2xl shadow-modal p-6 text-white flex flex-col items-center text-center relative overflow-hidden shrink-0">
               <div className="absolute -right-5 top-5 opacity-10 pointer-events-none">
-                 <User size={120} />
+                 <FiUser size={120} />
               </div>
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4 backdrop-blur-md">
-                <Camera size={28} className="text-white" />
+                <FiCamera size={28} className="text-white" />
               </div>
               <h3 className="text-lg font-bold mb-2 relative z-10">Upload Photo</h3>
               <p className="text-sm text-white/80 leading-relaxed mb-6 relative z-10">

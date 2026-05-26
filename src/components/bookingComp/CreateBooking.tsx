@@ -1,24 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  X,
-  User,
-  Briefcase,
-  CreditCard,
-  CheckCircle,
-  Search,
-  Loader2,
-  Wifi,
-  Wind,
-  Tv,
-  Coffee,
-  Bath,
-  Calendar,
-  BedDouble,
-  Car,
-  FileText,
-  MessageSquare,
-  Plus,
-} from "lucide-react";
+  FiX,
+  FiUser,
+  FiBriefcase,
+  FiCreditCard,
+  FiCheckCircle,
+  FiSearch,
+  FiLoader,
+  FiWifi,
+  FiWind,
+  FiTv,
+  FiCoffee,
+  FiCalendar,
+  FiPhone,
+  FiFileText,
+  FiMessageSquare,
+  FiPlus,
+  FiDollarSign,
+} from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, differenceInDays, addDays } from "date-fns";
@@ -27,11 +26,11 @@ import api from "../../lib/axios";
 
 // Amenity icon mapping
 const amenityIcons: Record<string, any> = {
-  wifi: Wifi,
-  tv: Tv,
-  ac: Wind,
-  coffee: Coffee,
-  bath: Bath,
+  wifi: FiWifi,
+  tv: FiTv,
+  ac: FiWind,
+  coffee: FiCoffee,
+  bath: FiCoffee,
 };
 
 interface RoomSearchResult {
@@ -295,7 +294,6 @@ const CreateBooking = ({
   const {
     roomTotal,
     extraBedTotal,
-    subtotal,
     taxAmount,
     grandTotal,
     paidAmount,
@@ -426,13 +424,13 @@ const CreateBooking = ({
                 onClick={() => setBookingType("Individual")}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${bookingType === "Individual" ? "bg-white text-primary" : "bg-primary/50 text-white"}`}
               >
-                <User size={12} className="inline mr-1" /> Individual
+                <FiUser size={12} className="inline mr-1" /> Individual
               </button>
               <button
                 onClick={() => setBookingType("Corporate")}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${bookingType === "Corporate" ? "bg-white text-blue-600" : "bg-blue-400 text-white"}`}
               >
-                <Briefcase size={12} className="inline mr-1" /> Corporate
+                <FiBriefcase size={12} className="inline mr-1" /> Corporate
               </button>
             </div>
           </div>
@@ -440,7 +438,7 @@ const CreateBooking = ({
             onClick={onClose}
             className="p-2 hover:bg-white/20 rounded-lg transition-all"
           >
-            <X size={20} />
+            <FiX size={20} />
           </button>
         </div>
 
@@ -449,7 +447,7 @@ const CreateBooking = ({
           {/* SECTION 1: Guest Info */}
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <User size={14} className="text-primary" />
+              <FiUser size={14} className="text-primary" />
               <h3 className="font-bold text-text-primary text-sm">
                 Guest Information
               </h3>
@@ -615,7 +613,7 @@ const CreateBooking = ({
           {bookingCategory === "Day Access" ? (
             <div className="bg-card border border-border rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
-                <Calendar size={14} className="text-primary" />
+                <FiCalendar size={14} className="text-primary" />
                 <h3 className="font-bold text-text-primary text-sm">
                   Day Access stay & Package details
                 </h3>
@@ -686,7 +684,7 @@ const CreateBooking = ({
           ) : (
             <div className="bg-card border border-border rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
-                <Calendar size={14} className="text-primary" />
+                <FiCalendar size={14} className="text-primary" />
                 <h3 className="font-bold text-text-primary text-sm">
                   Stay Details & Room Search
                 </h3>
@@ -777,9 +775,9 @@ const CreateBooking = ({
                     className="w-full py-2 bg-primary hover:bg-primary-hover text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1 disabled:opacity-50 transition-all"
                   >
                     {searchingRooms ? (
-                      <Loader2 size={12} className="animate-spin" />
+                      <FiLoader size={12} className="animate-spin" />
                     ) : (
-                      <Search size={12} />
+                      <FiSearch size={12} />
                     )}
                     {searchingRooms ? "Searching..." : "Search"}
                   </button>
@@ -793,7 +791,7 @@ const CreateBooking = ({
             <div className="bg-card border border-border rounded-xl p-4">
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold text-text-primary text-sm flex items-center gap-2">
-                  <BedDouble size={14} className="text-primary" />
+                  <FiDollarSign size={14} className="text-primary" />
                   Available Rooms ({searchResults.length})
                 </h4>
                 <span className="text-xs text-text-secondary">
@@ -828,7 +826,7 @@ const CreateBooking = ({
                       </div>
                       <div className="flex flex-wrap gap-1 mt-2">
                         {result.amenities.slice(0, 3).map((a) => {
-                          const Icon = amenityIcons[a.icon] || Wifi;
+                          const Icon = amenityIcons[a.icon] || FiWifi;
                           return (
                             <span
                               key={a._id}
@@ -927,7 +925,7 @@ const CreateBooking = ({
                         }
                         className="p-1.5 text-danger hover:bg-danger/10 rounded-lg transition-all"
                       >
-                        <X size={14} />
+                        <FiX size={14} />
                       </button>
                     </div>
                   </div>
@@ -939,7 +937,7 @@ const CreateBooking = ({
           {/* SECTION 5: Special Requests & Internal Notes */}
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <MessageSquare size={14} className="text-primary" />
+              <FiMessageSquare size={14} className="text-primary" />
               <h3 className="font-bold text-text-primary text-sm">
                 Special Requests & Notes
               </h3>
@@ -947,7 +945,7 @@ const CreateBooking = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] font-bold text-text-secondary uppercase flex items-center gap-1">
-                  <FileText size={10} /> Special Requests (Guest)
+                  <FiFileText size={10} /> Special Requests (Guest)
                 </label>
                 <textarea
                   value={specialRequests}
@@ -959,7 +957,7 @@ const CreateBooking = ({
               </div>
               <div>
                 <label className="text-[10px] font-bold text-text-secondary uppercase flex items-center gap-1">
-                  <MessageSquare size={10} /> Internal Notes (Staff Only)
+                  <FiMessageSquare size={10} /> Internal Notes (Staff Only)
                 </label>
                 <textarea
                   value={internalNotes}
@@ -976,14 +974,14 @@ const CreateBooking = ({
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex justify-between items-center mb-3">
               <h4 className="font-bold text-text-primary text-sm flex items-center gap-2">
-                <Car size={14} className="text-primary" />
+                <FiPhone size={14} className="text-primary" />
                 Vehicle Details
               </h4>
               <button
                 onClick={addVehicle}
                 className="text-xs font-bold text-primary hover:text-primary-hover flex items-center gap-1"
               >
-                <Plus size={12} /> Add Vehicle
+                <FiPlus size={12} /> Add Vehicle
               </button>
             </div>
             {vehicles.length > 0 ? (
@@ -1034,7 +1032,7 @@ const CreateBooking = ({
                         onClick={() => removeVehicle(idx)}
                         className="p-1.5 text-danger hover:bg-danger/10 rounded transition-all"
                       >
-                        <X size={12} />
+                        <FiX size={12} />
                       </button>
                     </div>
                   </div>
@@ -1050,7 +1048,7 @@ const CreateBooking = ({
           {/* SECTION 7: Payment */}
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <CreditCard size={14} className="text-primary" />
+              <FiCreditCard size={14} className="text-primary" />
               <h3 className="font-bold text-text-primary text-sm">
                 Payment Details
               </h3>
@@ -1169,9 +1167,9 @@ const CreateBooking = ({
             className="px-8 py-2 bg-success hover:bg-success/90 text-white rounded-lg font-bold text-sm flex items-center gap-2 disabled:opacity-50 transition-all"
           >
             {loading ? (
-              <Loader2 size={16} className="animate-spin" />
+              <FiLoader size={16} className="animate-spin" />
             ) : (
-              <CheckCircle size={16} />
+              <FiCheckCircle size={16} />
             )}
             {loading ? "Creating..." : "Confirm Booking"}
           </button>

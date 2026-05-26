@@ -1,18 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Calendar as CalendarIcon,
-  Snowflake,
-  Wrench,
-  User,
-} from "lucide-react";
+import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 import api from "../../lib/axios";
 import NewBookingButton from "../../components/ui/NewBookingButton";
 import ExtendStayModal from "../../components/checkinComp/ExtendStayModal";
+import { FaSnowflake } from "react-icons/fa";
+import { BiUser, BiWrench } from "react-icons/bi";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -53,7 +48,9 @@ const SummaryCard = ({
     </span>
     <div className="flex items-baseline gap-1">
       <span className="text-[24px] font-bold text-text-primary">{value}</span>
-      <span className="text-[16px] font-bold text-text-secondary">/{total}</span>
+      <span className="text-[16px] font-bold text-text-secondary">
+        /{total}
+      </span>
     </div>
   </div>
 );
@@ -79,8 +76,10 @@ const BookingBlock = ({
         className={`z-10 m-1.5 rounded-lg border ${theme} flex items-center justify-center gap-2 opacity-80 overflow-hidden`}
         style={{ gridColumn: `${startCol} / span ${span}` }}
       >
-        <Wrench size={14} className="text-text-secondary shrink-0" />
-        <span className="text-[12px] font-bold text-text-secondary truncate">BLOCKED</span>
+        <BiWrench size={14} className="text-text-secondary shrink-0" />
+        <span className="text-[12px] font-bold text-text-secondary truncate">
+          BLOCKED
+        </span>
       </div>
     );
   }
@@ -94,16 +93,22 @@ const BookingBlock = ({
     >
       <div className="flex justify-between items-start gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
-          <User size={12} className="text-primary shrink-0" />
-          <span className="text-[13px] font-bold text-text-primary truncate">{booking.guest}</span>
+          <BiUser size={12} className="text-primary shrink-0" />
+          <span className="text-[13px] font-bold text-text-primary truncate">
+            {booking.guest}
+          </span>
         </div>
         <span className="text-[9px] font-bold text-text-secondary hidden sm:inline-block">
           {actualSpan} Days
         </span>
       </div>
       <div className="flex justify-between items-end mt-1 gap-2">
-        <span className="text-[11px] text-text-secondary truncate">{booking.phone}</span>
-        <span className="text-[11px] font-bold text-primary shrink-0">₹{booking.price || 0}</span>
+        <span className="text-[11px] text-text-secondary truncate">
+          {booking.phone}
+        </span>
+        <span className="text-[11px] font-bold text-primary shrink-0">
+          ₹{booking.price || 0}
+        </span>
       </div>
       <div
         onMouseDown={(e) => {
@@ -143,7 +148,7 @@ const StayOverview = () => {
 
   const datesArray = useMemo(
     () => getDaysArray(viewStart, viewEnd),
-    [viewStart, viewEnd]
+    [viewStart, viewEnd],
   );
 
   const gridTemplate = `180px repeat(${datesArray.length}, minmax(0, 1fr))`;
@@ -221,113 +226,49 @@ const StayOverview = () => {
   // =====================================================
   // DRAG & DROP
   // =====================================================
-  const handleDragStart = (e: React.DragEvent, booking: any, roomId: string) => {
+  const handleDragStart = (
+    e: React.DragEvent,
+    booking: any,
+    roomId: string,
+  ) => {
     e.dataTransfer.setData(
       "booking",
-      JSON.stringify({ booking, sourceRoomId: roomId })
+      JSON.stringify({ booking, sourceRoomId: roomId }),
     );
   };
 
-// =====================================================
-// DRAG & DROP — replace your existing handleDrop
-// =====================================================
-const handleDrop = (e: React.DragEvent, targetRoom: any, colIndex: number) => {
-  e.preventDefault();
-  e.stopPropagation();
+  // =====================================================
+  // DRAG & DROP — replace your existing handleDrop
+  // =====================================================
+  const handleDrop = (
+    e: React.DragEvent,
+    targetRoom: any,
+    colIndex: number,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  const raw = e.dataTransfer.getData("booking");
-  if (!raw) return;
+    const raw = e.dataTransfer.getData("booking");
+    if (!raw) return;
 
-  const { booking } = JSON.parse(raw);
+    const { booking } = JSON.parse(raw);
 
-  // ✅ newCheckout = the column the user dropped on
-  const dropDate = new Date(datesArray[colIndex]);
-  dropDate.setHours(12, 0, 0, 0);
+    // ✅ newCheckout = the column the user dropped on
+    const dropDate = new Date(datesArray[colIndex]);
+    dropDate.setHours(12, 0, 0, 0);
 
-  // ✅ Don't change if dropped on same date as current end
-  const currentEnd = new Date(booking.end);
-  if (dropDate <= currentEnd) return;
+    // ✅ Don't change if dropped on same date as current end
+    const currentEnd = new Date(booking.end);
+    if (dropDate <= currentEnd) return;
 
-  const isSameRoom = booking.roomId === targetRoom.id;
-
-  setSelectedCheckIn({
-    _id: booking.id,
-    guests: [{ name: booking.guest, mobileNo: booking.phone }],
-
-    // ✅ ORIGINAL checkout — modal calculates extension FROM this
-    expectedCheckOutTime: new Date(booking.end),
-
-    roomDetails: [
-      {
-        roomId: booking.roomId,
-        roomNumber: booking.roomNumber,
-        roomType: booking.roomType || "",
-        appliedPrice: booking.price || 0,
-      },
-    ],
-    totalAdvanceAmount: booking.totalAdvanceAmount || 0,
-
-    // ✅ NEW checkout = where user dropped
-    _prefillCheckout: dropDate,
-    _prefillRoomId: isSameRoom ? booking.roomId : targetRoom.id,
-    _prefillRoomType: isSameRoom
-      ? (booking.roomType || "")
-      : (targetRoom.roomType?._id || targetRoom.roomType || ""),
-  });
-
-  setExtendOpen(true);
-};
-
-
-// =====================================================
-// RESIZE — replace your existing handleResizeStart
-// =====================================================
-const handleResizeStart = (e: React.MouseEvent, booking: any) => {
-  e.preventDefault();
-  const startX = e.clientX;
-
-  pendingResizeRef.current = new Date(booking.end);
-
-  const move = (ev: MouseEvent) => {
-    if (!gridRef.current) return;
-
-    const width = gridRef.current.offsetWidth - 180;
-    const colWidth = width / datesArray.length;
-    const diff = ev.clientX - startX;
-    const cols = Math.round(diff / colWidth);
-
-    if (cols === 0) return;
-
-    const newDate = new Date(booking.end);
-    newDate.setDate(newDate.getDate() + cols);
-    newDate.setHours(12, 0, 0, 0);
-
-    if (newDate <= new Date(booking.start)) return;
-
-    // ✅ Only ref update — no setState during drag
-    pendingResizeRef.current = newDate;
-  };
-
-  const up = () => {
-    document.removeEventListener("mousemove", move);
-    document.removeEventListener("mouseup", up);
-
-    const finalDate = pendingResizeRef.current;
-    if (!finalDate) return;
-
-    // ✅ finalDate must be after booking.end
-    const originalEnd = new Date(booking.end);
-    if (finalDate <= originalEnd) {
-      pendingResizeRef.current = null;
-      return;
-    }
+    const isSameRoom = booking.roomId === targetRoom.id;
 
     setSelectedCheckIn({
       _id: booking.id,
-      guests: [{ name: booking.guest }],
+      guests: [{ name: booking.guest, mobileNo: booking.phone }],
 
-      // ✅ ORIGINAL checkout — extension calculated FROM this
-      expectedCheckOutTime: originalEnd,
+      // ✅ ORIGINAL checkout — modal calculates extension FROM this
+      expectedCheckOutTime: new Date(booking.end),
 
       roomDetails: [
         {
@@ -339,41 +280,121 @@ const handleResizeStart = (e: React.MouseEvent, booking: any) => {
       ],
       totalAdvanceAmount: booking.totalAdvanceAmount || 0,
 
-      // ✅ NEW checkout = where user released mouse
-      _prefillCheckout: finalDate,
-      _prefillRoomId: booking.roomId,
-      _prefillRoomType: booking.roomType || "",
+      // ✅ NEW checkout = where user dropped
+      _prefillCheckout: dropDate,
+      _prefillRoomId: isSameRoom ? booking.roomId : targetRoom.id,
+      _prefillRoomType: isSameRoom
+        ? booking.roomType || ""
+        : targetRoom.roomType?._id || targetRoom.roomType || "",
     });
 
     setExtendOpen(true);
-    pendingResizeRef.current = null;
   };
 
-  document.addEventListener("mousemove", move);
-  document.addEventListener("mouseup", up);
-};
+  // =====================================================
+  // RESIZE — replace your existing handleResizeStart
+  // =====================================================
+  const handleResizeStart = (e: React.MouseEvent, booking: any) => {
+    e.preventDefault();
+    const startX = e.clientX;
+
+    pendingResizeRef.current = new Date(booking.end);
+
+    const move = (ev: MouseEvent) => {
+      if (!gridRef.current) return;
+
+      const width = gridRef.current.offsetWidth - 180;
+      const colWidth = width / datesArray.length;
+      const diff = ev.clientX - startX;
+      const cols = Math.round(diff / colWidth);
+
+      if (cols === 0) return;
+
+      const newDate = new Date(booking.end);
+      newDate.setDate(newDate.getDate() + cols);
+      newDate.setHours(12, 0, 0, 0);
+
+      if (newDate <= new Date(booking.start)) return;
+
+      // ✅ Only ref update — no setState during drag
+      pendingResizeRef.current = newDate;
+    };
+
+    const up = () => {
+      document.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseup", up);
+
+      const finalDate = pendingResizeRef.current;
+      if (!finalDate) return;
+
+      // ✅ finalDate must be after booking.end
+      const originalEnd = new Date(booking.end);
+      if (finalDate <= originalEnd) {
+        pendingResizeRef.current = null;
+        return;
+      }
+
+      setSelectedCheckIn({
+        _id: booking.id,
+        guests: [{ name: booking.guest }],
+
+        // ✅ ORIGINAL checkout — extension calculated FROM this
+        expectedCheckOutTime: originalEnd,
+
+        roomDetails: [
+          {
+            roomId: booking.roomId,
+            roomNumber: booking.roomNumber,
+            roomType: booking.roomType || "",
+            appliedPrice: booking.price || 0,
+          },
+        ],
+        totalAdvanceAmount: booking.totalAdvanceAmount || 0,
+
+        // ✅ NEW checkout = where user released mouse
+        _prefillCheckout: finalDate,
+        _prefillRoomId: booking.roomId,
+        _prefillRoomType: booking.roomType || "",
+      });
+
+      setExtendOpen(true);
+      pendingResizeRef.current = null;
+    };
+
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", up);
+  };
 
   return (
     <div className="page-container flex flex-col py-[32px] gap-[24px] w-full pb-10">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-[22px] font-bold text-text-primary">Stay Overview</h2>
+        <h2 className="text-[22px] font-bold text-text-primary">
+          Stay Overview
+        </h2>
         <div className="flex items-center gap-4 relative">
           <div className="flex items-center gap-2 bg-white border border-border rounded-lg px-2 py-1.5 shadow-sm">
-            <button onClick={goPrev} className="p-1 hover:bg-gray-100 rounded-md">
-              <ChevronLeft size={18} />
+            <button
+              onClick={goPrev}
+              className="p-1 hover:bg-gray-100 rounded-md"
+            >
+              <FiChevronLeft size={18} />
             </button>
             <button
               onClick={() => setShowPicker(!showPicker)}
               className="flex items-center gap-2 text-[13px] font-bold px-3 py-1 hover:bg-gray-50 rounded-md"
             >
-              <CalendarIcon size={16} className="text-primary" />
+              <FiCalendar size={16} className="text-primary" />
               <span>
-                {viewStart.toLocaleDateString()} - {viewEnd.toLocaleDateString()}
+                {viewStart.toLocaleDateString()} -{" "}
+                {viewEnd.toLocaleDateString()}
               </span>
             </button>
-            <button onClick={goNext} className="p-1 hover:bg-gray-100 rounded-md">
-              <ChevronRight size={18} />
+            <button
+              onClick={goNext}
+              className="p-1 hover:bg-gray-100 rounded-md"
+            >
+              <FiChevronRight size={18} />
             </button>
           </div>
           <NewBookingButton />
@@ -403,9 +424,21 @@ const handleResizeStart = (e: React.MouseEvent, booking: any) => {
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-[24px]">
-        <SummaryCard title="TOTAL ROOMS" value={summary.total} total={summary.total} />
-        <SummaryCard title="OCCUPIED" value={summary.occupied} total={summary.total} />
-        <SummaryCard title="AVAILABLE" value={summary.available} total={summary.total} />
+        <SummaryCard
+          title="TOTAL ROOMS"
+          value={summary.total}
+          total={summary.total}
+        />
+        <SummaryCard
+          title="OCCUPIED"
+          value={summary.occupied}
+          total={summary.total}
+        />
+        <SummaryCard
+          title="AVAILABLE"
+          value={summary.available}
+          total={summary.total}
+        />
       </div>
 
       {/* Timeline */}
@@ -439,7 +472,9 @@ const handleResizeStart = (e: React.MouseEvent, booking: any) => {
 
           {/* Rows */}
           {loading ? (
-            <div className="p-10 text-center font-bold text-gray-400">Loading...</div>
+            <div className="p-10 text-center font-bold text-gray-400">
+              Loading...
+            </div>
           ) : (
             timelineData.map((category: any, cIdx: number) => (
               <div key={cIdx}>
@@ -455,10 +490,17 @@ const handleResizeStart = (e: React.MouseEvent, booking: any) => {
                     {/* Room Cell */}
                     <div className="p-3 border-r bg-white z-20 flex flex-col justify-center">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[14px] font-bold">{room.roomNumber}</span>
-                        <Snowflake size={12} className="text-cyan-600 shrink-0" />
+                        <span className="text-[14px] font-bold">
+                          {room.roomNumber}
+                        </span>
+                        <FaSnowflake
+                          size={12}
+                          className="text-cyan-600 shrink-0"
+                        />
                       </div>
-                      <span className="text-[10px] text-text-secondary">{room.status}</span>
+                      <span className="text-[10px] text-text-secondary">
+                        {room.status}
+                      </span>
                     </div>
 
                     {/* Blank Cells */}
@@ -481,20 +523,23 @@ const handleResizeStart = (e: React.MouseEvent, booking: any) => {
                       const bEnd = new Date(booking.end);
 
                       const startOffset = Math.floor(
-                        (bStart.getTime() - viewStart.getTime()) / MS_PER_DAY
+                        (bStart.getTime() - viewStart.getTime()) / MS_PER_DAY,
                       );
                       const endOffset = Math.floor(
-                        (bEnd.getTime() - viewStart.getTime()) / MS_PER_DAY
+                        (bEnd.getTime() - viewStart.getTime()) / MS_PER_DAY,
                       );
 
-                      const visualStartCol = startOffset < 0 ? 2 : 2 + startOffset;
+                      const visualStartCol =
+                        startOffset < 0 ? 2 : 2 + startOffset;
                       const visualEndCol =
                         endOffset >= datesArray.length
                           ? datesArray.length + 1
                           : 2 + endOffset;
                       const visualSpan = visualEndCol - visualStartCol + 1;
                       const actualSpan =
-                        Math.floor((bEnd.getTime() - bStart.getTime()) / MS_PER_DAY) + 1;
+                        Math.floor(
+                          (bEnd.getTime() - bStart.getTime()) / MS_PER_DAY,
+                        ) + 1;
 
                       if (
                         visualSpan <= 0 ||

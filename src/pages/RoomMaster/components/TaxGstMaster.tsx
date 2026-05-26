@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Edit2, Trash2, Landmark, Loader2 } from 'lucide-react';
+import { FiSearch, FiEdit2, FiTrash2, FiDollarSign, FiLoader } from 'react-icons/fi';
 import TaxGstModal from './TaxGstModal';
 import DeleteModal from '../../StaffMaster/Components/DeleteModal';
 import toast from 'react-hot-toast';
@@ -133,7 +133,7 @@ export default function TaxGstMaster({ isAddModalOpen, setIsAddModalOpen }: TaxG
       {/* Top Filter Bar */}
       <div className="bg-card border border-border rounded-xl p-3 flex flex-col xl:flex-row xl:items-center justify-between gap-4 shadow-sm">
         <div className="relative w-full xl:w-96 shrink-0">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+          <FiSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
           <input 
             type="text" 
             placeholder="Search tax name or percentage..." 
@@ -199,7 +199,7 @@ export default function TaxGstMaster({ isAddModalOpen, setIsAddModalOpen }: TaxG
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-text-secondary">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      <FiLoader className="w-6 h-6 animate-spin text-primary" />
                       <span className="text-sm">Loading taxes...</span>
                     </div>
                   </td>
@@ -210,7 +210,7 @@ export default function TaxGstMaster({ isAddModalOpen, setIsAddModalOpen }: TaxG
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                          <Landmark size={18} />
+                          <FiDollarSign size={18} />
                         </div>
                         <div className="flex flex-col">
                           <span className="font-bold text-text-primary text-sm">{tax.name}</span>
@@ -247,13 +247,13 @@ export default function TaxGstMaster({ isAddModalOpen, setIsAddModalOpen }: TaxG
                           onClick={() => handleEditClick(tax)}
                           className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                         >
-                          <Edit2 size={16} />
+                          <FiEdit2 size={16} />
                         </button>
                         <button 
                           onClick={() => handleDeleteClick(tax)}
                           className="p-2 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
                         >
-                          <Trash2 size={16} />
+                          <FiTrash2 size={16} />
                         </button>
                       </div>
                     </td>

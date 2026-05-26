@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { format, addDays, startOfDay, differenceInCalendarDays, isSameDay, eachDayOfInterval } from "date-fns";
-import { BedDouble, User, CalendarDays, Users, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { FiDollarSign, FiUsers, FiUser, FiCheckCircle, FiLoader, FiCalendar } from "react-icons/fi";
 import api from "../../lib/axios";
 
 // ==========================================
@@ -163,7 +163,7 @@ const RoomRow: React.FC<RoomRowProps> = ({ room, columns, dayWidth, totalWidth, 
         style={{ width: "110px", minWidth: "110px" }}
       >
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center flex-shrink-0">
-          <BedDouble size={12} className="text-orange-500" />
+          <FiDollarSign size={12} className="text-orange-500" />
         </div>
         <div className="min-w-0">
           <p className="text-[10px] font-black text-gray-800 truncate">Room {room.number}</p>
@@ -313,7 +313,7 @@ const BookingTimeline: React.FC<BookingTimelineProps> = ({ data, viewMode, loadi
     return (
       <div className="flex flex-col h-full bg-gray-50/30">
         <div className="flex items-center justify-center h-48">
-          <Loader2 size={28} className="animate-spin text-orange-500" />
+          <FiLoader size={28} className="animate-spin text-orange-500" />
         </div>
       </div>
     );
@@ -379,7 +379,7 @@ const BookingTimeline: React.FC<BookingTimelineProps> = ({ data, viewMode, loadi
             <span className="text-[10px] font-bold text-gray-600">{data.stats.maintenanceRooms + data.stats.blockedRooms} Maint.</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <User size={10} className="text-gray-400" />
+            <FiUser size={10} className="text-gray-400" />
             <span className="text-[10px] font-bold text-gray-600">{data.stats.activeBookings} Active</span>
           </div>
         </div>
@@ -473,25 +473,25 @@ const BookingOverview: React.FC = () => {
           {/* Stats */}
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-100">
-              <BedDouble size={12} className="text-gray-400" />
+              <FiDollarSign size={12} className="text-gray-400" />
               <span className="text-[10px] font-bold text-gray-500">Total</span>
               <span className="text-sm font-black text-gray-800">{stats?.totalRooms || 0}</span>
             </div>
 
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 rounded-lg border border-orange-100">
-              <Users size={12} className="text-orange-400" />
+              <FiUsers size={12} className="text-orange-400" />
               <span className="text-[10px] font-bold text-orange-500">Occupied</span>
               <span className="text-sm font-black text-orange-600">{stats?.occupiedRooms || 0}</span>
             </div>
 
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 rounded-lg border border-green-100">
-              <CheckCircle size={12} className="text-green-400" />
+              <FiCheckCircle size={12} className="text-green-400" />
               <span className="text-[10px] font-bold text-green-500">Available</span>
               <span className="text-sm font-black text-green-600">{stats?.availableRooms || 0}</span>
             </div>
 
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 rounded-lg border border-blue-100">
-              <CalendarDays size={12} className="text-blue-400" />
+              <FiCalendar size={12} className="text-blue-400" />
               <span className="text-[10px] font-bold text-blue-500">Active</span>
               <span className="text-sm font-black text-blue-600">{stats?.activeBookings || 0}</span>
             </div>

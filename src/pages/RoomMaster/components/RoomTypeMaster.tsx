@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Edit2, Trash2, BedDouble, Loader2 } from 'lucide-react';
+import { FiSearch, FiEdit2, FiTrash2, FiLoader, FiCoffee } from 'react-icons/fi';
 import RoomTypeModal from './RoomTypeModal';
 import DeleteModal from '../../StaffMaster/Components/DeleteModal'; 
 import toast from 'react-hot-toast';
@@ -101,7 +101,7 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
         {/* Header & Search */}
         <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-text-primary">
-            <BedDouble size={20} className="text-primary" />
+            <FiCoffee size={20} className="text-primary" />
             <h2 className="text-lg font-bold">Registered Room Types</h2>
             {!isLoading && (
               <span className="bg-background px-2.5 py-0.5 rounded-full text-xs font-medium text-text-secondary border border-border">
@@ -111,7 +111,7 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
           </div>
           
           <div className="relative w-full sm:w-72">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+            <FiSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
             <input 
               type="text" 
               placeholder="Search types..." 
@@ -138,7 +138,7 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
                 <tr>
                   <td colSpan={3} className="px-6 py-12 text-center text-text-secondary">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      <FiLoader className="w-6 h-6 animate-spin text-primary" />
                       <span className="text-sm">Loading room types...</span>
                     </div>
                   </td>
@@ -149,7 +149,7 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                          <BedDouble size={18} />
+                          <FiCoffee size={18} />
                         </div>
                         <span className="font-bold text-text-primary text-sm">{rt.name}</span>
                       </div>
@@ -165,13 +165,13 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
                           onClick={() => handleEditClick(rt)}
                           className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                         >
-                          <Edit2 size={16} />
+                          <FiEdit2 size={16} />
                         </button>
                         <button 
                           onClick={() => handleDeleteClick(rt)}
                           className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-lg transition-colors"
                         >
-                          <Trash2 size={16} />
+                          <FiTrash2 size={16} />
                         </button>
                       </div>
                     </td>

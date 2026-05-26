@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Loader2, Info } from "lucide-react";
+import { FiLoader, FiInfo } from "react-icons/fi";
 import toast from "react-hot-toast";
 import api from "../../../lib/axios";
 import { AxiosError } from "axios";
@@ -225,7 +225,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
   if (isFetchingDeps) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-text-secondary">
-        <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
+        <FiLoader className="w-8 h-8 animate-spin mb-4 text-primary" />
         <p>Loading room data...</p>
       </div>
     );
@@ -640,7 +640,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
                 className="btn-primary w-full py-3 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <Loader2 size={18} className="animate-spin" />
+                  <FiLoader size={18} className="animate-spin" />
                 ) : initialData ? (
                   "Update Room"
                 ) : (
@@ -651,7 +651,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
 
             {/* Info Note */}
             <div className="bg-warning/10 border border-warning/20 rounded-xl p-4 flex items-start gap-3 text-text-secondary text-xs leading-relaxed">
-              <Info size={16} className="shrink-0 mt-0.5 text-warning" />
+              <FiInfo size={16} className="shrink-0 mt-0.5 text-warning" />
               <p>
                 Prices are automatically calculated including selected tax.
               </p>

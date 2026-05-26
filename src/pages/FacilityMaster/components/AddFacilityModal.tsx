@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Building, IndianRupee, Settings, ChevronDown, CheckCircle, ListChecks } from "lucide-react";
+import { FiHome, FiDollarSign, FiSettings, FiChevronDown, FiCheckCircle, FiList } from "react-icons/fi";
 import toast from "react-hot-toast";
 import api from "../../../lib/axios";
 import { isAxiosError } from "axios";
@@ -184,7 +184,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
               {/* Basic Info */}
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-5">
-                  <Building size={20} className="text-primary" />
+                  <FiHome size={20} className="text-primary" />
                   <h3 className="text-lg font-bold text-text-primary">Basic Info</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -218,7 +218,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
                         <option value="Rooftop">Rooftop</option>
                         <option value="Other">Other</option>
                       </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+                      <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
                     </div>
                     {errors.type && <p className="text-xs text-danger mt-1.5 font-medium">{errors.type}</p>}
                   </div>
@@ -245,7 +245,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
               {/* Pricing details */}
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-5">
-                  <IndianRupee size={20} className="text-primary" />
+                  <FiDollarSign size={20} className="text-primary" />
                   <h3 className="text-lg font-bold text-text-primary">Pricing Details</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -274,7 +274,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
                         <option value="Slot">Slot Based</option>
                         <option value="Full Day">Full Day</option>
                       </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+                      <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
                     </div>
                   </div>
                 </div>
@@ -295,7 +295,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
               {/* Amenities Section */}
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-5">
-                  <ListChecks size={20} className="text-primary" />
+                  <FiList size={20} className="text-primary" />
                   <h3 className="text-lg font-bold text-text-primary">Amenities Included</h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -355,7 +355,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
             {/* Status Card */}
             <div className="bg-card rounded-2xl shadow-modal p-6 shrink-0 border border-border">
               <div className="flex items-center gap-2 mb-4">
-                 <Settings size={18} className="text-text-primary" />
+                 <FiSettings size={18} className="text-text-primary" />
                  <h3 className="text-lg font-bold text-text-primary">Operational Status</h3>
               </div>
               <p className="text-xs text-text-secondary mb-4 leading-relaxed">
@@ -381,7 +381,7 @@ const AddFacilityModal = ({ isOpen, onClose, onSuccess, editData }: AddFacilityM
                         {status}
                       </span>
                     </div>
-                    {formData.status === status && <CheckCircle size={18} className="text-primary" />}
+                    {formData.status === status && <FiCheckCircle size={18} className="text-primary" />}
                   </label>
                 ))}
               </div>

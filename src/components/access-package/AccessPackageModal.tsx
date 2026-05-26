@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Upload, Plus, Trash2, Loader2 } from "lucide-react";
+import { FiX, FiUpload, FiPlus, FiTrash2, FiLoader } from "react-icons/fi";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 import { AxiosError } from "axios";
@@ -321,7 +321,7 @@ export default function AccessPackageModal({
             disabled={isLoading}
             className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors"
           >
-            <X size={20} />
+            <FiX size={20} />
           </button>
         </div>
 
@@ -517,7 +517,7 @@ export default function AccessPackageModal({
                       disabled={isLoading}
                       className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-1.5 text-xs font-semibold"
                     >
-                      <Trash2 size={14} />
+                      <FiTrash2 size={14} />
                       Remove
                     </button>
                   </div>
@@ -525,7 +525,7 @@ export default function AccessPackageModal({
               ) : (
                 <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 rounded-xl p-6 cursor-pointer transition-all duration-200 group h-36">
                   <div className="p-3 bg-gray-100 rounded-lg text-text-secondary group-hover:text-primary transition-colors">
-                    <Upload size={20} />
+                    <FiUpload size={20} />
                   </div>
                   <span className="text-xs font-bold text-text-secondary group-hover:text-primary">
                     Upload Cover Image
@@ -570,7 +570,7 @@ export default function AccessPackageModal({
                   disabled={isLoading}
                   className="btn-secondary px-4 h-[42px] flex items-center justify-center"
                 >
-                  <Plus size={18} />
+                  <FiPlus size={18} />
                 </button>
               </div>
 
@@ -588,7 +588,7 @@ export default function AccessPackageModal({
                         onClick={() => handleRemoveInclusion(index)}
                         className="text-primary hover:text-red-500 transition-colors"
                       >
-                        <X size={12} />
+                        <FiX size={12} />
                       </button>
                     </span>
                   ))
@@ -608,7 +608,7 @@ export default function AccessPackageModal({
               <div className="border border-border bg-background rounded-xl p-3 max-h-36 overflow-y-auto no-scrollbar space-y-2">
                 {isLoadingServices ? (
                   <div className="flex items-center justify-center gap-2 py-4 text-text-secondary text-xs">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <FiLoader className="w-4 h-4 animate-spin text-primary" />
                     Loading services...
                   </div>
                 ) : extraServices.length > 0 ? (
@@ -671,7 +671,7 @@ export default function AccessPackageModal({
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
+                <FiLoader className="w-4 h-4 animate-spin text-white" />
                 Saving...
               </>
             ) : (

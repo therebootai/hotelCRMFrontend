@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../lib/axios';
 import { AxiosError } from 'axios';
@@ -143,7 +143,7 @@ export default function TaxGstModal({ isOpen, onClose, onSuccess, initialData }:
             disabled={isLoading}
             className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors self-start disabled:opacity-50"
           >
-            <X size={20} />
+            <FiX size={20} />
           </button>
         </div>
 

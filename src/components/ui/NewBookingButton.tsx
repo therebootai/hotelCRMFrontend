@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { FiPlus } from 'react-icons/fi';
 
 interface NewBookingButtonProps {
   className?: string;
@@ -8,7 +8,7 @@ interface NewBookingButtonProps {
 const NewBookingButton = ({ className = "" }: NewBookingButtonProps) => {
   return (
     <button className={`btn-primary flex items-center justify-center gap-2 shadow-md shadow-primary/20 ${className}`}>
-      <Plus size={18} strokeWidth={2.5} />
+      <FiPlus size={18} />
       <span>New Booking</span>
     </button>
   );

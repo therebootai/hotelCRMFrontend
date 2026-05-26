@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { format, addDays, startOfDay, differenceInDays, isSameDay } from "date-fns";
-import { BedDouble, User, Phone, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { FiSearch, FiUser, FiPhone, FiChevronLeft, FiChevronRight, FiCalendar } from "react-icons/fi";
 
 // ==========================================
 // TYPES & INTERFACES
@@ -187,7 +187,7 @@ const BookingBar: React.FC<BookingBarProps> = ({ booking, startOffset, width, da
           <BookingTagBadge tag={booking.tag} />
         </div>
         <p className="text-[9px] text-gray-500 flex items-center gap-1">
-          <Phone size={8} />
+          <FiPhone size={8} />
           {booking.guest.phone}
         </p>
       </div>
@@ -250,20 +250,20 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({ columns, dayWidth, onSc
       {/* Month/Year Header */}
       <div className="flex items-center justify-between px-4 py-2 bg-gray-50/50 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <CalendarDays size={14} className="text-gray-400" />
+          <FiCalendar size={14} className="text-gray-400" />
           <span className="text-xs font-bold text-gray-600">
             {format(columns[0]?.date || new Date(), "MMMM yyyy")}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-            <ChevronLeft size={16} className="text-gray-500" />
+            <FiChevronLeft size={16} className="text-gray-500" />
           </button>
           <button className="px-3 py-1 text-[10px] font-bold text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50">
             Today
           </button>
           <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-            <ChevronRight size={16} className="text-gray-500" />
+            <FiChevronRight size={16} className="text-gray-500" />
           </button>
         </div>
       </div>
@@ -349,7 +349,7 @@ const RoomRow: React.FC<RoomRowProps> = ({ room, bookings, columns, dayWidth, ti
       <div className="sticky left-0 z-30 bg-white w-32 lg:w-40 flex-shrink-0 border-r border-gray-100 p-3">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center">
-            <BedDouble size={18} className="text-orange-500" />
+            <FiDollarSign size={18} className="text-orange-500" />
           </div>
           <div>
             <p className="text-sm font-black text-gray-800">Room {room.number}</p>
@@ -477,7 +477,7 @@ const BookingTimeline: React.FC = () => {
         </div>
         <div className="h-4 w-px bg-gray-200"></div>
         <div className="flex items-center gap-2">
-          <User size={12} className="text-gray-400" />
+          <FiUser size={12} className="text-gray-400" />
           <span className="text-[10px] font-bold text-gray-600">
             {stats.activeBookings} Active Bookings
           </span>

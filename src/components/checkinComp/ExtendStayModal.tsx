@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Hotel, Layers, IndianRupee, NotebookPen, ArrowRightLeft } from 'lucide-react';
+import { FiX, FiCalendar, FiHome, FiLayers, FiDollarSign, FiFileText, FiRefreshCw } from 'react-icons/fi';
 import DatePicker from 'react-datepicker';
 import api from '../../lib/axios';
 
@@ -145,7 +145,7 @@ const totalNights = Math.max(
             <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tighter">Extend & Switch Stay</h2>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">Guest: {checkIn.guests?.[0]?.name}</p>
           </div>
-          <button onClick={onClose} className="p-3 hover:bg-gray-200 rounded-full transition-all"><X size={24}/></button>
+          <button onClick={onClose} className="p-3 hover:bg-gray-200 rounded-full transition-all"><FiX size={24}/></button>
         </div>
 
         <div className="p-8 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
@@ -180,7 +180,7 @@ const totalNights = Math.max(
               className={`w-full p-4 rounded-2xl flex items-center justify-center gap-3 font-black uppercase text-xs tracking-widest transition-all border-2 
                 ${isChangingRoom ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'}`}
             >
-              <ArrowRightLeft size={18}/> {isChangingRoom ? "Cancel Room Change" : "Switch to Different Room"}
+              <FiRefreshCw size={18}/> {isChangingRoom ? "Cancel Room Change" : "Switch to Different Room"}
             </button>
 
             {isChangingRoom && (
@@ -219,7 +219,7 @@ const totalNights = Math.max(
             <div className="pt-2">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 block mb-2">Adjust Nightly Rate for Extension (₹)</label>
               <div className="relative">
-                <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18}/>
+                <FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18}/>
                 <input 
                   type="number"
                   value={manualPrice}
@@ -253,7 +253,7 @@ const totalNights = Math.max(
                 </select>
              </div>
              <div className="relative">
-                <NotebookPen className="absolute left-4 top-1/2 -translate-y-1/2 text-green-300" size={16}/>
+                <FiFileText className="absolute left-4 top-1/2 -translate-y-1/2 text-green-300" size={16}/>
                 <input 
                   type="text"
                   placeholder="Note (e.g. Paid for extra 2 days suite room)"

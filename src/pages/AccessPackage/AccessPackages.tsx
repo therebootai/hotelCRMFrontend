@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Plus, Edit, Trash2, ChevronDown, Loader2, Calendar } from "lucide-react";
+import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiLoader, FiCalendar } from "react-icons/fi";
 import AccessPackageModal, { type AccessPackageData } from "../../components/access-package/AccessPackageModal";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 import toast from "react-hot-toast";
@@ -126,7 +126,7 @@ export default function AccessPackages() {
           }}
           className="btn-primary flex items-center gap-2"
         >
-          <Plus size={18} />
+          <FiPlus size={18} />
           <span>Add Pass Package</span>
         </button>
       </div>
@@ -134,7 +134,7 @@ export default function AccessPackages() {
       {/* Filters Bar */}
       <div className="flex items-center gap-4 bg-gray-50/80 p-2 rounded-xl mb-6">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
             value={search}
@@ -154,7 +154,7 @@ export default function AccessPackages() {
             <option value="Premium Combo">Premium Combo</option>
             <option value="Corporate">Corporate</option>
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
         </div>
 
         <div className="relative min-w-40">
@@ -167,7 +167,7 @@ export default function AccessPackages() {
             <option value="true">Active Only</option>
             <option value="false">Inactive Only</option>
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
         </div>
       </div>
 
@@ -199,7 +199,7 @@ export default function AccessPackages() {
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-text-secondary">
                     <div className="flex justify-center items-center gap-3">
-                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      <FiLoader className="w-5 h-5 animate-spin text-primary" />
                       <span className="text-sm font-medium">Loading packages...</span>
                     </div>
                   </td>
@@ -228,7 +228,7 @@ export default function AccessPackages() {
                           />
                         ) : (
                           <div className="w-14 h-14 rounded-lg bg-gray-100 border border-border flex items-center justify-center text-gray-400 shrink-0">
-                            <Calendar size={20} />
+                            <FiCalendar size={20} />
                           </div>
                         )}
                         <div className="min-w-0">
@@ -286,13 +286,13 @@ export default function AccessPackages() {
                           onClick={() => handleEditClick(pkg)}
                           className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                         >
-                          <Edit size={16} />
+                          <FiEdit2 size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(pkg)}
                           className="p-2 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
                         >
-                          <Trash2 size={16} />
+                          <FiTrash2 size={16} />
                         </button>
                       </div>
                     </td>

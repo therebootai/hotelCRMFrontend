@@ -1,5 +1,5 @@
 import React from 'react';
-import { Banknote, AlertTriangle, ArrowLeftRight, Brush } from 'lucide-react';
+import { FiDollarSign, FiAlertTriangle, FiRefreshCw, FiEdit2, FiRepeat } from 'react-icons/fi';
 
 // Reusable Sub-component
 const KpiCard = ({ icon: Icon, label, value, valueColor, iconBg, iconColor }: any) => (
@@ -25,7 +25,7 @@ const KpiMetrics = () => {
       label: "AVG ROOM RENT",
       value: "₹428.50",
       valueColor: "text-text-primary",
-      icon: Banknote,
+      icon: FiDollarSign,
       iconBg: "bg-orange-50",
       iconColor: "text-orange-600"
     },
@@ -34,7 +34,7 @@ const KpiMetrics = () => {
       label: "PENDING POSTINGS",
       value: "04 Bills",
       valueColor: "text-danger", // Using the danger color from index.css
-      icon: AlertTriangle,
+      icon: FiAlertTriangle,
       iconBg: "bg-red-50",
       iconColor: "text-danger"
     },
@@ -43,7 +43,7 @@ const KpiMetrics = () => {
       label: "CHANNEL ISSUES",
       value: "None",
       valueColor: "text-text-primary",
-      icon: ArrowLeftRight,
+      icon: FiRepeat,
       iconBg: "bg-cyan-50",
       iconColor: "text-cyan-600"
     },
@@ -52,7 +52,7 @@ const KpiMetrics = () => {
       label: "HOUSEKEEPING",
       value: "82% Clear",
       valueColor: "text-text-primary",
-      icon: Brush,
+      icon: FiEdit2,
       iconBg: "bg-red-50", // Subtle pink/red background from your design
       iconColor: "text-primary"
     }

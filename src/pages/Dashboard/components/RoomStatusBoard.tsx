@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 // --- STYLING CONFIGURATION ---
 const STATUS_STYLES = {
@@ -149,9 +149,9 @@ const RoomStatusBoard = () => {
           >
             {row.date}
             {row.isExpanded ? (
-              <ChevronDown size={16} className="text-text-secondary" />
+              <FiChevronDown size={16} className="text-text-secondary" />
             ) : (
-              <ChevronRight size={16} className="text-text-secondary" />
+              <FiChevronRight size={16} className="text-text-secondary" />
             )}
           </button>
 

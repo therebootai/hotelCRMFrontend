@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { PlusCircle, X, Trash2, Plus, ChevronDown, AlertCircle, ShieldAlert, Search, Calendar, Landmark, Check, CreditCard, Landmark as UpiIcon, Receipt } from "lucide-react";
+import { FiPlus, FiX, FiTrash2, FiChevronDown, FiAlertCircle, FiShield, FiSearch, FiCalendar, FiDollarSign, FiCheck, FiCreditCard, FiFileText } from "react-icons/fi";
 import api from "../../lib/axios";
 import toast from "react-hot-toast";
 
@@ -310,7 +310,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
         {/* Modal Header */}
         <div className="flex justify-between items-center border-b border-gray-100 px-6 py-4 bg-gray-50/50">
           <div className="flex items-center gap-2">
-            <PlusCircle className="text-orange-500" size={20} />
+            <FiPlus className="text-orange-500" size={20} />
             <h3 className="text-base font-black text-gray-900 uppercase tracking-tight">
               Process Room Billing & Checkout Settlement
             </h3>
@@ -319,7 +319,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-gray-100 transition-colors text-gray-400"
           >
-            <X size={20} />
+            <FiX size={20} />
           </button>
         </div>
 
@@ -332,7 +332,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
               Search & Select Active In-House Check-In Record
             </label>
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
               <input
                 type="text"
                 placeholder="Type Guest Name, Check-in ID, or Mobile number to search..."
@@ -354,7 +354,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                   onClick={resetForm}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-gray-200/50 hover:bg-gray-200 rounded-full p-0.5"
                 >
-                  <X size={12} />
+                  <FiX size={12} />
                 </button>
               )}
             </div>
@@ -380,7 +380,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                         <div className="flex flex-col gap-0.5">
                           <span className="text-orange-600 font-black text-xs flex items-center gap-1.5">
                             {ci.checkInId} - {primary?.name || "Guest"}
-                            {isSelected && <Check size={12} className="text-orange-600 font-bold" />}
+                            {isSelected && <FiCheck size={12} className="text-orange-600 font-bold" />}
                           </span>
                           <span className="text-[10px] text-gray-400 font-medium">
                             Mobile: {primary?.mobileNo || "N/A"} | Rooms: <span className="font-bold text-gray-600">{rooms || "N/A"}</span>
@@ -440,7 +440,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                 {advanceAmount > 0 && (
                   <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex items-center justify-between text-xs font-bold">
                     <div className="flex gap-2.5 items-center">
-                      <Landmark className="text-green-600" size={18} />
+                      <FiDollarSign className="text-green-600" size={18} />
                       <div>
                         <h5 className="text-green-800 font-black">Advance Payments Collected</h5>
                         <p className="text-[10px] text-green-600 font-medium">This amount was paid during check-in and will be deducted from total.</p>
@@ -455,7 +455,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                 {/* Room Rates Breakdown */}
                 <div>
                   <h4 className="text-[10px] uppercase font-black text-gray-400 tracking-wider mb-2 flex items-center gap-1">
-                    <Calendar size={12} /> Calculated Room Stays & Durations
+                    <FiCalendar size={12} /> Calculated Room Stays & Durations
                   </h4>
                   <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
                     <table className="w-full text-xs text-left">
@@ -485,14 +485,14 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <h4 className="text-[10px] uppercase font-black text-gray-400 tracking-wider flex items-center gap-1">
-                      <Receipt size={12} /> Extra Services / Amenities Additions
+                      <FiFileText size={12} /> Extra Services / Amenities Additions
                     </h4>
                     <button
                       type="button"
                       onClick={addExtraServiceRow}
                       className="flex items-center gap-1 text-[10px] font-black uppercase text-orange-500 hover:text-orange-600 bg-orange-50 px-2 py-1 rounded"
                     >
-                      <Plus size={10} /> Add Service Row
+                      <FiPlus size={10} /> Add Service Row
                     </button>
                   </div>
 
@@ -528,7 +528,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                                       title="Add this custom service to Master Database"
                                       className="px-2.5 py-1 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-black text-[9px] uppercase rounded-lg transition-all active:scale-95 shadow-md shadow-orange-100 flex items-center gap-0.5"
                                     >
-                                      <Plus size={10} strokeWidth={3} /> Add
+                                      <FiPlus size={10} /> Add
                                     </button>
                                   ) : (
                                     <button
@@ -539,7 +539,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                                       }}
                                       className="p-1 rounded-md text-gray-400 hover:bg-gray-100 transition-colors"
                                     >
-                                      <ChevronDown size={14} className={`transform transition-transform duration-200 ${focusedRowIndex === index ? "rotate-180" : ""}`} />
+                                      <FiChevronDown size={14} className={`transform transition-transform duration-200 ${focusedRowIndex === index ? "rotate-180" : ""}`} />
                                     </button>
                                   )}
                                 </div>
@@ -608,7 +608,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                               onClick={() => removeExtraServiceRow(index)}
                               className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl hover:text-red-700 transition-colors"
                             >
-                              <Trash2 size={14} />
+                              <FiTrash2 size={14} />
                             </button>
                           </div>
                         </div>
@@ -780,11 +780,11 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                       </label>
                       <div className="relative">
                         {paymentMethod === "UPI" ? (
-                          <UpiIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                          <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                         ) : paymentMethod === "Card" ? (
-                          <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                          <FiCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                         ) : (
-                          <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                          <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                         )}
                         <input
                           type="text"
@@ -824,7 +824,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
 
                 {/* INSTRUCTIONS ALERT */}
                 <div className="bg-gray-100/70 p-3 rounded-xl border border-gray-200/40 flex gap-2 items-start text-[10px] text-gray-500 font-bold leading-relaxed">
-                  <AlertCircle size={14} className="text-gray-400 shrink-0 mt-0.5" />
+                  <FiAlertCircle size={14} className="text-gray-400 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-gray-600">Final checkout changes the guest status and frees the assigned room only if the Due Balance is completely zero (₹0).</p>
                     <p className="mt-1 text-gray-400">Save Draft records partial payments without checking out the guests.</p>
@@ -838,7 +838,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
 
           {!selectedCheckInId && (
             <div className="py-24 text-center text-gray-400 font-bold text-xs space-y-2 border border-dashed border-gray-100 rounded-2xl">
-              <ShieldAlert size={32} className="mx-auto text-gray-300 animate-bounce" />
+              <FiShield size={32} className="mx-auto text-gray-300 animate-bounce" />
               <p>Search and select an active guest check-in at the top to load invoices & details.</p>
             </div>
           )}

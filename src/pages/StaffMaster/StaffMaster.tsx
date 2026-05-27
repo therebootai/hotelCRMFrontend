@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Search,
-  UserPlus,
-  ListFilter,
-  Edit,
-  Trash2,
-  ChevronDown,
-} from "lucide-react";
+  FiSearch,
+  FiUserPlus,
+  FiList,
+  FiEdit2,
+  FiTrash2,
+  FiChevronDown,
+} from "react-icons/fi";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 
@@ -236,7 +236,7 @@ const StaffMaster = () => {
           }}
           className="btn-primary flex items-center gap-2"
         >
-          <UserPlus size={18} />
+          <FiUserPlus size={18} />
           <span>Add Staff</span>
         </button>
       </div>
@@ -244,7 +244,7 @@ const StaffMaster = () => {
       {/* Filters Bar */}
       <div className="flex items-center gap-4 bg-gray-50/80 p-2 rounded-xl mb-6">
         <div className="flex-1 relative">
-          <Search
+          <FiSearch
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             size={18}
           />
@@ -267,7 +267,7 @@ const StaffMaster = () => {
             <option value="admin">Admin</option>
             <option value="receptionist">Reception</option>
           </select>
-          <ChevronDown
+          <FiChevronDown
             className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
             size={16}
           />
@@ -278,7 +278,7 @@ const StaffMaster = () => {
             onClick={() => setIsMoreFiltersOpen(!isMoreFiltersOpen)}
             className={`flex items-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${isMoreFiltersOpen ? 'bg-gray-200 text-text-primary' : 'bg-gray-100 hover:bg-gray-200 text-text-secondary'}`}
           >
-            <ListFilter size={16} />
+            <FiList size={16} />
             <span>More Filters</span>
             {/* Show a little dot if a filter is active */}
             {(statusFilter !== "all" || sortOrder !== "newest") && (
@@ -438,13 +438,13 @@ const StaffMaster = () => {
                           }}
                           className="text-text-secondary hover:text-primary transition-colors"
                         >
-                          <Edit size={16} />
+                          <FiEdit2 size={16} />
                         </button>
                         <button
                           onClick={() => setStaffToDelete(staff)}
                           className="text-text-secondary hover:text-danger transition-colors"
                         >
-                          <Trash2 size={16} />
+                          <FiTrash2 size={16} />
                         </button>
                       </div>
                     </td>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { User, Key, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { FiUser, FiKey, FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
@@ -77,7 +77,7 @@ const Login = () => {
         {/* Left Side: Brand Panel */}
         <div className="hidden md:flex md:w-5/12 bg-primary p-10 flex-col justify-between relative overflow-hidden text-white">
           <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
-            <Key size={300} />
+            <FiKey size={300} />
           </div>
 
           <div className="relative z-10">
@@ -140,7 +140,7 @@ const Login = () => {
               </label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">
-                  <User size={18} />
+                  <FiUser size={18} />
                 </div>
                 <input
                   type="text"
@@ -173,7 +173,7 @@ const Login = () => {
               </div>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">
-                  <Key size={18} />
+                  <FiKey size={18} />
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -188,7 +188,7 @@ const Login = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </button>
               </div>
               {errors.password && (
@@ -209,7 +209,7 @@ const Login = () => {
               ) : (
                 <>
                   <span>Sign In to Dashboard</span>
-                  <ArrowRight size={18} />
+                  <FiArrowRight size={18} />
                 </>
               )}
             </button>

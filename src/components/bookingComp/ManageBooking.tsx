@@ -2,16 +2,16 @@ import { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
-  Search,
-  Calendar,
-  Phone,
-  User,
-  LogIn,
-  Briefcase,
-  XCircle,
-  CheckCircle,
-  Clock,
-} from "lucide-react";
+  FiSearch,
+  FiCalendar,
+  FiPhone,
+  FiUser,
+  FiLogIn,
+  FiBriefcase,
+  FiXCircle,
+  FiCheckCircle,
+  FiClock,
+} from "react-icons/fi";
 import Pagination from "../layout/Pagination";
 import { format } from "date-fns";
 
@@ -50,15 +50,15 @@ const ManageBooking = ({
   const getPaymentStatusBadge = (paymentStatus: string) => {
     switch (paymentStatus) {
       case "Paid":
-        return { bg: "bg-green-100", text: "text-green-700", icon: CheckCircle };
+        return { bg: "bg-green-100", text: "text-green-700", icon: FiCheckCircle };
       case "Partial":
-        return { bg: "bg-yellow-100", text: "text-yellow-700", icon: Clock };
+        return { bg: "bg-yellow-100", text: "text-yellow-700", icon: FiClock };
       case "Pending":
-        return { bg: "bg-gray-100", text: "text-gray-500", icon: Clock };
+        return { bg: "bg-gray-100", text: "text-gray-500", icon: FiClock };
       case "Refunded":
-        return { bg: "bg-blue-100", text: "text-blue-700", icon: XCircle };
+        return { bg: "bg-blue-100", text: "text-blue-700", icon: FiXCircle };
       default:
-        return { bg: "bg-gray-100", text: "text-gray-500", icon: Clock };
+        return { bg: "bg-gray-100", text: "text-gray-500", icon: FiClock };
     }
   };
 
@@ -76,7 +76,7 @@ const ManageBooking = ({
               }}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${viewType === "Individual" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
             >
-              <User size={12} /> Individual
+              <FiUser size={12} /> Individual
             </button>
             <button
               onClick={() => {
@@ -86,13 +86,13 @@ const ManageBooking = ({
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${viewType === "Corporate" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`
               }
             >
-              <Briefcase size={12} /> Corporate
+              <FiBriefcase size={12} /> Corporate
             </button>
           </div>
 
           {/* Search Bar */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search
+            <FiSearch
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               size={14}
             />
@@ -108,7 +108,7 @@ const ManageBooking = ({
           {/* Date Range */}
           <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
             <div className="flex items-center px-2 gap-1 border-r border-gray-200">
-              <Calendar size={12} className="text-orange-500" />
+              <FiCalendar size={12} className="text-orange-500" />
               <DatePicker
                 selected={filters.startDate}
                 onChange={(date: any) => setFilters({ ...filters, startDate: date })}
@@ -198,7 +198,7 @@ const ManageBooking = ({
                   <div className="flex-1">
                     <span className="text-sm font-bold text-gray-800">{guestName}</span>
                     <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                      <Phone size={8} />
+                      <FiPhone size={8} />
                       {guestPhone}
                     </div>
                     {viewType === "Corporate" && item.corporateDetails?.companyName && (
@@ -272,7 +272,7 @@ const ManageBooking = ({
                         onClick={() => onCheckIn(item)}
                         className="flex items-center gap-1 px-2.5 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all text-[9px] font-bold"
                       >
-                        <LogIn size={10} />
+                        <FiLogIn size={10} />
                         Check-in
                       </button>
                     ) : item.status === "Checked-In" ? (

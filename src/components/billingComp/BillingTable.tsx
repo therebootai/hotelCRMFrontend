@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Phone, Eye } from "lucide-react";
+import { FiUser, FiPhone, FiEye } from "react-icons/fi";
 import { format } from "date-fns";
 import type { BillingItem } from "../../pages/billing/BillingPage";
 
@@ -68,11 +68,11 @@ const BillingTable: React.FC<BillingTableProps> = ({
                   {/* Guest Info */}
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5">
-                      <User size={10} className="text-gray-400" />
+                      <FiUser size={10} className="text-gray-400" />
                       <span className="text-xs font-bold text-gray-800">{guestName}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px] text-gray-500 mt-0.5">
-                      <Phone size={10} className="text-gray-400" />
+                      <FiPhone size={10} className="text-gray-400" />
                       <span>{guestPhone}</span>
                     </div>
                   </div>
@@ -114,7 +114,7 @@ const BillingTable: React.FC<BillingTableProps> = ({
                       onClick={() => onViewDetails(bill)}
                       className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-orange-50 hover:text-orange-600 transition-all text-[10px] font-bold"
                     >
-                      <Eye size={12} /> View
+                      <FiEye size={12} /> View
                     </button>
                   </div>
 

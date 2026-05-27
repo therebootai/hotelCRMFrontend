@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
-  X, Receipt, Trash2, Save, LogOut, Utensils, CheckCircle2,
-  AlertCircle, Clock, ChevronRight, CreditCard, Banknote, Smartphone, Building2
-} from "lucide-react";
+  FiX, FiFileText, FiTrash2, FiSave, FiLogOut, FiCoffee, FiCheckCircle,
+  FiAlertCircle, FiClock, FiChevronRight, FiCreditCard, FiDollarSign, FiPhone
+} from "react-icons/fi";
 import api from "../../lib/axios";
 import { startOfDay } from "date-fns";
 
@@ -194,9 +194,9 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
   };
 
   const paymentMethods = [
-    { value: "Cash", label: "Cash", icon: Banknote },
-    { value: "UPI", label: "UPI", icon: Smartphone },
-    { value: "Card", label: "Card", icon: CreditCard },
+    { value: "Cash", label: "Cash", icon: FiDollarSign },
+    { value: "UPI", label: "UPI", icon: FiPhone },
+    { value: "Card", label: "Card", icon: FiCreditCard },
     { value: "Bank Transfer", label: "Bank Transfer", icon: Building2 },
   ];
 
@@ -223,7 +223,7 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
         <div className="px-8 py-5 border-b border-gray-200 bg-white flex justify-between items-center rounded-t-[2rem]">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-orange-500 rounded-xl text-white">
-              <Receipt size={22} />
+              <FiFileText size={22} />
             </div>
             <div>
               <h2 className="text-lg font-black text-gray-900 uppercase tracking-tight">Hotel Bill & Checkout</h2>
@@ -234,7 +234,7 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
-            <X size={22} />
+            <FiX size={22} />
           </button>
         </div>
 
@@ -347,7 +347,7 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
                       </div>
                       <div className="w-20 text-right text-xs font-black text-purple-600">₹{Number(s.total).toLocaleString()}</div>
                       <button onClick={() => removeExtraService(i)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                        <Trash2 size={15} />
+                        <FiTrash2 size={15} />
                       </button>
                     </div>
                   ))}
@@ -560,7 +560,7 @@ onChange={(e) => {
                 {/* Checkout status indicator */}
                 {!canCheckout && netPayable > 0 && (
                   <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                    <AlertCircle size={14} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                    <FiAlertCircle size={14} className="text-amber-500 mt-0.5 flex-shrink-0" />
                     <p className="text-xs text-amber-700 font-semibold">
                       Full payment required for checkout. Save as draft if partial payment is collected.
                     </p>
@@ -581,7 +581,7 @@ onChange={(e) => {
                     {submitting ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <LogOut size={15} />
+                      <FiLogOut size={15} />
                     )}
                     {isZeroBalance ? "Confirm Checkout (No Balance)" : "Confirm Checkout (Full Payment)"}
                   </button>
@@ -601,7 +601,7 @@ onChange={(e) => {
                     disabled={submitting}
                     className="w-full py-3.5 bg-white border-2 border-gray-200 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
                   >
-                    <Save size={14} />
+                    <FiSave size={14} />
                     Save as Draft {numReceived > 0 && `(₹${numReceived.toLocaleString()} collected)`}
                   </button>
                 </div>

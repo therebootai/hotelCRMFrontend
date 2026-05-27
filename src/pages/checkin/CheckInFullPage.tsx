@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from "react";
 import {
-  Search,
-  Calendar,
-  Filter,
-  User,
-  Building2,
-  MoreVertical,
-  Edit3,
-  LogOut,
-  RefreshCw,
-  X,
-  Utensils,
-  CalendarDays,
-  ArrowLeftRight,
-  ChevronRight,
-} from "lucide-react";
+  FiSearch,
+  FiCalendar,
+  FiFilter,
+  FiUser,
+  FiHome,
+  FiMoreVertical,
+  FiEdit2,
+  FiLogOut,
+  FiRefreshCw,
+  FiX,
+  FiCoffee,
+  FiChevronRight,
+} from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
@@ -133,7 +131,7 @@ const handleCheckoutClick = (item: any) => {
         <div className="flex gap-4">
           <div className="bg-white p-4 px-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-orange-50 text-orange-500 rounded-2xl">
-              <User size={20} />
+              <FiUser size={20} />
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase">
@@ -146,7 +144,7 @@ const handleCheckoutClick = (item: any) => {
           </div>
           <div className="bg-white p-4 px-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-blue-50 text-blue-500 rounded-2xl">
-              <Building2 size={20} />
+              <FiHome size={20} />
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase">
@@ -180,7 +178,7 @@ const handleCheckoutClick = (item: any) => {
 
         {/* 2. Global Search */}
         <div className="relative min-w-[200px] flex-1">
-          <Search
+          <FiSearch
             className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
             size={16}
           />
@@ -206,7 +204,7 @@ const handleCheckoutClick = (item: any) => {
 
         {/* 4. Date Range Picker */}
         <div className="flex items-center bg-gray-50 border border-transparent rounded-2xl px-4 py-2">
-          <Calendar className="text-gray-400 mr-2" size={14} />
+          <FiCalendar className="text-gray-400 mr-2" size={14} />
           <DatePicker
             selected={filters.startDate}
             onChange={(date) => setFilters({ ...filters, startDate: date })}
@@ -214,7 +212,7 @@ const handleCheckoutClick = (item: any) => {
             className="bg-transparent outline-none text-[10px] font-black w-20 uppercase"
             isClearable
           />
-          <ChevronRight className="text-gray-300 mx-1" size={12} />
+          <FiChevronRight className="text-gray-300 mx-1" size={12} />
           <DatePicker
             selected={filters.endDate}
             onChange={(date) => setFilters({ ...filters, endDate: date })}
@@ -255,7 +253,7 @@ const handleCheckoutClick = (item: any) => {
             className="p-3 bg-orange-500 text-white rounded-2xl hover:bg-orange-600 transition-all shadow-md shadow-orange-100"
             title="Apply Filters"
           >
-            <RefreshCw size={18} />
+            <FiRefreshCw size={18} />
           </button>
         </div>
       </div>
@@ -315,10 +313,10 @@ const handleCheckoutClick = (item: any) => {
                         <FaEye size={12} />
                       </button>
                       <button onClick={() => { setEditCheckInData(item); setIsEditMode(true); }} className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all border border-indigo-100" title="Edit">
-                        <Edit3 size={12} />
+                        <FiEdit2 size={12} />
                       </button>
                       <button onClick={() => { setSelectedItem(item); setIsExtendModalOpen(true); }} className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all" title="Extend">
-                        <CalendarDays size={12} />
+                        <FiCalendar size={12} />
                       </button>
                       <button onClick={() => handleCheckoutClick(item)} className="px-3 py-1.5 bg-orange-500 text-white rounded-lg font-bold text-[9px] uppercase hover:bg-orange-600 shadow-sm transition-all">
                         Checkout

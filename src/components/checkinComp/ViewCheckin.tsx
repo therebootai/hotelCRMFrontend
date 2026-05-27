@@ -1,5 +1,5 @@
 import React from "react";
-import { X, User, BedDouble, Calendar, CreditCard, FileText, Car, Users, Building2, Phone, Mail, MapPin, Shield, CreditCardIcon } from "lucide-react";
+import { FiX, FiUser, FiPhone, FiCalendar, FiUsers, FiCreditCard, FiFileText, FiMail, FiMapPin, FiShield, FiCoffee } from "react-icons/fi";
 import { format } from "date-fns";
 
 interface ViewCheckinProps {
@@ -20,7 +20,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
         <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <FileText size={18} className="text-blue-600" />
+              <FiFileText size={18} className="text-blue-600" />
             </div>
             <div>
               <h2 className="text-sm font-black text-gray-800 uppercase">Check-in Details</h2>
@@ -28,7 +28,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
             </div>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-all">
-            <X size={18} className="text-gray-400" />
+            <FiX size={18} className="text-gray-400" />
           </button>
         </div>
 
@@ -52,7 +52,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
             {/* Guest Details */}
             <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
               <div className="flex items-center gap-2 mb-2">
-                <User size={12} className="text-gray-400" />
+                <FiUser size={12} className="text-gray-400" />
                 <span className="text-[10px] font-black text-gray-500 uppercase">Primary Guest</span>
               </div>
               <div className="space-y-1 text-[10px]">
@@ -82,7 +82,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
             {/* Stay Details */}
             <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
               <div className="flex items-center gap-2 mb-2">
-                <Calendar size={12} className="text-gray-400" />
+                <FiCalendar size={12} className="text-gray-400" />
                 <span className="text-[10px] font-black text-gray-500 uppercase">Stay Info</span>
               </div>
               <div className="space-y-1 text-[10px]">
@@ -113,7 +113,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
           {/* Rooms */}
           <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
             <div className="flex items-center gap-2 mb-2">
-              <BedDouble size={12} className="text-gray-400" />
+              <FiCoffee size={12} className="text-gray-400" />
               <span className="text-[10px] font-black text-gray-500 uppercase">Rooms ({checkIn.roomDetails?.length || 0})</span>
             </div>
             <div className="space-y-1">
@@ -135,7 +135,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
           {/* All Guests */}
           <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
             <div className="flex items-center gap-2 mb-2">
-              <Users size={12} className="text-gray-400" />
+              <FiUsers size={12} className="text-gray-400" />
               <span className="text-[10px] font-black text-gray-500 uppercase">Guests ({checkIn.guests?.length || 0})</span>
             </div>
             <div className="space-y-1">
@@ -157,7 +157,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
           {/* Payment Summary */}
           <div className="bg-green-50 rounded-lg p-3 border border-green-100">
             <div className="flex items-center gap-2 mb-2">
-              <CreditCard size={12} className="text-green-600" />
+              <FiCreditCard size={12} className="text-green-600" />
               <span className="text-[10px] font-black text-green-700 uppercase">Payment Summary</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -209,7 +209,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
           {checkIn.grcDetails?.length > 0 && (
             <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
               <div className="flex items-center gap-2 mb-2">
-                <FileText size={12} className="text-purple-600" />
+                <FiFileText size={12} className="text-purple-600" />
                 <span className="text-[10px] font-black text-purple-700 uppercase">GRC Details</span>
               </div>
               <div className="space-y-1">
@@ -260,7 +260,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
           {primaryGuest?.idDocument?.secure_url && (
             <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
               <div className="flex items-center gap-2 mb-2">
-                <Shield size={12} className="text-gray-400" />
+                <FiShield size={12} className="text-gray-400" />
                 <span className="text-[10px] font-black text-gray-500 uppercase">ID Document</span>
               </div>
               <a href={primaryGuest.idDocument.secure_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 hover:underline font-bold">

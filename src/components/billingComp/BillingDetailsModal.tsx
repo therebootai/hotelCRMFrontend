@@ -1,5 +1,5 @@
 import React from "react";
-import { X, User, Phone } from "lucide-react";
+import { FiX, FiUser, FiPhone } from "react-icons/fi";
 import { format } from "date-fns";
 import type { BillingItem } from "../../pages/billing/BillingPage";
 
@@ -34,7 +34,7 @@ const BillingDetailsModal: React.FC<BillingDetailsModalProps> = ({
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-gray-100 transition-colors text-gray-400"
           >
-            <X size={20} />
+            <FiX size={20} />
           </button>
         </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ArrowDown } from 'lucide-react';
+import { FiChevronDown, FiArrowDown } from 'react-icons/fi';
 import api from '../../../lib/axios';
 
 interface RoomType {
@@ -48,7 +48,7 @@ export default function RoomFilters({ filters, onFilterChange }: RoomFiltersProp
               </option>
             ))}
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
         </div>
 
         {/* Status Dropdown */}
@@ -63,7 +63,7 @@ export default function RoomFilters({ filters, onFilterChange }: RoomFiltersProp
             <option value="Maintenance">Maintenance</option>
             <option value="Blocked">Blocked</option>
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
         </div>
 
       </div>
@@ -72,7 +72,7 @@ export default function RoomFilters({ filters, onFilterChange }: RoomFiltersProp
         <span className="text-text-secondary font-bold tracking-wider uppercase text-[10px]">Sort By:</span>
         <button className="flex items-center gap-1 text-text-primary font-medium hover:text-primary transition-colors">
           Room No
-          <ArrowDown size={14} className="text-text-secondary transition-colors group-hover:text-primary" />
+          <FiArrowDown size={14} className="text-text-secondary transition-colors group-hover:text-primary" />
         </button>
       </div>
     </div>

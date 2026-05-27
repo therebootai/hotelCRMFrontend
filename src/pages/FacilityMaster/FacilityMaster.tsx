@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Search,
-  Plus,
-  ListFilter,
-  Edit,
-  Trash2,
-  ChevronDown,
-  Building,
-} from "lucide-react";
+  FiSearch,
+  FiPlus,
+  FiList,
+  FiEdit2,
+  FiTrash2,
+  FiChevronDown,
+  FiHome,
+  FiFilter,
+} from "react-icons/fi";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 import { isAxiosError } from "axios";
@@ -214,7 +215,7 @@ const FacilityMaster = () => {
           }}
           className="btn-primary flex items-center gap-2"
         >
-          <Plus size={18} />
+          <FiPlus size={18} />
           <span>Add Facility</span>
         </button>
       </div>
@@ -222,7 +223,7 @@ const FacilityMaster = () => {
       {/* Filters Bar */}
       <div className="flex items-center gap-4 bg-gray-50/80 p-2 rounded-xl mb-6">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
             value={searchInput}
@@ -247,7 +248,7 @@ const FacilityMaster = () => {
             <option value="Rooftop">Rooftop</option>
             <option value="Other">Other</option>
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
         </div>
 
         <div className="relative" ref={popoverRef}>
@@ -255,7 +256,7 @@ const FacilityMaster = () => {
             onClick={() => setIsMoreFiltersOpen(!isMoreFiltersOpen)}
             className={`flex items-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${isMoreFiltersOpen ? 'bg-gray-200 text-text-primary' : 'bg-gray-100 hover:bg-gray-200 text-text-secondary'}`}
           >
-            <ListFilter size={16} />
+            <FiFilter size={16} />
             <span>More Filters</span>
             {(statusFilter !== "all" || sortOrder !== "newest") && (
               <span className="w-2 h-2 rounded-full bg-primary ml-1"></span>
@@ -337,7 +338,7 @@ const FacilityMaster = () => {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 border border-border">
-                          <Building size={20} />
+                          <FiHome size={20} />
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-text-primary">{fac.name}</p>
@@ -374,13 +375,13 @@ const FacilityMaster = () => {
                           }}
                           className="text-text-secondary hover:text-primary transition-colors"
                         >
-                          <Edit size={16} />
+                          <FiEdit2 size={16} />
                         </button>
                         <button
                           onClick={() => setFacilityToDelete(fac)}
                           className="text-text-secondary hover:text-danger transition-colors"
                         >
-                          <Trash2 size={16} />
+                          <FiTrash2 size={16} />
                         </button>
                       </div>
                     </td>

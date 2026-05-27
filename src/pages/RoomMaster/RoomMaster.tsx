@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, ArrowLeft, Loader2, CalendarRange } from "lucide-react";
+import { FiPlus, FiArrowLeft, FiLoader, FiCalendar } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
@@ -144,7 +144,7 @@ export default function RoomMaster() {
               onClick={handleCloseForm}
               className="p-2 bg-card border border-border text-text-secondary hover:text-text-primary rounded-lg transition-colors"
             >
-              <ArrowLeft size={18} />
+              <FiArrowLeft size={18} />
             </button>
             <h1 className="text-xl font-bold text-text-primary">
               {editingRoom
@@ -164,13 +164,13 @@ export default function RoomMaster() {
                   onClick={() => navigate('/master/rooms/rates')}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors border bg-card border-border text-text-primary hover:bg-background"
                 >
-                  <CalendarRange size={16} /> Manage Rates
+                  <FiCalendar size={16} /> Manage Rates
                 </button>
                 <button
                   onClick={handleOpenAddForm}
                   className="btn-primary flex items-center gap-2 px-5 py-2.5"
                 >
-                  <Plus size={18} /> Add Room
+                  <FiPlus size={18} /> Add Room
                 </button>
               </>
             )}
@@ -179,7 +179,7 @@ export default function RoomMaster() {
                 onClick={() => setIsRoomTypeModalOpen(true)}
                 className="btn-primary flex items-center gap-2 px-5 py-2.5"
               >
-                <Plus size={18} /> Add Room Type
+                <FiPlus size={18} /> Add Room Type
               </button>
             )}
             {activeTab === "Amenities Master" && (
@@ -187,7 +187,7 @@ export default function RoomMaster() {
                 onClick={() => setIsAmenityModalOpen(true)}
                 className="btn-primary flex items-center gap-2 px-5 py-2.5"
               >
-                <Plus size={18} /> Add Amenities
+                <FiPlus size={18} /> Add Amenities
               </button>
             )}
             {activeTab === "Tax / GST Master" && (
@@ -195,7 +195,7 @@ export default function RoomMaster() {
                 onClick={() => setIsTaxModalOpen(true)}
                 className="btn-primary flex items-center gap-2 px-5 py-2.5"
               >
-                <Plus size={18} /> Add Tax/GST
+                <FiPlus size={18} /> Add Tax/GST
               </button>
             )}
           </div>
@@ -221,7 +221,7 @@ export default function RoomMaster() {
             <div className="flex-1 min-w-0 transition-all duration-300 w-full">
               {isLoadingRooms ? (
                 <div className="bg-card border border-border rounded-xl p-12 flex flex-col items-center justify-center text-text-secondary">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+                  <FiLoader className="w-8 h-8 animate-spin text-primary mb-3" />
                   <p className="font-medium">Loading rooms...</p>
                 </div>
               ) : (

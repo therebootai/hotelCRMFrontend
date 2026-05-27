@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Search, FileText, PlusCircle, CheckCircle, Clock, DollarSign } from "lucide-react";
+import { FiSearch, FiFileText, FiPlus, FiCheckCircle, FiClock, FiDollarSign } from "react-icons/fi";
 import api from "../../lib/axios";
 import toast from "react-hot-toast";
 
@@ -107,7 +107,7 @@ const BillingPage = () => {
       <div className="sticky top-0 z-10 bg-[#F8F9FA]/90 backdrop-blur-md py-4 flex flex-row justify-between items-center border-b border-gray-100">
         <div className="flex flex-col">
           <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase flex items-center gap-2">
-            <FileText className="text-orange-500" size={24} />
+            <FiFileText className="text-orange-500" size={24} />
             Billing & Invoices
           </h1>
           <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
@@ -119,7 +119,7 @@ const BillingPage = () => {
           onClick={() => setShowCreateModal(true)}
           className="h-[2.8rem] px-6 flex justify-center items-center bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 transition-all rounded-xl text-white font-bold gap-2 shadow-lg shadow-orange-100 active:scale-95"
         >
-          <PlusCircle size={16} /> Process Billing / Checkout
+          <FiPlus size={16} /> Process Billing / Checkout
         </button>
       </div>
 
@@ -131,7 +131,7 @@ const BillingPage = () => {
             <h3 className="text-xl font-black text-gray-800 mt-1">{billings.length}</h3>
           </div>
           <div className="p-3 bg-gray-50 text-gray-600 rounded-lg">
-            <FileText size={20} />
+            <FiFileText size={20} />
           </div>
         </div>
         
@@ -143,7 +143,7 @@ const BillingPage = () => {
             </h3>
           </div>
           <div className="p-3 bg-green-50 text-green-600 rounded-lg">
-            <CheckCircle size={20} />
+            <FiCheckCircle size={20} />
           </div>
         </div>
 
@@ -155,7 +155,7 @@ const BillingPage = () => {
             </h3>
           </div>
           <div className="p-3 bg-yellow-50 text-yellow-600 rounded-lg">
-            <Clock size={20} />
+            <FiClock size={20} />
           </div>
         </div>
 
@@ -167,7 +167,7 @@ const BillingPage = () => {
             </h3>
           </div>
           <div className="p-3 bg-red-50 text-red-600 rounded-lg">
-            <DollarSign size={20} />
+            <FiDollarSign size={20} />
           </div>
         </div>
       </div>
@@ -175,7 +175,7 @@ const BillingPage = () => {
       {/* FILTER & SEARCH */}
       <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-wrap items-center justify-between gap-3">
         <div className="relative flex-1 min-w-[280px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
           <input
             type="text"
             placeholder="Search by invoice code, guest name..."

@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, HelpCircle, LogOut, User, Key } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { FiSearch, FiHelpCircle, FiLogOut, FiUser, FiKey } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
 const TopBar = () => {
   const { user, logout } = useAuth();
@@ -35,7 +36,7 @@ const TopBar = () => {
         <h2 className="text-lg font-semibold text-text-primary whitespace-nowrap">Siddharaj Hotel</h2>
         
         <div className="relative w-full max-w-md hidden lg:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
           <input 
             type="text" 
             placeholder="Search guests, rooms..." 
@@ -62,12 +63,9 @@ const TopBar = () => {
 
         {/* Icons */}
         <div className="flex items-center gap-4 text-text-secondary">
-          <button className="hover:text-text-primary transition-colors relative">
-            <Bell size={20} />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
+          <NotificationBell />
           <button className="hover:text-text-primary transition-colors">
-            <HelpCircle size={20} />
+            <FiHelpCircle size={20} />
           </button>
         </div>
 
@@ -110,13 +108,13 @@ const TopBar = () => {
                 
                 {/* Future Profile Link */}
                 <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded-lg transition-colors">
-                  <User size={16} />
+                  <FiUser size={16} />
                   <span>My Profile</span>
                 </button>
 
                 {/* Future Change Password Link */}
                 <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded-lg transition-colors">
-                  <Key size={16} />
+                  <FiKey size={16} />
                   <span>Change Password</span>
                 </button>
 
@@ -130,7 +128,7 @@ const TopBar = () => {
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-danger hover:bg-red-50 rounded-lg transition-colors"
                 >
-                  <LogOut size={16} />
+                  <FiLogOut size={16} />
                   <span>Sign Out</span>
                 </button>
 

@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from "react";
 import {
-  FiX, FiFileText, FiTrash2, FiSave, FiLogOut, FiCoffee, FiCheckCircle,
-  FiAlertCircle, FiClock, FiChevronRight, FiCreditCard, FiDollarSign, FiPhone
+  FiX,
+  FiFileText,
+  FiSave,
+  FiLogOut,
+  FiAlertCircle,
+  FiCreditCard,
+  FiDollarSign,
+  FiPhone,
 } from "react-icons/fi";
 import api from "../../lib/axios";
 import { startOfDay } from "date-fns";
+import { FaUtensils } from "react-icons/fa";
+import { BiBuilding } from "react-icons/bi";
 
 const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -33,37 +41,34 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
           api.get(`/billing/preview/${checkIn._id}`),
           api.get(`/extra-services?activeOnly=true`),
         ]);
-       if (billRes.data.success) {
-  const d = billRes.data.data;
+        if (billRes.data.success) {
+          const d = billRes.data.data;
 
-  setBillData(d);
-  setIsExisting(billRes.data.isExisting);
+          setBillData(d);
+          setIsExisting(billRes.data.isExisting);
 
-  setExtraServices(d.extraServices || []);
-  setRestaurantCharges(d.restaurantCharges || 0);
-  setDiscount(d.discount || 0);
-  setNotes(d.notes || "");
-  setTaxPercentage(d.taxPercentage ?? 12);
+          setExtraServices(d.extraServices || []);
+          setRestaurantCharges(d.restaurantCharges || 0);
+          setDiscount(d.discount || 0);
+          setNotes(d.notes || "");
+          setTaxPercentage(d.taxPercentage ?? 12);
 
-  const lastPayment =
-    d.payments?.length > 0
-      ? d.payments[d.payments.length - 1]
-      : null;
+          const lastPayment =
+            d.payments?.length > 0 ? d.payments[d.payments.length - 1] : null;
 
-  setPaymentMethod(lastPayment?.method || "Cash");
-  setPaymentNote(lastPayment?.note || "");
+          setPaymentMethod(lastPayment?.method || "Cash");
+          setPaymentNote(lastPayment?.note || "");
 
-  setReceivedAmount("");
+          setReceivedAmount("");
 
-  setBillData({
-    ...d,
-    paidAmount: d.paidAmount || 0,
-    dueAmount: d.dueAmount || 0,
-    payments: d.payments || [],
-    advancePaymentsHistory:
-      d.advancePaymentsHistory || [],
-  });
-}
+          setBillData({
+            ...d,
+            paidAmount: d.paidAmount || 0,
+            dueAmount: d.dueAmount || 0,
+            payments: d.payments || [],
+            advancePaymentsHistory: d.advancePaymentsHistory || [],
+          });
+        }
         setMasterServices(serviceRes.data.data || []);
       } catch (err) {
         console.error(err);
@@ -76,76 +81,64 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
 
   // ─── Calculations ────────────────────────────────────────────────
   // Derive roomTotal from breakdown array (API doesn't always send totalRoomCharges)
-const roomTotal =
-  billData?.roomChargesBreakdown?.reduce(
-    (acc: number, r: any) => acc + (Number(r.totalRoomCharge) || 0),
-    0
-  ) ?? billData?.totalRoomCharges ?? 0;
+  const roomTotal =
+    billData?.roomChargesBreakdown?.reduce(
+      (acc: number, r: any) => acc + (Number(r.totalRoomCharge) || 0),
+      0,
+    ) ??
+    billData?.totalRoomCharges ??
+    0;
 
-const servicesTotal = extraServices.reduce(
-  (acc, s) => acc + (Number(s.total) || 0),
-  0
-);
+  const servicesTotal = extraServices.reduce(
+    (acc, s) => acc + (Number(s.total) || 0),
+    0,
+  );
 
-// 👉 Round subtotal immediately
-const subTotal = Math.round(
-  roomTotal + servicesTotal + Number(restaurantCharges)
-);
+  // 👉 Round subtotal immediately
+  const subTotal = Math.round(
+    roomTotal + servicesTotal + Number(restaurantCharges),
+  );
 
-// 👉 Round tax (no decimals)
-const taxAmount = Math.round((subTotal * taxPercentage) / 100);
+  // 👉 Round tax (no decimals)
+  const taxAmount = Math.round((subTotal * taxPercentage) / 100);
 
-// 👉 Round grand total
-const grandTotal = Math.round(
-  subTotal + taxAmount - Number(discount)
-);
+  // 👉 Round grand total
+  const grandTotal = Math.round(subTotal + taxAmount - Number(discount));
 
-const advancePaid = Math.round(
-  billData?.advanceDeducted || 0
-);
+  const advancePaid = Math.round(billData?.advanceDeducted || 0);
 
-const existingPaid = Math.round(
-  billData?.paidAmount || 0
-);
+  const existingPaid = Math.round(billData?.paidAmount || 0);
 
-const alreadyPaid = advancePaid + existingPaid;
+  const alreadyPaid = advancePaid + existingPaid;
 
-const numReceived = Math.round(
-  Number(receivedAmount) || 0
-);
+  const numReceived = Math.round(Number(receivedAmount) || 0);
 
-// total payable after previous payments
-const netPayable = Math.max(
-  0,
-  Math.round(grandTotal - alreadyPaid)
-);
+  // total payable after previous payments
+  const netPayable = Math.max(0, Math.round(grandTotal - alreadyPaid));
 
-// after current input payment
-const dueAfterPayment = Math.max(
-  0,
-  Math.round(netPayable - numReceived)
-);
+  // after current input payment
+  const dueAfterPayment = Math.max(0, Math.round(netPayable - numReceived));
 
-const isFullyPaid = numReceived >= netPayable && netPayable > 0;
-const isZeroBalance = netPayable === 0;
-const expectedOut = checkIn.expectedCheckOutTime
-  ? new Date(checkIn.expectedCheckOutTime)
-  : null;
- 
-const today = startOfDay(new Date());
-const isCheckoutDateReached = expectedOut
-  ? today >= startOfDay(expectedOut)
-  : true; 
+  const isFullyPaid = numReceived >= netPayable && netPayable > 0;
+  const isZeroBalance = netPayable === 0;
+  const expectedOut = checkIn.expectedCheckOutTime
+    ? new Date(checkIn.expectedCheckOutTime)
+    : null;
 
+  const today = startOfDay(new Date());
+  const isCheckoutDateReached = expectedOut
+    ? today >= startOfDay(expectedOut)
+    : true;
 
-const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
+  const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
 
   // ─── Handlers ────────────────────────────────────────────────────
   const updateExtraService = (index: number, field: string, value: any) => {
     const updated = [...extraServices];
     updated[index] = { ...updated[index], [field]: value };
     if (field === "quantity" || field === "rate") {
-      updated[index].total = Number(updated[index].quantity) * Number(updated[index].rate);
+      updated[index].total =
+        Number(updated[index].quantity) * Number(updated[index].rate);
     }
     setExtraServices(updated);
   };
@@ -155,7 +148,10 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
   };
 
   const addExtraService = () => {
-    setExtraServices([...extraServices, { serviceName: "", quantity: 1, rate: 0, total: 0 }]);
+    setExtraServices([
+      ...extraServices,
+      { serviceName: "", quantity: 1, rate: 0, total: 0 },
+    ]);
   };
 
   const handleAction = async (isCheckout: boolean) => {
@@ -176,7 +172,9 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
             ? {
                 amount: numReceived,
                 method: paymentMethod,
-                note: paymentNote || (isCheckout ? "Checkout settlement" : "Partial payment"),
+                note:
+                  paymentNote ||
+                  (isCheckout ? "Checkout settlement" : "Partial payment"),
               }
             : null,
       };
@@ -197,19 +195,17 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
     { value: "Cash", label: "Cash", icon: FiDollarSign },
     { value: "UPI", label: "UPI", icon: FiPhone },
     { value: "Card", label: "Card", icon: FiCreditCard },
-    { value: "Bank Transfer", label: "Bank Transfer", icon: Building2 },
+    { value: "Bank Transfer", label: "Bank Transfer", icon: BiBuilding },
   ];
-
-
-  
-
 
   if (loading && !billData) {
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div className="bg-white rounded-3xl p-12 text-center shadow-2xl">
           <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="font-bold text-gray-500 text-sm uppercase tracking-widest">Loading Bill Data...</p>
+          <p className="font-bold text-gray-500 text-sm uppercase tracking-widest">
+            Loading Bill Data...
+          </p>
         </div>
       </div>
     );
@@ -218,7 +214,6 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm">
       <div className="bg-[#f8f8f6] w-full max-w-6xl rounded-[2rem] shadow-2xl flex flex-col max-h-[96vh] overflow-hidden border border-gray-200">
-
         {/* ── HEADER ── */}
         <div className="px-8 py-5 border-b border-gray-200 bg-white flex justify-between items-center rounded-t-[2rem]">
           <div className="flex items-center gap-4">
@@ -226,14 +221,20 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
               <FiFileText size={22} />
             </div>
             <div>
-              <h2 className="text-lg font-black text-gray-900 uppercase tracking-tight">Hotel Bill & Checkout</h2>
+              <h2 className="text-lg font-black text-gray-900 uppercase tracking-tight">
+                Hotel Bill & Checkout
+              </h2>
               <p className="text-xs text-gray-400 font-semibold mt-0.5">
-                {checkIn.guests?.[0]?.name} &nbsp;·&nbsp; Room {checkIn.roomDetails?.[0]?.roomNumber}
+                {checkIn.guests?.[0]?.name} &nbsp;·&nbsp; Room{" "}
+                {checkIn.roomDetails?.[0]?.roomNumber}
                 &nbsp;·&nbsp; Invoice Preview
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+          >
             <FiX size={22} />
           </button>
         </div>
@@ -241,52 +242,95 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
         {/* ── BODY ── */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-6 flex flex-col xl:flex-row gap-6">
-
             {/* ══ LEFT COLUMN ══ */}
             <div className="flex-1 space-y-5">
-
               {/* 1. Room Stay Breakdown */}
               <Section title="Room Stay Charges" accent="orange">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100">
-                      <th className="text-left pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">Room</th>
-                      <th className="text-center pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">Check-In</th>
-                      <th className="text-center pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">Check-Out</th>
-                      <th className="text-center pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">Nights</th>
-                      <th className="text-right pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">Rate/Night</th>
-                      <th className="text-right pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">Total</th>
+                      <th className="text-left pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                        Room
+                      </th>
+                      <th className="text-center pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                        Check-In
+                      </th>
+                      <th className="text-center pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                        Check-Out
+                      </th>
+                      <th className="text-center pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                        Nights
+                      </th>
+                      <th className="text-right pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                        Rate/Night
+                      </th>
+                      <th className="text-right pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">
+                        Total
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {billData?.roomChargesBreakdown?.length > 0 ? (
-                      billData.roomChargesBreakdown.map((room: any, i: number) => (
-                        <tr key={i} className="border-b border-gray-50 last:border-0">
-                          <td className="py-3 font-bold text-gray-800">
-                            Room {room.roomNumber}
-                            <span className="ml-2 text-[10px] font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{room.roomType}</span>
-                          </td>
-                          <td className="py-3 text-center text-gray-600 text-xs">
-                            {room.checkInDate ? new Date(room.checkInDate).toLocaleDateString("en-IN") : "—"}
-                          </td>
-                          <td className="py-3 text-center text-gray-600 text-xs">
-                            {room.checkOutDate ? new Date(room.checkOutDate).toLocaleDateString("en-IN") : "—"}
-                          </td>
-                          <td className="py-3 text-center font-bold text-gray-700">{room.nights}</td>
-                          <td className="py-3 text-right text-gray-700 font-semibold">₹{Number(room.ratePerNight).toLocaleString()}</td>
-                          <td className="py-3 text-right font-black text-orange-600">₹{Number(room.totalRoomCharge).toLocaleString()}</td>
-                        </tr>
-                      ))
+                      billData.roomChargesBreakdown.map(
+                        (room: any, i: number) => (
+                          <tr
+                            key={i}
+                            className="border-b border-gray-50 last:border-0"
+                          >
+                            <td className="py-3 font-bold text-gray-800">
+                              Room {room.roomNumber}
+                              <span className="ml-2 text-[10px] font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                                {room.roomType}
+                              </span>
+                            </td>
+                            <td className="py-3 text-center text-gray-600 text-xs">
+                              {room.checkInDate
+                                ? new Date(room.checkInDate).toLocaleDateString(
+                                    "en-IN",
+                                  )
+                                : "—"}
+                            </td>
+                            <td className="py-3 text-center text-gray-600 text-xs">
+                              {room.checkOutDate
+                                ? new Date(
+                                    room.checkOutDate,
+                                  ).toLocaleDateString("en-IN")
+                                : "—"}
+                            </td>
+                            <td className="py-3 text-center font-bold text-gray-700">
+                              {room.nights}
+                            </td>
+                            <td className="py-3 text-right text-gray-700 font-semibold">
+                              ₹{Number(room.ratePerNight).toLocaleString()}
+                            </td>
+                            <td className="py-3 text-right font-black text-orange-600">
+                              ₹{Number(room.totalRoomCharge).toLocaleString()}
+                            </td>
+                          </tr>
+                        ),
+                      )
                     ) : (
                       <tr>
-                        <td colSpan={6} className="py-6 text-center text-gray-400 text-xs">No room charges found</td>
+                        <td
+                          colSpan={6}
+                          className="py-6 text-center text-gray-400 text-xs"
+                        >
+                          No room charges found
+                        </td>
                       </tr>
                     )}
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-orange-100">
-                      <td colSpan={5} className="pt-3 text-xs font-black text-gray-500 uppercase">Total Room Charges</td>
-                      <td className="pt-3 text-right font-black text-orange-600 text-base">₹{Number(roomTotal).toLocaleString()}</td>
+                      <td
+                        colSpan={5}
+                        className="pt-3 text-xs font-black text-gray-500 uppercase"
+                      >
+                        Total Room Charges
+                      </td>
+                      <td className="pt-3 text-right font-black text-orange-600 text-base">
+                        ₹{Number(roomTotal).toLocaleString()}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>
@@ -295,16 +339,23 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
               {/* 2. Restaurant Charges */}
               <Section title="Restaurant / Food Charges" accent="blue">
                 <div className="flex items-center gap-4">
-                  <Utensils size={16} className="text-blue-400 flex-shrink-0" />
+                  <FaUtensils
+                    size={16}
+                    className="text-blue-400 flex-shrink-0"
+                  />
                   <input
                     type="number"
                     min={0}
                     className="flex-1 p-3 bg-blue-50 border border-blue-100 rounded-xl font-bold text-blue-700 outline-none focus:border-blue-400 transition-colors text-sm"
                     placeholder="Enter total food/restaurant bill"
                     value={restaurantCharges}
-                    onChange={(e) => setRestaurantCharges(Number(e.target.value))}
+                    onChange={(e) =>
+                      setRestaurantCharges(Number(e.target.value))
+                    }
                   />
-                  <span className="text-sm font-black text-blue-600 w-28 text-right">₹{Number(restaurantCharges).toLocaleString()}</span>
+                  <span className="text-sm font-black text-blue-600 w-28 text-right">
+                    ₹{Number(restaurantCharges).toLocaleString()}
+                  </span>
                 </div>
               </Section>
 
@@ -312,41 +363,69 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
               <Section title="Extra Services" accent="purple">
                 <div className="space-y-3">
                   {extraServices.length === 0 && (
-                    <p className="text-center text-xs text-gray-400 py-4">No extra services added yet.</p>
+                    <p className="text-center text-xs text-gray-400 py-4">
+                      No extra services added yet.
+                    </p>
                   )}
                   {extraServices.map((s, i) => (
-                    <div key={i} className="flex gap-2 items-center bg-gray-50 rounded-xl p-2">
+                    <div
+                      key={i}
+                      className="flex gap-2 items-center bg-gray-50 rounded-xl p-2"
+                    >
                       <select
                         className="flex-1 p-2 border border-gray-200 rounded-lg text-xs font-semibold bg-white outline-none"
                         value={s.serviceName}
-                        onChange={(e) => updateExtraService(i, "serviceName", e.target.value)}
+                        onChange={(e) =>
+                          updateExtraService(i, "serviceName", e.target.value)
+                        }
                       >
                         <option value="">Select service…</option>
                         {masterServices.map((ms) => (
-                          <option key={ms._id} value={ms.name}>{ms.name}</option>
+                          <option key={ms._id} value={ms.name}>
+                            {ms.name}
+                          </option>
                         ))}
                       </select>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-gray-400">Qty</span>
                         <input
-                          type="number" min={1}
+                          type="number"
+                          min={1}
                           className="w-14 p-2 border border-gray-200 rounded-lg text-xs text-center font-bold outline-none"
                           value={s.quantity}
-                          onChange={(e) => updateExtraService(i, "quantity", Number(e.target.value))}
+                          onChange={(e) =>
+                            updateExtraService(
+                              i,
+                              "quantity",
+                              Number(e.target.value),
+                            )
+                          }
                         />
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-gray-400">₹</span>
                         <input
-                          type="number" min={0}
+                          type="number"
+                          min={0}
                           className="w-20 p-2 border border-gray-200 rounded-lg text-xs text-right font-bold outline-none"
                           placeholder="Rate"
                           value={s.rate}
-                          onChange={(e) => updateExtraService(i, "rate", Number(e.target.value))}
+                          onChange={(e) =>
+                            updateExtraService(
+                              i,
+                              "rate",
+                              Number(e.target.value),
+                            )
+                          }
                         />
                       </div>
-                      <div className="w-20 text-right text-xs font-black text-purple-600">₹{Number(s.total).toLocaleString()}</div>
-                      <button onClick={() => removeExtraService(i)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <div className="w-20 text-right text-xs font-black text-purple-600">
+                        ₹{Number(s.total).toLocaleString()}
+                      </div>
+                      <button
+                        onClick={() => removeExtraService(i)}
+                        className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
                         <FiTrash2 size={15} />
                       </button>
                     </div>
@@ -359,8 +438,12 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
                   </button>
                   {extraServices.length > 0 && (
                     <div className="flex justify-between px-2 pt-2 border-t border-gray-100">
-                      <span className="text-xs font-black text-gray-500 uppercase">Extra Services Total</span>
-                      <span className="text-sm font-black text-purple-600">₹{servicesTotal.toLocaleString()}</span>
+                      <span className="text-xs font-black text-gray-500 uppercase">
+                        Extra Services Total
+                      </span>
+                      <span className="text-sm font-black text-purple-600">
+                        ₹{servicesTotal.toLocaleString()}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -372,35 +455,69 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100">
-                        <th className="text-left pb-2 text-xs font-black text-gray-400 uppercase tracking-wider">#</th>
-                        <th className="text-left pb-2 text-xs font-black text-gray-400 uppercase tracking-wider">Date</th>
-                        <th className="text-left pb-2 text-xs font-black text-gray-400 uppercase tracking-wider">Method</th>
-                        <th className="text-left pb-2 text-xs font-black text-gray-400 uppercase tracking-wider">Note</th>
-                        <th className="text-right pb-2 text-xs font-black text-gray-400 uppercase tracking-wider">Amount</th>
+                        <th className="text-left pb-2 text-xs font-black text-gray-400 uppercase tracking-wider">
+                          #
+                        </th>
+                        <th className="text-left pb-2 text-xs font-black text-gray-400 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="text-left pb-2 text-xs font-black text-gray-400 uppercase tracking-wider">
+                          Method
+                        </th>
+                        <th className="text-left pb-2 text-xs font-black text-gray-400 uppercase tracking-wider">
+                          Note
+                        </th>
+                        <th className="text-right pb-2 text-xs font-black text-gray-400 uppercase tracking-wider">
+                          Amount
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {billData.advancePaymentsHistory.map((p: any, i: number) => (
-                        <tr key={i} className="border-b border-gray-50 last:border-0">
-                          <td className="py-2.5 text-xs text-gray-400">{i + 1}</td>
-                          <td className="py-2.5 text-xs text-gray-600">{new Date(p.paidAt).toLocaleDateString("en-IN")}</td>
-                          <td className="py-2.5 text-xs">
-                            <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-bold">{p.paymentMode || p.method || "Cash"}</span>
-                          </td>
-                          <td className="py-2.5 text-xs text-gray-500">{p.note || "—"}</td>
-                          <td className="py-2.5 text-right font-black text-green-600">₹{Number(p.amount).toLocaleString()}</td>
-                        </tr>
-                      ))}
+                      {billData.advancePaymentsHistory.map(
+                        (p: any, i: number) => (
+                          <tr
+                            key={i}
+                            className="border-b border-gray-50 last:border-0"
+                          >
+                            <td className="py-2.5 text-xs text-gray-400">
+                              {i + 1}
+                            </td>
+                            <td className="py-2.5 text-xs text-gray-600">
+                              {new Date(p.paidAt).toLocaleDateString("en-IN")}
+                            </td>
+                            <td className="py-2.5 text-xs">
+                              <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                {p.paymentMode || p.method || "Cash"}
+                              </span>
+                            </td>
+                            <td className="py-2.5 text-xs text-gray-500">
+                              {p.note || "—"}
+                            </td>
+                            <td className="py-2.5 text-right font-black text-green-600">
+                              ₹{Number(p.amount).toLocaleString()}
+                            </td>
+                          </tr>
+                        ),
+                      )}
                     </tbody>
                     <tfoot>
                       <tr className="border-t-2 border-green-100">
-                        <td colSpan={4} className="pt-2.5 text-xs font-black text-green-600 uppercase">Total Advance Paid</td>
-                        <td className="pt-2.5 text-right font-black text-green-600 text-base">₹{Number(advancePaid).toLocaleString()}</td>
+                        <td
+                          colSpan={4}
+                          className="pt-2.5 text-xs font-black text-green-600 uppercase"
+                        >
+                          Total Advance Paid
+                        </td>
+                        <td className="pt-2.5 text-right font-black text-green-600 text-base">
+                          ₹{Number(advancePaid).toLocaleString()}
+                        </td>
                       </tr>
                     </tfoot>
                   </table>
                 ) : (
-                  <p className="text-center text-xs text-gray-400 py-4">No advance payments recorded.</p>
+                  <p className="text-center text-xs text-gray-400 py-4">
+                    No advance payments recorded.
+                  </p>
                 )}
               </Section>
 
@@ -419,30 +536,42 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
             {/* ══ RIGHT COLUMN — Bill Summary & Settlement ══ */}
             <div className="w-full xl:w-[380px] flex-shrink-0">
               <div className="sticky top-0 space-y-4">
-
                 {/* Bill Summary Card */}
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                   <div className="px-6 py-4 bg-gray-900 text-white">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Bill Summary</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">
+                      Bill Summary
+                    </p>
                     <p className="text-xs text-gray-300 font-medium">
-                      {checkIn.guests?.[0]?.name} · Room {checkIn.roomDetails?.[0]?.roomNumber}
+                      {checkIn.guests?.[0]?.name} · Room{" "}
+                      {checkIn.roomDetails?.[0]?.roomNumber}
                     </p>
                   </div>
 
                   <div className="p-6 space-y-3">
                     <LineItem label="Room Stay" value={roomTotal} />
-                    <LineItem label="Restaurant / Food" value={Number(restaurantCharges)} />
+                    <LineItem
+                      label="Restaurant / Food"
+                      value={Number(restaurantCharges)}
+                    />
                     <LineItem label="Extra Services" value={servicesTotal} />
-                    
+
                     <div className="border-t border-dashed border-gray-200 pt-3 space-y-3">
                       <LineItem label={`Subtotal`} value={subTotal} bold />
-                      <LineItem label={`Tax (${taxPercentage}%)`} value={taxAmount} color="text-gray-500" />
-                      
+                      <LineItem
+                        label={`Tax (${taxPercentage}%)`}
+                        value={taxAmount}
+                        color="text-gray-500"
+                      />
+
                       {/* Discount input inline */}
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-red-500 uppercase">Discount (₹)</span>
+                        <span className="text-xs font-black text-red-500 uppercase">
+                          Discount (₹)
+                        </span>
                         <input
-                          type="number" min={0}
+                          type="number"
+                          min={0}
                           className="w-28 p-2 bg-red-50 border border-red-100 rounded-lg text-right text-xs font-black text-red-600 outline-none focus:border-red-300"
                           value={discount}
                           onChange={(e) => setDiscount(Number(e.target.value))}
@@ -452,20 +581,34 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
 
                     {/* Grand Total */}
                     <div className="bg-orange-500 rounded-xl px-5 py-4 flex justify-between items-center">
-                      <span className="text-xs font-black text-orange-100 uppercase tracking-wider">Grand Total</span>
-                      <span className="text-2xl font-black text-white">₹{grandTotal.toLocaleString()}</span>
+                      <span className="text-xs font-black text-orange-100 uppercase tracking-wider">
+                        Grand Total
+                      </span>
+                      <span className="text-2xl font-black text-white">
+                        ₹{grandTotal.toLocaleString()}
+                      </span>
                     </div>
 
                     {/* Advance deducted */}
                     <div className="bg-green-50 rounded-xl px-5 py-3 flex justify-between items-center border border-green-100">
-                      <span className="text-xs font-black text-green-700 uppercase">Already Paid</span>
-                      <span className="text-base font-black text-green-600">− ₹{Number(alreadyPaid).toLocaleString()}</span>
+                      <span className="text-xs font-black text-green-700 uppercase">
+                        Already Paid
+                      </span>
+                      <span className="text-base font-black text-green-600">
+                        − ₹{Number(alreadyPaid).toLocaleString()}
+                      </span>
                     </div>
 
                     {/* Net Payable */}
-                    <div className={`rounded-xl px-5 py-4 flex justify-between items-center border-2 ${netPayable === 0 ? "bg-blue-50 border-blue-200" : "bg-red-50 border-red-200"}`}>
-                      <span className="text-xs font-black uppercase text-gray-700 tracking-wider">Net Payable Now</span>
-                      <span className={`text-2xl font-black ${netPayable === 0 ? "text-blue-600" : "text-red-600"}`}>
+                    <div
+                      className={`rounded-xl px-5 py-4 flex justify-between items-center border-2 ${netPayable === 0 ? "bg-blue-50 border-blue-200" : "bg-red-50 border-red-200"}`}
+                    >
+                      <span className="text-xs font-black uppercase text-gray-700 tracking-wider">
+                        Net Payable Now
+                      </span>
+                      <span
+                        className={`text-2xl font-black ${netPayable === 0 ? "text-blue-600" : "text-red-600"}`}
+                      >
                         ₹{netPayable.toLocaleString()}
                       </span>
                     </div>
@@ -475,7 +618,9 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
                 {/* Payment Settlement Card */}
                 {netPayable > 0 && (
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment Settlement</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Payment Settlement
+                    </p>
 
                     {/* Payment Method */}
                     <div className="grid grid-cols-2 gap-2">
@@ -497,30 +642,38 @@ const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
 
                     {/* Amount Paying Now */}
                     <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase mb-1.5 block">Amount Paying Now</label>
+                      <label className="text-[10px] font-black text-gray-400 uppercase mb-1.5 block">
+                        Amount Paying Now
+                      </label>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-black text-sm">₹</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-black text-sm">
+                          ₹
+                        </span>
                         <input
-  type="text"
-  inputMode="numeric"
-  min={0}
-  className="w-full pl-8 pr-4 py-3 border-2 border-gray-200 rounded-xl text-lg font-black text-gray-900 outline-none focus:border-orange-400 transition-colors"
-  placeholder={`0 – ${netPayable.toLocaleString()}`}
-  value={receivedAmount}
-onChange={(e) => {
-  const value = e.target.value;
+                          type="text"
+                          inputMode="numeric"
+                          min={0}
+                          className="w-full pl-8 pr-4 py-3 border-2 border-gray-200 rounded-xl text-lg font-black text-gray-900 outline-none focus:border-orange-400 transition-colors"
+                          placeholder={`0 – ${netPayable.toLocaleString()}`}
+                          value={receivedAmount}
+                          onChange={(e) => {
+                            const value = e.target.value;
 
-  if (/^\d*$/.test(value)) {
-    setReceivedAmount(value === "" ? "" : Number(value));
-  }
-}}
-/>
+                            if (/^\d*$/.test(value)) {
+                              setReceivedAmount(
+                                value === "" ? "" : Number(value),
+                              );
+                            }
+                          }}
+                        />
                       </div>
                     </div>
 
                     {/* Payment note */}
                     <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase mb-1.5 block">Payment Note (optional)</label>
+                      <label className="text-[10px] font-black text-gray-400 uppercase mb-1.5 block">
+                        Payment Note (optional)
+                      </label>
                       <input
                         type="text"
                         className="w-full p-2.5 border border-gray-200 rounded-xl text-xs text-gray-700 outline-none focus:border-gray-400"
@@ -533,24 +686,38 @@ onChange={(e) => {
                     {/* Paid / Due Summary */}
                     <div className="rounded-xl overflow-hidden border border-gray-200">
                       <div className="grid grid-cols-2 divide-x divide-gray-200">
-                        <div className={`p-4 text-center ${numReceived > 0 ? "bg-green-50" : "bg-gray-50"}`}>
-                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Paying Now</p>
-                          <p className={`text-xl font-black ${numReceived > 0 ? "text-green-600" : "text-gray-400"}`}>
+                        <div
+                          className={`p-4 text-center ${numReceived > 0 ? "bg-green-50" : "bg-gray-50"}`}
+                        >
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">
+                            Paying Now
+                          </p>
+                          <p
+                            className={`text-xl font-black ${numReceived > 0 ? "text-green-600" : "text-gray-400"}`}
+                          >
                             ₹{numReceived.toLocaleString()}
                           </p>
                         </div>
-                        <div className={`p-4 text-center ${dueAfterPayment > 0 ? "bg-red-50" : "bg-green-50"}`}>
+                        <div
+                          className={`p-4 text-center ${dueAfterPayment > 0 ? "bg-red-50" : "bg-green-50"}`}
+                        >
                           <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">
                             {dueAfterPayment > 0 ? "Still Due" : "Balance"}
                           </p>
-                          <p className={`text-xl font-black ${dueAfterPayment > 0 ? "text-red-600" : "text-green-600"}`}>
+                          <p
+                            className={`text-xl font-black ${dueAfterPayment > 0 ? "text-red-600" : "text-green-600"}`}
+                          >
                             ₹{dueAfterPayment.toLocaleString()}
                           </p>
                         </div>
                       </div>
                       {numReceived > 0 && (
-                        <div className={`px-4 py-2 text-center text-[10px] font-black uppercase tracking-wide ${isFullyPaid ? "bg-green-500 text-white" : "bg-amber-400 text-white"}`}>
-                          {isFullyPaid ? "✓ Full Payment — Ready to Checkout" : `⏳ Partial Payment — ₹${dueAfterPayment.toLocaleString()} still pending`}
+                        <div
+                          className={`px-4 py-2 text-center text-[10px] font-black uppercase tracking-wide ${isFullyPaid ? "bg-green-500 text-white" : "bg-amber-400 text-white"}`}
+                        >
+                          {isFullyPaid
+                            ? "✓ Full Payment — Ready to Checkout"
+                            : `⏳ Partial Payment — ₹${dueAfterPayment.toLocaleString()} still pending`}
                         </div>
                       )}
                     </div>
@@ -560,9 +727,13 @@ onChange={(e) => {
                 {/* Checkout status indicator */}
                 {!canCheckout && netPayable > 0 && (
                   <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                    <FiAlertCircle size={14} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                    <FiAlertCircle
+                      size={14}
+                      className="text-amber-500 mt-0.5 flex-shrink-0"
+                    />
                     <p className="text-xs text-amber-700 font-semibold">
-                      Full payment required for checkout. Save as draft if partial payment is collected.
+                      Full payment required for checkout. Save as draft if
+                      partial payment is collected.
                     </p>
                   </div>
                 )}
@@ -571,7 +742,7 @@ onChange={(e) => {
                 <div className="space-y-2.5">
                   <button
                     onClick={() => handleAction(true)}
-                    disabled={submitting || (!canCheckout)}
+                    disabled={submitting || !canCheckout}
                     className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
                       canCheckout
                         ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-100 active:scale-95"
@@ -583,18 +754,20 @@ onChange={(e) => {
                     ) : (
                       <FiLogOut size={15} />
                     )}
-                    {isZeroBalance ? "Confirm Checkout (No Balance)" : "Confirm Checkout (Full Payment)"}
+                    {isZeroBalance
+                      ? "Confirm Checkout (No Balance)"
+                      : "Confirm Checkout (Full Payment)"}
                   </button>
                   {!isCheckoutDateReached && (
-  <p className="text-xs text-red-500 mt-2 font-semibold">
-    Checkout will be available on{" "}
-    {expectedOut!.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })}
-  </p>
-)}
+                    <p className="text-xs text-red-500 mt-2 font-semibold">
+                      Checkout will be available on{" "}
+                      {expectedOut!.toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  )}
 
                   <button
                     onClick={() => handleAction(false)}
@@ -602,16 +775,22 @@ onChange={(e) => {
                     className="w-full py-3.5 bg-white border-2 border-gray-200 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
                   >
                     <FiSave size={14} />
-                    Save as Draft {numReceived > 0 && `(₹${numReceived.toLocaleString()} collected)`}
+                    Save as Draft{" "}
+                    {numReceived > 0 &&
+                      `(₹${numReceived.toLocaleString()} collected)`}
                   </button>
                 </div>
 
                 {/* Tax % input small */}
                 <div className="flex items-center justify-between px-2">
-                  <span className="text-xs text-gray-400 font-bold">Tax Rate</span>
+                  <span className="text-xs text-gray-400 font-bold">
+                    Tax Rate
+                  </span>
                   <div className="flex items-center gap-1">
                     <input
-                      type="number" min={0} max={100}
+                      type="number"
+                      min={0}
+                      max={100}
                       className="w-14 p-1.5 border border-gray-200 rounded-lg text-center text-xs font-bold outline-none"
                       value={taxPercentage}
                       onChange={(e) => setTaxPercentage(Number(e.target.value))}
@@ -619,7 +798,6 @@ onChange={(e) => {
                     <span className="text-xs text-gray-400 font-bold">%</span>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -630,7 +808,15 @@ onChange={(e) => {
 };
 
 // ─── Helper Components ────────────────────────────────────────────
-const Section = ({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) => {
+const Section = ({
+  title,
+  accent,
+  children,
+}: {
+  title: string;
+  accent: string;
+  children: React.ReactNode;
+}) => {
   const colors: Record<string, string> = {
     orange: "text-orange-500",
     blue: "text-blue-500",
@@ -640,7 +826,9 @@ const Section = ({ title, accent, children }: { title: string; accent: string; c
   };
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-      <h3 className={`text-[10px] font-black uppercase tracking-[0.18em] mb-4 ${colors[accent] || "text-gray-500"}`}>
+      <h3
+        className={`text-[10px] font-black uppercase tracking-[0.18em] mb-4 ${colors[accent] || "text-gray-500"}`}
+      >
         {title}
       </h3>
       {children}
@@ -649,13 +837,25 @@ const Section = ({ title, accent, children }: { title: string; accent: string; c
 };
 
 const LineItem = ({
-  label, value, bold, color,
+  label,
+  value,
+  bold,
+  color,
 }: {
-  label: string; value: number; bold?: boolean; color?: string;
+  label: string;
+  value: number;
+  bold?: boolean;
+  color?: string;
 }) => (
   <div className="flex justify-between items-center">
-    <span className={`text-xs ${bold ? "font-black text-gray-800" : "text-gray-500 font-semibold"}`}>{label}</span>
-    <span className={`text-sm ${bold ? "font-black text-gray-900" : color || "text-gray-700 font-semibold"}`}>
+    <span
+      className={`text-xs ${bold ? "font-black text-gray-800" : "text-gray-500 font-semibold"}`}
+    >
+      {label}
+    </span>
+    <span
+      className={`text-sm ${bold ? "font-black text-gray-900" : color || "text-gray-700 font-semibold"}`}
+    >
       ₹{value.toLocaleString()}
     </span>
   </div>

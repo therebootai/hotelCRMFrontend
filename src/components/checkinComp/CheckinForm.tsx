@@ -26,7 +26,7 @@ import {
 } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { addDays, differenceInDays, format } from "date-fns";
+import { addDays, differenceInDays, differenceInHours, format } from "date-fns";
 import api from "../../lib/axios";
 import GuestRegistrationCard from "./GuestRegistrationCard";
 import { BiShield } from "react-icons/bi";
@@ -307,11 +307,44 @@ const CheckInForm = ({
   );
 
   // Form State - Step 1
+  const isDayAccess = bookingData?.bookingCategory === "Day Access";
+
+  const getInitialCheckInTime = () => {
+    if (isDayAccess && bookingData?.accessPackageId) {
+      const pkg = bookingData.accessPackageId;
+      const visitDate = bookingData.visitDate ? new Date(bookingData.visitDate) : new Date();
+      const entryStr = pkg.entry_time || "09:00";
+      const [entryH, entryM] = entryStr.split(":").map(Number);
+      visitDate.setHours(entryH, entryM, 0, 0);
+      return visitDate;
+    }
+    return new Date();
+  };
+
+  const getInitialCheckOutTime = () => {
+    if (isDayAccess && bookingData?.accessPackageId) {
+      const pkg = bookingData.accessPackageId;
+      const today = new Date();
+      const entryStr = pkg.entry_time || "09:00";
+      const exitStr = pkg.exit_time || "18:00";
+      const [entryH, entryM] = entryStr.split(":").map(Number);
+      const [exitH, exitM] = exitStr.split(":").map(Number);
+      const checkOutDate = new Date(today);
+      checkOutDate.setHours(exitH, exitM, 0, 0);
+      if (exitH < entryH || (exitH === entryH && exitM < entryM)) {
+        checkOutDate.setDate(checkOutDate.getDate() + 1);
+      }
+      return checkOutDate;
+    }
+    if (bookingData?.rooms?.[0]?.checkOutDate) {
+      return new Date(bookingData.rooms[0].checkOutDate);
+    }
+    return addDays(new Date(), 1);
+  };
+
   const [stayFormData, setStayFormData] = useState({
-    checkInTime: new Date(),
-    expectedCheckOutTime: bookingData?.rooms?.[0]?.checkOutDate
-      ? new Date(bookingData.rooms[0].checkOutDate)
-      : addDays(new Date(), 1),
+    checkInTime: getInitialCheckInTime(),
+    expectedCheckOutTime: getInitialCheckOutTime(),
     specialRequests: "",
   });
 
@@ -365,10 +398,19 @@ const CheckInForm = ({
     remarks: "",
   });
 
-  // Calculate nights
+  // Calculate nights for display
   const nights = Math.max(
     1,
     differenceInDays(
+      new Date(stayFormData.expectedCheckOutTime),
+      new Date(stayFormData.checkInTime),
+    ),
+  );
+
+  // Calculate hours/duration for Day Access
+  const durationHours = Math.max(
+    1,
+    differenceInHours(
       new Date(stayFormData.expectedCheckOutTime),
       new Date(stayFormData.checkInTime),
     ),
@@ -458,13 +500,28 @@ const CheckInForm = ({
   };
 
   // Calculate totals
-  const roomTotal = selectedRooms.reduce((sum: number, room: RoomEntry) => {
-    const basePrice = Number(room.basePrice) || 0;
-    const extraBedPrice = room.hasExtraBed
-      ? (Number(room.extraBedCharge) || 0) * nights
-      : 0;
-    return sum + basePrice * nights + extraBedPrice;
-  }, 0);
+  // Package price for Day Access
+  const packagePrice = isDayAccess
+    ? (bookingData?.pricingSummary?.grandTotal ||
+       bookingData?.accessPackageId?.adult_price ||
+       bookingData?.pricingSummary?.roomTotal ||
+       0)
+    : 0;
+
+  // Room add-on charges (for Day Access rooms are charged as flat add-on, not per night)
+  const roomAddOnTotal = isDayAccess
+    ? selectedRooms.reduce((sum: number, room: RoomEntry) => sum + (Number(room.basePrice) || 0), 0)
+    : 0;
+
+  const roomTotal = isDayAccess
+    ? packagePrice + roomAddOnTotal
+    : selectedRooms.reduce((sum: number, room: RoomEntry) => {
+        const basePrice = Number(room.basePrice) || 0;
+        const extraBedPrice = room.hasExtraBed
+          ? (Number(room.extraBedCharge) || 0) * nights
+          : 0;
+        return sum + basePrice * nights + extraBedPrice;
+      }, 0);
 
   const bookingAdvance = bookingData?.advanceAmount || 0;
   const checkInAdvance = paymentData.checkInAdvance;
@@ -1158,191 +1215,315 @@ const CheckInForm = ({
                       <label className="text-[9px] font-bold text-gray-500 uppercase block mb-1">
                         Check-out
                       </label>
-                      <DatePicker
-                        selected={stayFormData.expectedCheckOutTime}
-                        onChange={(date: Date) =>
-                          setStayFormData({
-                            ...stayFormData,
-                            expectedCheckOutTime: date,
-                          })
-                        }
-                        className="w-full p-2 bg-gray-50 border border-border rounded-lg text-[11px] font-bold text-[var(--color-primary)] outline-none"
-                        dateFormat="dd MMM, HH:mm"
-                        showTimeSelect
-                      />
+                      {isDayAccess ? (
+                        <div className="w-full p-2 bg-green-50 border border-green-200 rounded-lg text-[11px] font-bold text-green-600">
+                          {format(stayFormData.expectedCheckOutTime, "dd MMM, HH:mm")}
+                          <span className="text-[9px] ml-1">(from package)</span>
+                        </div>
+                      ) : (
+                        <DatePicker
+                          selected={stayFormData.expectedCheckOutTime}
+                          onChange={(date: Date) =>
+                            setStayFormData({
+                              ...stayFormData,
+                              expectedCheckOutTime: date,
+                            })
+                          }
+                          className="w-full p-2 bg-gray-50 border border-border rounded-lg text-[11px] font-bold text-[var(--color-primary)] outline-none"
+                          dateFormat="dd MMM, HH:mm"
+                          showTimeSelect
+                        />
+                      )}
                     </div>
                     <div>
                       <label className="text-[9px] font-bold text-gray-500 uppercase block mb-1">
-                        Nights
-                      </label>
-                      <div className="p-2 bg-gray-50 border border-border rounded-lg text-center">
-                        <span className="text-sm font-black">{nights}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[9px] font-bold text-gray-500 uppercase block mb-1">
-                        Rooms
+                        {isDayAccess ? "Duration" : "Nights"}
                       </label>
                       <div className="p-2 bg-gray-50 border border-border rounded-lg text-center">
                         <span className="text-sm font-black">
-                          {selectedRooms.length}
+                          {isDayAccess ? `${durationHours}h` : `${nights}N`}
                         </span>
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Room Selection */}
-                <div className="bg-[var(--color-card)] rounded-xl border border-border p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase tracking-widest flex items-center gap-2">
-                      <FiHome
-                        size={12}
-                        className="text-[var(--color-primary)]"
-                      />{" "}
-                      Room Selection
-                    </h3>
-                    <select
-                      onChange={(e) =>
-                        fetchRoomsByType(e.target.value || undefined)
-                      }
-                      className="p-1.5 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none"
-                    >
-                      <option value="">All Rooms</option>
-                      {roomTypes.map((type: any) => (
-                        <option key={type._id} value={type._id}>
-                          {type.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* All Rooms Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-48 sm:max-h-60 overflow-y-auto">
-                    {availableRooms.map((room: any) => {
-                      const isSelected = selectedRooms.some(
-                        (r) => r.roomId === room._id,
-                      );
-                      const occupancy = getRoomOccupancy(room._id);
-                      return (
-                        <div
-                          key={room._id}
-                          onClick={() => toggleRoom(room)}
-                          className={`relative p-2 sm:p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                            isSelected
-                              ? "border-orange-500 bg-orange-50"
-                              : "border-border hover:border-gray-300"
-                          }`}
-                        >
-                          {isSelected && (
-                            <div className="absolute top-1 right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
-                              <FiCheckCircle size={10} className="text-white" />
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2 mb-1">
-                            <FiCoffee
-                              size={12}
-                              className={
-                                isSelected ? "text-orange-500" : "text-gray-400"
-                              }
-                            />
-                            <span className="text-[10px] sm:text-[11px] font-black">
-                              {room.roomNumber}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[9px] sm:text-[10px] text-gray-500 font-bold">
-                              ₹{Number(room.basePrice) || 0}
-                            </span>
-                            {room.extraBedAllowed && (
-                              <span className="text-[8px] sm:text-[9px] text-orange-500 font-bold">
-                                +Extra
-                              </span>
-                            )}
-                          </div>
-                          {occupancy.count > 0 && (
-                            <div className="mt-1 text-[8px] text-orange-600 font-bold">
-                              {occupancy.count} guest
-                              {occupancy.count > 1 ? "s" : ""}
-                            </div>
-                          )}
+                    {!isDayAccess && (
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-500 uppercase block mb-1">
+                          Rooms
+                        </label>
+                        <div className="p-2 bg-gray-50 border border-border rounded-lg text-center">
+                          <span className="text-sm font-black">
+                            {selectedRooms.length}
+                          </span>
                         </div>
-                      );
-                    })}
+                      </div>
+                    )}
+                    {isDayAccess && (
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-500 uppercase block mb-1">
+                          Package
+                        </label>
+                        <div className="p-2 bg-gray-50 border border-border rounded-lg text-center">
+                          <span className="text-sm font-black text-green-600">
+                            {bookingData?.accessPackageId?.packageName || "Day Access"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Selected Rooms with Extra Bed */}
-                <div className="bg-[var(--color-card)] rounded-xl border border-border p-4">
-                  <h3 className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase tracking-widest mb-3">
-                    Selected Rooms ({selectedRooms.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {selectedRooms.map((room: RoomEntry) => {
-                      const safeBasePrice = Number(room.basePrice) || 0;
-                      const occupancy = getRoomOccupancy(room.roomId);
-                      return (
-                        <div
-                          key={room.roomId}
-                          className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-orange-50 border border-orange-100 rounded-lg gap-2"
+                {/* Room Selection - Hidden for Day Access */}
+                {!isDayAccess && (
+                  <>
+                    <div className="bg-[var(--color-card)] rounded-xl border border-border p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                          <FiHome
+                            size={12}
+                            className="text-[var(--color-primary)]"
+                          />{" "}
+                          Room Selection
+                        </h3>
+                        <select
+                          onChange={(e) =>
+                            fetchRoomsByType(e.target.value || undefined)
+                          }
+                          className="p-1.5 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none"
                         >
-                          <div className="flex items-center gap-3">
-                            <FiCoffee size={16} className="text-orange-500" />
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-xs">
-                                  Room {room.roomNumber || "TBD"}
+                          <option value="">All Rooms</option>
+                          {roomTypes.map((type: any) => (
+                            <option key={type._id} value={type._id}>
+                              {type.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* All Rooms Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-48 sm:max-h-60 overflow-y-auto">
+                        {availableRooms.map((room: any) => {
+                          const isSelected = selectedRooms.some(
+                            (r) => r.roomId === room._id,
+                          );
+                          const occupancy = getRoomOccupancy(room._id);
+                          return (
+                            <div
+                              key={room._id}
+                              onClick={() => toggleRoom(room)}
+                              className={`relative p-2 sm:p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                isSelected
+                                  ? "border-orange-500 bg-orange-50"
+                                  : "border-border hover:border-gray-300"
+                              }`}
+                            >
+                              {isSelected && (
+                                <div className="absolute top-1 right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                                  <FiCheckCircle size={10} className="text-white" />
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2 mb-1">
+                                <FiCoffee
+                                  size={12}
+                                  className={
+                                    isSelected ? "text-orange-500" : "text-gray-400"
+                                  }
+                                />
+                                <span className="text-[10px] sm:text-[11px] font-black">
+                                  {room.roomNumber}
                                 </span>
-                                {room.roomTypeName && (
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] sm:text-[10px] text-gray-500 font-bold">
+                                  ₹{Number(room.basePrice) || 0}
+                                </span>
+                                {room.extraBedAllowed && (
+                                  <span className="text-[8px] sm:text-[9px] text-orange-500 font-bold">
+                                    +Extra
+                                  </span>
+                                )}
+                              </div>
+                              {occupancy.count > 0 && (
+                                <div className="mt-1 text-[8px] text-orange-600 font-bold">
+                                  {occupancy.count} guest
+                                  {occupancy.count > 1 ? "s" : ""}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Selected Rooms with Extra Bed */}
+                    <div className="bg-[var(--color-card)] rounded-xl border border-border p-4">
+                      <h3 className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase tracking-widest mb-3">
+                        Selected Rooms ({selectedRooms.length})
+                      </h3>
+                      <div className="space-y-2">
+                        {selectedRooms.map((room: RoomEntry) => {
+                          const safeBasePrice = Number(room.basePrice) || 0;
+                          const occupancy = getRoomOccupancy(room.roomId);
+                          return (
+                            <div
+                              key={room.roomId}
+                              className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-orange-50 border border-orange-100 rounded-lg gap-2"
+                            >
+                              <div className="flex items-center gap-3">
+                                <FiCoffee size={16} className="text-orange-500" />
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-xs">
+                                      Room {room.roomNumber || "TBD"}
+                                    </span>
+                                    {room.roomTypeName && (
+                                      <span className="text-[9px] text-gray-500">
+                                        ({room.roomTypeName})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[10px] text-gray-500 font-bold">
+                                      ₹{safeBasePrice}/night
+                                    </span>
+                                    {occupancy.count > 0 && (
+                                      <span className="text-[9px] text-orange-600 font-bold">
+                                        {occupancy.count} guest
+                                        {occupancy.count > 1 ? "s" : ""}
+                                      </span>
+                                    )}
+                                    {room.hasExtraBed && (
+                                      <span className="text-[9px] text-green-600 font-bold bg-green-100 px-1 rounded">
+                                        Extra Bed
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {room.extraBedAllowed && (
+                                  <button
+                                    onClick={() => toggleExtraBed(room.roomId)}
+                                    className={`px-2 py-1 rounded text-[9px] font-bold ${room.hasExtraBed ? "bg-orange-500 text-white" : "bg-gray-100 text-gray500"}`}
+                                  >
+                                    Extra Bed{" "}
+                                    {room.hasExtraBed
+                                      ? `(+₹${Number(room.extraBedCharge) || 0})`
+                                      : ""}
+                                  </button>
+                                )}
+                                {selectedRooms.length > 1 && (
+                                  <button
+                                    onClick={() => removeRoom(room.roomId)}
+                                    className="p-1 text-red-400 hover:bg-red-50 rounded"
+                                  >
+                                    <FiTrash2 size={12} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Day Access Info Banner */}
+                {isDayAccess && (
+                  <>
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                      <div className="flex items-center gap-2">
+                        <FiCalendar size={16} className="text-green-600" />
+                        <span className="text-xs font-black text-green-700 uppercase">
+                          Day Access Booking
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-green-600 mt-1">
+                        Entry: {format(stayFormData.checkInTime, "HH:mm")} | Exit: {format(stayFormData.expectedCheckOutTime, "HH:mm")} ({durationHours}h)
+                      </p>
+                    </div>
+
+                    {/* Optional Room Add-on for Day Access */}
+                    <div className="bg-[var(--color-card)] rounded-xl border border-border p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                          <FiHome size={12} className="text-[var(--color-primary)]" />
+                          Optional Room Add-on
+                        </h3>
+                        <span className="text-[9px] text-gray-400 font-bold">
+                          Additional charge
+                        </span>
+                      </div>
+                      {selectedRooms.length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          {selectedRooms.map((room: RoomEntry) => {
+                            const safeBasePrice = Number(room.basePrice) || 0;
+                            return (
+                              <div
+                                key={room.roomId}
+                                className="flex items-center justify-between p-2 bg-orange-50 border border-orange-100 rounded-lg"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <FiCoffee size={14} className="text-orange-500" />
+                                  <span className="text-[11px] font-bold">
+                                    Room {room.roomNumber || "TBD"}
+                                  </span>
                                   <span className="text-[9px] text-gray-500">
                                     ({room.roomTypeName})
                                   </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[10px] text-gray-500 font-bold">
-                                  ₹{safeBasePrice}/night
-                                </span>
-                                {occupancy.count > 0 && (
-                                  <span className="text-[9px] text-orange-600 font-bold">
-                                    {occupancy.count} guest
-                                    {occupancy.count > 1 ? "s" : ""}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-bold text-orange-600">
+                                    +₹{safeBasePrice}
                                   </span>
-                                )}
-                                {room.hasExtraBed && (
-                                  <span className="text-[9px] text-green-600 font-bold bg-green-100 px-1 rounded">
-                                    Extra Bed
-                                  </span>
-                                )}
+                                  <button
+                                    onClick={() => removeRoom(room.roomId)}
+                                    className="p-1 text-red-400 hover:bg-red-50 rounded"
+                                  >
+                                    <FiTrash2 size={10} />
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {room.extraBedAllowed && (
-                              <button
-                                onClick={() => toggleExtraBed(room.roomId)}
-                                className={`px-2 py-1 rounded text-[9px] font-bold ${room.hasExtraBed ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-500"}`}
-                              >
-                                Extra Bed{" "}
-                                {room.hasExtraBed
-                                  ? `(+₹${Number(room.extraBedCharge) || 0})`
-                                  : ""}
-                              </button>
-                            )}
-                            {selectedRooms.length > 1 && (
-                              <button
-                                onClick={() => removeRoom(room.roomId)}
-                                className="p-1 text-red-400 hover:bg-red-50 rounded"
-                              >
-                                <FiTrash2 size={12} />
-                              </button>
-                            )}
-                          </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                      )}
+                      <select
+                        onChange={(e) => {
+                          const roomId = e.target.value;
+                          if (!roomId) return;
+                          const room = availableRooms.find((r: any) => r._id === roomId);
+                          if (room && !selectedRooms.some((r) => r.roomId === room._id)) {
+                            setSelectedRooms([
+                              ...selectedRooms,
+                              {
+                                roomId: room._id,
+                                roomNumber: room.roomNumber,
+                                basePrice: Number(room.basePrice) || 0,
+                                roomType: room.roomType,
+                                roomTypeName: room.roomType?.name || "",
+                                hasExtraBed: false,
+                                extraBedCharge: 0,
+                                extraBedAllowed: false,
+                              },
+                            ]);
+                          }
+                          e.target.value = "";
+                        }}
+                        className="w-full p-2 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none"
+                      >
+                        <option value="">+ Add a room (optional)</option>
+                        {availableRooms
+                          .filter((room: any) => !selectedRooms.some((r) => r.roomId === room._id))
+                          .map((room: any) => (
+                            <option key={room._id} value={room._id}>
+                              Room {room.roomNumber} - ₹{Number(room.basePrice) || 0} ({room.roomType?.name || "Standard"})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  </>
+                )}
 
                 {/* Corporate Details */}
                 {partyType === "Corporate" && (
@@ -1505,48 +1686,66 @@ const CheckInForm = ({
                   <div className="flex justify-between p-2 bg-gray-50 rounded-lg">
                     <span className="text-gray-500">Duration</span>
                     <span className="font-bold">
-                      {nights} Night{nights !== 1 ? "s" : ""}
+                      {isDayAccess ? `${durationHours}h` : `${nights} Night${nights !== 1 ? "s" : ""}`}
                     </span>
                   </div>
-                  <div className="flex justify-between p-2 bg-gray-50 rounded-lg">
-                    <span className="text-gray-500">Rooms</span>
-                    <span className="font-bold">{selectedRooms.length}</span>
-                  </div>
+                  {!isDayAccess && (
+                    <div className="flex justify-between p-2 bg-gray-50 rounded-lg">
+                      <span className="text-gray-500">Rooms</span>
+                      <span className="font-bold">{selectedRooms.length}</span>
+                    </div>
+                  )}
+                  {isDayAccess && (
+                    <div className="flex justify-between p-2 bg-green-50 rounded-lg">
+                      <span className="text-green-600">Package</span>
+                      <span className="font-bold text-green-600">
+                        {bookingData?.accessPackageId?.packageName || "Day Access"}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-3 pt-3 border-t border-border">
-                  <p className="text-[9px] font-bold text-gray-500 uppercase mb-2">
-                    Room Breakdown
-                  </p>
-                  {selectedRooms.map((room: RoomEntry) => {
-                    const safeBasePrice = Number(room.basePrice) || 0;
-                    return (
-                      <div key={room.roomId} className="mb-2">
-                        <div className="flex justify-between text-[11px]">
-                          <span>
-                            Room {room.roomNumber || "TBD"} × {nights}
-                          </span>
-                          <span className="font-bold">
-                            ₹{(safeBasePrice * nights).toLocaleString()}
-                          </span>
-                        </div>
-                        {room.hasExtraBed && (
-                          <div className="flex justify-between text-[10px] text-orange-500">
-                            <span>Extra Bed × {nights}</span>
-                            <span>
-                              +₹
-                              {(
-                                (Number(room.extraBedCharge) || 0) * nights
-                              ).toLocaleString()}
-                            </span>
+                  {!isDayAccess ? (
+                    <>
+                      <p className="text-[9px] font-bold text-gray-500 uppercase mb-2">
+                        Room Breakdown
+                      </p>
+                      {selectedRooms.map((room: RoomEntry) => {
+                        const safeBasePrice = Number(room.basePrice) || 0;
+                        return (
+                          <div key={room.roomId} className="mb-2">
+                            <div className="flex justify-between text-[11px]">
+                              <span>
+                                Room {room.roomNumber || "TBD"} × {nights}
+                              </span>
+                              <span className="font-bold">
+                                ₹{(safeBasePrice * nights).toLocaleString()}
+                              </span>
+                            </div>
+                            {room.hasExtraBed && (
+                              <div className="flex justify-between text-[10px] text-orange-500">
+                                <span>Extra Bed × {nights}</span>
+                                <span>
+                                  +₹
+                                  {(
+                                    (Number(room.extraBedCharge) || 0) * nights
+                                  ).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <p className="text-[9px] font-bold text-green-600 uppercase mb-2">
+                      Day Access Package
+                    </p>
+                  )}
                 </div>
                 <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
                   <div className="flex justify-between text-[11px]">
-                    <span className="font-bold">Room Total</span>
+                    <span className="font-bold">{isDayAccess ? "Total" : "Room Total"}</span>
                     <span className="font-black text-[var(--color-primary)]">
                       ₹{roomTotal.toLocaleString()}
                     </span>
@@ -1633,34 +1832,43 @@ const CheckInForm = ({
                         )}
                       </div>
 
-                      {/* Room Assignment - Compact inline version */}
-                      <div className="mb-3 flex items-center gap-2">
-                        <span className="text-[9px] font-bold text-gray-500 uppercase">
-                          Assigned Room:
-                        </span>
-                        <select
-                          value={guest.assignedRoomId || ""}
-                          onChange={(e) =>
-                            updateGuest(
-                              guest.id,
-                              "assignedRoomId",
-                              e.target.value || null,
-                            )
-                          }
-                          className="flex-1 p-1.5 bg-white border border-blue-200 rounded-lg text-[10px] font-bold outline-none"
-                        >
-                          <option value="">Select Room</option>
-                          {selectedRooms.map((room: RoomEntry) => {
-                            const occ = getRoomOccupancy(room.roomId);
-                            return (
-                              <option key={room.roomId} value={room.roomId}>
-                                Room {room.roomNumber || "TBD"} ({occ.count}{" "}
-                                guest{occ.count !== 1 ? "s" : ""})
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </div>
+                      {/* Room Assignment - Hidden for Day Access */}
+                      {!isDayAccess && (
+                        <div className="mb-3 flex items-center gap-2">
+                          <span className="text-[9px] font-bold text-gray-500 uppercase">
+                            Assigned Room:
+                          </span>
+                          <select
+                            value={guest.assignedRoomId || ""}
+                            onChange={(e) =>
+                              updateGuest(
+                                guest.id,
+                                "assignedRoomId",
+                                e.target.value || null,
+                              )
+                            }
+                            className="flex-1 p-1.5 bg-white border border-blue-200 rounded-lg text-[10px] font-bold outline-none"
+                          >
+                            <option value="">Select Room</option>
+                            {selectedRooms.map((room: RoomEntry) => {
+                              const occ = getRoomOccupancy(room.roomId);
+                              return (
+                                <option key={room.roomId} value={room.roomId}>
+                                  Room {room.roomNumber || "TBD"} ({occ.count}{" "}
+                                  guest{occ.count !== 1 ? "s" : ""})
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
+                      )}
+                      {isDayAccess && (
+                        <div className="mb-3 p-2 bg-green-50 rounded-lg border border-green-100">
+                          <span className="text-[9px] font-black text-green-600">
+                            Day Access — No room assignment required
+                          </span>
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <div className="col-span-2">
@@ -2300,69 +2508,135 @@ const CheckInForm = ({
                   {" "}
                   Payment Breakdown
                 </h3>
-                <div className="space-y-2">
-                  {selectedRooms.map((room: RoomEntry) => {
-                    const safeBasePrice = Number(room.basePrice) || 0;
-                    return (
-                      <div
-                        key={room.roomId}
-                        className="p-2 bg-gray-50 rounded-lg border border-border"
-                      >
-                        <div className="flex justify-between">
-                          <span className="text-[11px] font-bold">
-                            Room {room.roomNumber || "TBD"}
-                          </span>
-                          <span className="text-[11px] text-gray-500">
-                            ₹{safeBasePrice} × {nights}
-                          </span>
+                {/* Payment Breakdown for Room Stay only */}
+                {!isDayAccess ? (
+                  <div className="space-y-2">
+                    {selectedRooms.map((room: RoomEntry) => {
+                      const safeBasePrice = Number(room.basePrice) || 0;
+                      return (
+                        <div
+                          key={room.roomId}
+                          className="p-2 bg-gray-50 rounded-lg border border-border"
+                        >
+                          <div className="flex justify-between">
+                            <span className="text-[11px] font-bold">
+                              Room {room.roomNumber || "TBD"}
+                            </span>
+                            <span className="text-[11px] text-gray-500">
+                              ₹{safeBasePrice} × {nights}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-[10px] text-gray-600">
+                            <span>Subtotal</span>
+                            <span className="font-bold">
+                              ₹{(safeBasePrice * nights).toLocaleString()}
+                            </span>
+                          </div>
+                          {room.hasExtraBed && (
+                            <span className="text-[9px] text-orange-500 font-bold">
+                              + ₹
+                              {(
+                                (Number(room.extraBedCharge) || 0) * nights
+                              ).toLocaleString()}{" "}
+                              (Extra Bed)
+                            </span>
+                          )}
                         </div>
-                        <div className="flex justify-between text-[10px] text-gray-600">
-                          <span>Subtotal</span>
-                          <span className="font-bold">
-                            ₹{(safeBasePrice * nights).toLocaleString()}
-                          </span>
-                        </div>
-                        {room.hasExtraBed && (
-                          <span className="text-[9px] text-orange-500 font-bold">
-                            + ₹
-                            {(
-                              (Number(room.extraBedCharge) || 0) * nights
-                            ).toLocaleString()}{" "}
-                            (Extra Bed)
-                          </span>
-                        )}
+                      );
+                    })}
+                    <div className="h-px bg-border" />
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-gray-500">Room Total</span>
+                      <span className="font-bold">
+                        ₹{roomTotal.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[11px] text-green-500">
+                      <span className="text-gray-500">Booking Advance</span>
+                      <span className="font-bold">
+                        - ₹{bookingAdvance.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[11px] text-green-500">
+                      <span className="text-gray-500">Check-in Advance</span>
+                      <span className="font-bold">
+                        - ₹{checkInAdvance.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-px bg-border" />
+                    <div className="flex justify-between items-center p-3 bg-[var(--color-primary)]/10 rounded-lg">
+                      <span className="text-[11px] font-bold text-[var(--color-primary)]">
+                        Due at Checkout
+                      </span>
+                      <span className="text-lg font-black text-[var(--color-primary)]">
+                        ₹{dueAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="p-3 bg-green-50 rounded-lg border border-green-100">
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-green-600 font-bold">
+                          Day Access Package
+                        </span>
+                        <span className="text-green-600 font-bold">
+                          ₹{packagePrice.toLocaleString()}
+                        </span>
                       </div>
-                    );
-                  })}
-                  <div className="h-px bg-border" />
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-gray-500">Room Total</span>
-                    <span className="font-bold">
-                      ₹{roomTotal.toLocaleString()}
-                    </span>
+                    </div>
+                    {selectedRooms.length > 0 && selectedRooms.map((room: RoomEntry) => {
+                      const safePrice = Number(room.basePrice) || 0;
+                      return (
+                        <div key={room.roomId} className="p-2 bg-gray-50 rounded-lg border border-border">
+                          <div className="flex justify-between text-[11px]">
+                            <span className="font-bold">
+                              Room {room.roomNumber || "TBD"} (add-on)
+                            </span>
+                            <span className="font-bold text-orange-600">
+                              +₹{safePrice.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {selectedRooms.length > 0 && (
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-gray-500">Room Add-ons Total</span>
+                        <span className="font-bold">
+                          ₹{roomAddOnTotal.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-[11px] font-black border-t border-border pt-2">
+                      <span>Total (Package + Rooms)</span>
+                      <span className="text-[var(--color-primary)]">
+                        ₹{roomTotal.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[11px] text-green-500">
+                      <span className="text-gray-500">Booking Advance</span>
+                      <span className="font-bold">
+                        - ₹{bookingAdvance.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[11px] text-green-500">
+                      <span className="text-gray-500">Check-in Advance</span>
+                      <span className="font-bold">
+                        - ₹{checkInAdvance.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-px bg-border" />
+                    <div className="flex justify-between items-center p-3 bg-[var(--color-primary)]/10 rounded-lg">
+                      <span className="text-[11px] font-bold text-[var(--color-primary)]">
+                        Due at Checkout
+                      </span>
+                      <span className="text-lg font-black text-[var(--color-primary)]">
+                        ₹{Math.max(0, roomTotal - totalPaid).toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-[11px] text-green-500">
-                    <span className="text-gray-500">Booking Advance</span>
-                    <span className="font-bold">
-                      - ₹{bookingAdvance.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-[11px] text-green-500">
-                    <span className="text-gray-500">Check-in Advance</span>
-                    <span className="font-bold">
-                      - ₹{checkInAdvance.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="h-px bg-border" />
-                  <div className="flex justify-between items-center p-3 bg-[var(--color-primary)]/10 rounded-lg">
-                    <span className="text-[11px] font-bold text-[var(--color-primary)]">
-                      Due at Checkout
-                    </span>
-                    <span className="text-lg font-black text-[var(--color-primary)]">
-                      ₹{dueAmount.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
+                )}
 
                 {/* Guest Summary */}
                 <div className="mt-4 pt-4 border-t border-border">

@@ -1,221 +1,79 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  FiSearch,
-  FiUserPlus,
-  FiList,
-  FiEdit2,
-  FiTrash2,
-  FiChevronDown,
-} from "react-icons/fi";
-import toast from "react-hot-toast";
-import api from "../../lib/axios";
-
+import { useState } from "react";
+import { FiUserPlus } from "react-icons/fi";
+import { useStaffData } from "./useStaffData";
+import { useStaffFilters } from "./useStaffFilters";
+import type { StaffMember, StaffFormPayload } from "./types";
 import AddStaffModal from "./Components/AddStaffModal";
 import DeleteModal from "./Components/DeleteModal";
-import { useDebounce } from "../../hooks/useDebounce";
-import { isAxiosError } from "axios";
-
-export interface StaffMember {
-  _id: string;
-  fullName: string;
-  email: string;
-  role: "admin" | "receptionist";
-  isActive: boolean;
-  mobile: string;
-  loginId: string;
-  createdAt?: string;
-}
-
-const ToggleSwitch = ({
-  isActive,
-  onToggle,
-}: {
-  isActive: boolean;
-  onToggle: () => void;
-}) => (
-  <div
-    onClick={onToggle}
-    className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-      isActive ? "bg-primary" : "bg-gray-300"
-    }`}
-  >
-    <div
-      className={`bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform ${
-        isActive ? "translate-x-4" : "translate-x-0"
-      }`}
-    />
-  </div>
-);
+import StaffFiltersBar from "./Components/StaffFiltersBar";
+import StaffTable from "./Components/StaffTable";
 
 const StaffMaster = () => {
+  const { staffList, isLoading, toggleStatus, createStaff, updateStaff, deleteStaff } =
+    useStaffData();
+
+  const {
+    roleFilter,
+    setRoleFilter,
+    searchInput,
+    setSearchInput,
+    statusFilter,
+    setStatusFilter,
+    sortOrder,
+    setSortOrder,
+    filteredStaffList,
+  } = useStaffFilters(staffList);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
-
   const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [staffList, setStaffList] = useState<StaffMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [searchInput, setSearchInput] = useState("");
-
-  const debouncedSearch = useDebounce(searchInput, 300);
-
-  const [isMoreFiltersOpen, setIsMoreFiltersOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all"); // "all" | "active" | "disabled"
-  const [sortOrder, setSortOrder] = useState("newest"); // "newest" | "oldest"
-
-  const popoverRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        popoverRef.current &&
-        !popoverRef.current.contains(event.target as Node)
-      ) {
-        setIsMoreFiltersOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const fetchStaff = async () => {
-    try {
-      setIsLoading(true);
-      const response = await api.get("/users");
-      setStaffList(response.data.data);
-    } catch (error) {
-      console.error("Failed to fetch staff list", error);
-      toast.error("Failed to load staff directory.");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleOpenAdd = () => {
+    setSelectedStaff(null);
+    setIsModalOpen(true);
   };
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
-
-  const handleToggleStatus = async (
-    staffId: string,
-    currentStatus: boolean,
-  ) => {
-    setStaffList((prevList) =>
-      prevList.map((staff) =>
-        staff._id === staffId ? { ...staff, isActive: !currentStatus } : staff,
-      ),
-    );
-
-    try {
-      const response = await api.patch(`/users/${staffId}/toggle-status`);
-
-      const finalStatus = response.data.data.isActive;
-      setStaffList((prevList) =>
-        prevList.map((staff) =>
-          staff._id === staffId ? { ...staff, isActive: finalStatus } : staff,
-        ),
-      );
-
-      toast.success(finalStatus ? "Account activated" : "Account disabled");
-    } catch (error) {
-      console.error("Failed to toggle status", error);
-
-      setStaffList((prevList) =>
-        prevList.map((staff) =>
-          staff._id === staffId ? { ...staff, isActive: currentStatus } : staff,
-        ),
-      );
-
-      toast.error("Failed to update status. Change reverted.");
-    }
+  const handleOpenEdit = (staff: StaffMember) => {
+    setSelectedStaff(staff);
+    setIsModalOpen(true);
   };
 
-  const getRoleBadgeStyle = (role: string) => {
-    switch (role.toLowerCase()) {
-      case "admin":
-        return "bg-orange-100 text-orange-600";
-      case "receptionist":
-        return "bg-blue-100 text-blue-600";
-      default:
-        return "bg-gray-100 text-gray-600";
-    }
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedStaff(null);
   };
 
-  const filteredStaffList = staffList
-    .filter((staff) => {
-      // 1. Role Check
-      const matchesRole = roleFilter === "all" || staff.role === roleFilter;
+  const handleSubmit = async (payload: StaffFormPayload): Promise<boolean> => {
+    const ok = selectedStaff
+      ? await updateStaff(selectedStaff._id, payload)
+      : await createStaff(payload);
+    if (ok) handleCloseModal();
+    return ok;
+  };
 
-      // 2. Status Check
-      const matchesStatus = 
-        statusFilter === "all" || 
-        (statusFilter === "active" && staff.isActive) || 
-        (statusFilter === "disabled" && !staff.isActive);
-
-      // 3. Search Check
-      const searchLower = debouncedSearch.toLowerCase();
-      const matchesSearch = 
-        !debouncedSearch ||
-        staff.fullName.toLowerCase().includes(searchLower) ||
-        staff.mobile?.includes(searchLower) ||
-        staff.loginId?.toLowerCase().includes(searchLower);
-
-      return matchesRole && matchesStatus && matchesSearch;
-    })
-    .sort((a, b) => {
-      // 4. Sort Check (Using createdAt, or falling back to a dummy date if missing)
-      const dateA = new Date(a.createdAt || 0).getTime();
-      const dateB = new Date(b.createdAt || 0).getTime();
-
-      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
-    });
-
-  const handleDeleteStaff = async () => {
+  const handleConfirmDelete = async () => {
     if (!staffToDelete) return;
     setIsDeleting(true);
-
-    try {
-      await api.delete(`/users/${staffToDelete._id}`);
-
-      setStaffList((prev) =>
-        prev.filter((staff) => staff._id !== staffToDelete._id),
-      );
-      toast.success(`${staffToDelete.fullName} has been deleted.`);
-      setStaffToDelete(null);
-    } catch (error: unknown) {
-      if (isAxiosError(error)) {
-        const errorMsg =
-          error.response?.data?.message || "Failed to delete user.";
-        toast.error(errorMsg);
-      } else {
-        toast.error("An unexpected error occurred.");
-      }
-    } finally {
-      setIsDeleting(false);
-      // if (!isAxiosError(error) || error?.response?.status === 200) {
-      //     setStaffToDelete(null);
-      // }
-    }
+    const ok = await deleteStaff(staffToDelete);
+    setIsDeleting(false);
+    if (ok) setStaffToDelete(null);
   };
 
   return (
     <div className="flex flex-col w-full h-full p-8 max-w-300 mx-auto relative">
-      <AddStaffModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedStaff(null);
-        }}
-        onSuccess={fetchStaff}
-        editData={selectedStaff}
-      />
+      {isModalOpen && (
+        <AddStaffModal
+          onClose={handleCloseModal}
+          onSubmit={handleSubmit}
+          editData={selectedStaff}
+        />
+      )}
 
       <DeleteModal
         isOpen={!!staffToDelete}
         onClose={() => setStaffToDelete(null)}
-        onConfirm={handleDeleteStaff}
+        onConfirm={handleConfirmDelete}
         isLoading={isDeleting}
         title="Delete Staff Member?"
         message={`Are you sure you want to permanently delete ${staffToDelete?.fullName}? This action cannot be undone and will revoke all their access to the ERP immediately.`}
@@ -230,10 +88,7 @@ const StaffMaster = () => {
           </p>
         </div>
         <button
-          onClick={() => {
-            setSelectedStaff(null);
-            setIsModalOpen(true);
-          }}
+          onClick={handleOpenAdd}
           className="btn-primary flex items-center gap-2"
         >
           <FiUserPlus size={18} />
@@ -241,220 +96,25 @@ const StaffMaster = () => {
         </button>
       </div>
 
-      {/* Filters Bar */}
-      <div className="flex items-center gap-4 bg-gray-50/80 p-2 rounded-xl mb-6">
-        <div className="flex-1 relative">
-          <FiSearch
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            size={18}
-          />
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by name, mobile or ID..."
-            className="input-field pl-10 py-2.5"
-          />
-        </div>
+      <StaffFiltersBar
+        searchInput={searchInput}
+        onSearchChange={setSearchInput}
+        roleFilter={roleFilter}
+        onRoleChange={setRoleFilter}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        sortOrder={sortOrder}
+        onSortChange={setSortOrder}
+      />
 
-        <div className="relative min-w-45">
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-text-primary focus:outline-none cursor-pointer"
-          >
-            <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="receptionist">Reception</option>
-          </select>
-          <FiChevronDown
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
-            size={16}
-          />
-        </div>
-
-        <div className="relative" ref={popoverRef}>
-          <button 
-            onClick={() => setIsMoreFiltersOpen(!isMoreFiltersOpen)}
-            className={`flex items-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${isMoreFiltersOpen ? 'bg-gray-200 text-text-primary' : 'bg-gray-100 hover:bg-gray-200 text-text-secondary'}`}
-          >
-            <FiList size={16} />
-            <span>More Filters</span>
-            {/* Show a little dot if a filter is active */}
-            {(statusFilter !== "all" || sortOrder !== "newest") && (
-              <span className="w-2 h-2 rounded-full bg-primary ml-1"></span>
-            )}
-          </button>
-
-          {/* Popover Menu */}
-          {isMoreFiltersOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-xl shadow-modal z-20 animate-fade-in p-4">
-              
-              {/* Status Filter */}
-              <div className="mb-4">
-                <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Account Status</label>
-                <select 
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active Only</option>
-                  <option value="disabled">Disabled Only</option>
-                </select>
-              </div>
-
-              {/* Sort Filter */}
-              <div>
-                <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Sort By</label>
-                <select 
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                </select>
-              </div>
-
-              {/* Reset Button */}
-              {(statusFilter !== "all" || sortOrder !== "newest") && (
-                <button 
-                  onClick={() => { setStatusFilter("all"); setSortOrder("newest"); }}
-                  className="w-full mt-4 text-xs font-semibold text-danger hover:text-red-700 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Data Table */}
-      <div className="bg-white border border-border rounded-xl shadow-sm">
-        <div className="overflow-x-auto flex-1">
-          <table className="table-container w-full min-w-200">
-            <thead>
-              <tr className="bg-gray-50/50">
-                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
-                  Name
-                </th>
-                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
-                  Role
-                </th>
-                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
-                  Mobile
-                </th>
-                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
-                  Login ID
-                </th>
-                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
-                  Status
-                </th>
-                <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-right py-3 px-4 pr-8">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* 6. Handle Loading State */}
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center">
-                    <div className="flex justify-center items-center gap-3 text-text-secondary">
-                      <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                      <span className="text-sm font-medium">
-                        Loading staff directory...
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ) : staffList.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="py-12 text-center text-text-secondary text-sm"
-                  >
-                    No staff members found.
-                  </td>
-                </tr>
-              ) : (
-                filteredStaffList.map((staff) => (
-                  <tr
-                    key={staff._id}
-                    className="group hover:bg-gray-50/50 border-b border-border last:border-none"
-                  >
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={`https://api.dicebear.com/7.x/notionists/svg?seed=${staff.fullName}&backgroundColor=e2e8f0`}
-                          alt={staff.fullName}
-                          className="w-10 h-10 rounded-full object-cover border border-border"
-                        />
-                        <div>
-                          <p className="text-sm font-semibold text-text-primary">
-                            {staff.fullName}
-                          </p>
-                          <p className="text-xs text-text-secondary">
-                            {staff.email}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${getRoleBadgeStyle(staff.role)}`}
-                      >
-                        {staff.role}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="text-sm text-text-secondary">
-                        {staff.mobile || "N/A"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="text-sm text-text-secondary max-w-25 block wrap-break-word">
-                        {staff.loginId || "N/A"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-2">
-                        <ToggleSwitch
-                          isActive={staff.isActive}
-                          onToggle={() =>
-                            handleToggleStatus(staff._id, staff.isActive)
-                          }
-                        />
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 pr-8">
-                      <div className="flex items-center justify-end gap-4">
-                        <button
-                          onClick={() => {
-                            setSelectedStaff(staff);
-                            setIsModalOpen(true);
-                          }}
-                          className="text-text-secondary hover:text-primary transition-colors"
-                        >
-                          <FiEdit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => setStaffToDelete(staff)}
-                          className="text-text-secondary hover:text-danger transition-colors"
-                        >
-                          <FiTrash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <StaffTable
+        rows={filteredStaffList}
+        totalStaffCount={staffList.length}
+        isLoading={isLoading}
+        onEdit={handleOpenEdit}
+        onDelete={(staff) => setStaffToDelete(staff)}
+        onToggleStatus={toggleStatus}
+      />
     </div>
   );
 };

@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
-import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiLoader, FiCalendar } from "react-icons/fi";
-import AccessPackageModal, { type AccessPackageData } from "../../components/access-package/AccessPackageModal";
+import {
+  FiSearch,
+  FiPlus,
+  FiEdit2,
+  FiTrash2,
+  FiChevronDown,
+  FiLoader,
+  FiCalendar,
+} from "react-icons/fi";
+import AccessPackageModal, {
+  type AccessPackageData,
+} from "../../components/access-package/AccessPackageModal";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
@@ -8,10 +18,14 @@ import { AxiosError } from "axios";
 
 export default function AccessPackages() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingData, setEditingData] = useState<AccessPackageData | null>(null);
+  const [editingData, setEditingData] = useState<AccessPackageData | null>(
+    null,
+  );
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<AccessPackageData | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<AccessPackageData | null>(
+    null,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [packages, setPackages] = useState<AccessPackageData[]>([]);
@@ -83,22 +97,28 @@ export default function AccessPackages() {
   // Toggle status handler
   const handleToggleStatus = async (pkg: AccessPackageData) => {
     const updatedStatus = !pkg.isActive;
-    
+
     // Optimistic Update
     setPackages((prev) =>
-      prev.map((p) => (p._id === pkg._id ? { ...p, isActive: updatedStatus } : p))
+      prev.map((p) =>
+        p._id === pkg._id ? { ...p, isActive: updatedStatus } : p,
+      ),
     );
 
     try {
       await api.put(`/access-packages/${pkg._id}`, {
         isActive: updatedStatus,
       });
-      toast.success(`Package status updated to ${updatedStatus ? "Active" : "Inactive"}`);
+      toast.success(
+        `Package status updated to ${updatedStatus ? "Active" : "Inactive"}`,
+      );
     } catch (err) {
       console.error(err);
       // Revert on failure
       setPackages((prev) =>
-        prev.map((p) => (p._id === pkg._id ? { ...p, isActive: pkg.isActive } : p))
+        prev.map((p) =>
+          p._id === pkg._id ? { ...p, isActive: pkg.isActive } : p,
+        ),
       );
       toast.error("Failed to update status");
     }
@@ -114,9 +134,12 @@ export default function AccessPackages() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Day Access Packages</h1>
+          <h1 className="text-2xl font-bold text-text-primary">
+            Day Access Packages
+          </h1>
           <p className="text-sm text-text-secondary mt-1">
-            Configure premium combo or corporate day pass offerings, pricing, inclusions and add-ons.
+            Configure premium combo or corporate day pass offerings, pricing,
+            inclusions and add-ons.
           </p>
         </div>
         <button
@@ -134,7 +157,10 @@ export default function AccessPackages() {
       {/* Filters Bar */}
       <div className="flex items-center gap-4 bg-gray-50/80 p-2 rounded-xl mb-6">
         <div className="flex-1 relative">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <FiSearch
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            size={18}
+          />
           <input
             type="text"
             value={search}
@@ -154,7 +180,10 @@ export default function AccessPackages() {
             <option value="Premium Combo">Premium Combo</option>
             <option value="Corporate">Corporate</option>
           </select>
-          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+          <FiChevronDown
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
+            size={16}
+          />
         </div>
 
         <div className="relative min-w-40">
@@ -167,7 +196,10 @@ export default function AccessPackages() {
             <option value="true">Active Only</option>
             <option value="false">Inactive Only</option>
           </select>
-          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+          <FiChevronDown
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
+            size={16}
+          />
         </div>
       </div>
 
@@ -197,16 +229,24 @@ export default function AccessPackages() {
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-text-secondary">
+                  <td
+                    colSpan={5}
+                    className="py-12 text-center text-text-secondary"
+                  >
                     <div className="flex justify-center items-center gap-3">
                       <FiLoader className="w-5 h-5 animate-spin text-primary" />
-                      <span className="text-sm font-medium">Loading packages...</span>
+                      <span className="text-sm font-medium">
+                        Loading packages...
+                      </span>
                     </div>
                   </td>
                 </tr>
               ) : packages.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-text-secondary text-sm">
+                  <td
+                    colSpan={5}
+                    className="py-12 text-center text-text-secondary text-sm"
+                  >
                     No access packages registered yet.
                   </td>
                 </tr>
@@ -261,7 +301,8 @@ export default function AccessPackages() {
                         </p>
                         {pkg.duration && (
                           <p className="text-xs text-text-secondary mt-0.5">
-                            Duration: {Math.floor(pkg.duration / 60)}h {pkg.duration % 60}m
+                            Duration: {Math.floor(pkg.duration / 60)}h{" "}
+                            {pkg.duration % 60}m
                           </p>
                         )}
                       </div>

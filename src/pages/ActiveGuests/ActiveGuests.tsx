@@ -46,9 +46,9 @@ const ActiveGuests = () => {
   const fetchActiveGuests = async () => {
     setLoading(true);
     try {
-      // Filter for Checked-In status
+      // Filter for Active status (DB enum: "Active" | "Checked-Out" | "Shifted")
       const response = await api.get(
-        `/checkin/list?status=Checked-In&search=${searchTerm}`,
+        `/checkin/list?status=Active&search=${searchTerm}`,
       );
       if (response.data?.success) {
         setGuests(response.data.data.list || []);

@@ -11,6 +11,8 @@ import {
   FiXCircle,
   FiCheckCircle,
   FiClock,
+  FiEdit2,
+  FiX,
 } from "react-icons/fi";
 import Pagination from "../layout/Pagination";
 import { format } from "date-fns";
@@ -22,7 +24,9 @@ const ManageBooking = ({
   setFilters,
   pagination,
   onPageChange,
-  onCheckIn
+  onCheckIn,
+  onEdit,
+  onCancel,
 }: any) => {
   const [viewType, setViewType] = useState<"Individual" | "Corporate">(
     "Individual",
@@ -268,13 +272,29 @@ const ManageBooking = ({
                   {/* Actions */}
                   <div className="w-24 flex items-center justify-center gap-1">
                     {item.status === "Confirmed" || item.status === "Pending" ? (
-                      <button
-                        onClick={() => onCheckIn(item)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all text-[9px] font-bold"
-                      >
-                        <FiLogIn size={10} />
-                        Check-in
-                      </button>
+                      <>
+                        <button
+                          onClick={() => onEdit(item)}
+                          title="Edit Booking"
+                          className="p-1.5 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-all"
+                        >
+                          <FiEdit2 size={12} />
+                        </button>
+                        <button
+                          onClick={() => onCancel(item)}
+                          title="Cancel Booking"
+                          className="p-1.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg transition-all"
+                        >
+                          <FiX size={12} />
+                        </button>
+                        <button
+                          onClick={() => onCheckIn(item)}
+                          className="flex items-center gap-1 px-2 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all text-[9px] font-bold"
+                        >
+                          <FiLogIn size={10} />
+                          Check-in
+                        </button>
+                      </>
                     ) : item.status === "Checked-In" ? (
                       <span className="px-2.5 py-1.5 bg-blue-100 text-blue-600 rounded-lg text-[9px] font-bold">
                         In House

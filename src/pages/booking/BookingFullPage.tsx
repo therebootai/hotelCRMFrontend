@@ -5,6 +5,8 @@ import CreateBooking from "../../components/bookingComp/CreateBooking";
 import ManageBooking from "../../components/bookingComp/ManageBooking";
 import BookingOverview from "../../components/bookingComp/BookingOverview";
 import CheckInForm from "../../components/checkinComp/CheckinForm";
+import EditBookingModal from "../../components/bookingComp/EditBookingModal";
+import CancelBookingModal from "../../components/bookingComp/CancelBookingModal";
 
 const BookingFullPage = () => {
   const [showPopup, setShowPopup] = useState(false);
@@ -16,7 +18,11 @@ const BookingFullPage = () => {
   const [loading, setLoading] = useState(false);
 
   const [showCheckIn, setShowCheckIn] = useState(false);
-const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+
+  // Edit & Cancel State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   // Pagination & Filters
   const [pagination, setPagination] = useState({
@@ -34,6 +40,17 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
   });
+
+  // Edit & Cancel Handlers
+  const handleOpenEdit = (booking: any) => {
+    setSelectedBooking(booking);
+    setShowEditModal(true);
+  };
+
+  const handleOpenCancel = (booking: any) => {
+    setSelectedBooking(booking);
+    setShowCancelModal(true);
+  };
 
   const handleOpenCheckIn = (booking: any) => {
   setSelectedBooking(booking);
@@ -121,6 +138,8 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
             setPagination({ ...pagination, currentPage: page })
           }
           onCheckIn={handleOpenCheckIn}
+          onEdit={handleOpenEdit}
+          onCancel={handleOpenCancel}
         />
       </section>
 
@@ -138,14 +157,46 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
       )}
 
       {showCheckIn && (
-  <CheckInForm 
-    bookingData={selectedBooking} 
+  <CheckInForm
+    bookingData={selectedBooking}
     onClose={() => {
       setShowCheckIn(false);
-      fetchBookingList(); // Refresh list after check-in
-    }} 
+      fetchBookingList();
+    }}
   />
 )}
+
+      {showEditModal && selectedBooking && (
+        <EditBookingModal
+          booking={selectedBooking}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedBooking(null);
+          }}
+          onSuccess={() => {
+            setShowEditModal(false);
+            setSelectedBooking(null);
+            fetchBookingList();
+            fetchOverview();
+          }}
+        />
+      )}
+
+      {showCancelModal && selectedBooking && (
+        <CancelBookingModal
+          booking={selectedBooking}
+          onClose={() => {
+            setShowCancelModal(false);
+            setSelectedBooking(null);
+          }}
+          onSuccess={() => {
+            setShowCancelModal(false);
+            setSelectedBooking(null);
+            fetchBookingList();
+            fetchOverview();
+          }}
+        />
+      )}
     </div>
   );
 };

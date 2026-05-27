@@ -13,6 +13,7 @@ import api from "../../lib/axios";
 import { startOfDay } from "date-fns";
 import { FaUtensils } from "react-icons/fa";
 import { BiBuilding } from "react-icons/bi";
+import useClickOutside from "../../hooks/useClickOutside";
 
 const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -34,6 +35,13 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
   const [isExisting, setIsExisting] = useState(false);
 
   const isDayAccess = checkIn.bookingCategory === "Day Access";
+
+  const modalRef = useClickOutside<HTMLDivElement>(
+    () => {
+      if (!submitting) onClose();
+    },
+    true,
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -215,7 +223,10 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm">
-      <div className="bg-[#f8f8f6] w-full max-w-6xl rounded-[2rem] shadow-2xl flex flex-col max-h-[96vh] overflow-hidden border border-gray-200">
+      <div
+        ref={modalRef}
+        className="bg-[#f8f8f6] w-full max-w-6xl rounded-[2rem] shadow-2xl flex flex-col max-h-[96vh] overflow-hidden border border-gray-200"
+      >
         {/* ── HEADER ── */}
         <div className="px-8 py-5 border-b border-gray-200 bg-white flex justify-between items-center rounded-t-[2rem]">
           <div className="flex items-center gap-4">

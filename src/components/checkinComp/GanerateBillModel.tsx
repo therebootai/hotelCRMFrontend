@@ -33,6 +33,8 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
   const [paymentNote, setPaymentNote] = useState("");
   const [isExisting, setIsExisting] = useState(false);
 
+  const isDayAccess = checkIn.bookingCategory === "Day Access";
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -244,6 +246,48 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
           <div className="p-6 flex flex-col xl:flex-row gap-6">
             {/* ══ LEFT COLUMN ══ */}
             <div className="flex-1 space-y-5">
+              {/* ── Package Charges (Day Access only) ── */}
+              {isDayAccess && (
+                <Section title="Package Charges" accent="amber">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">Package</th>
+                        <th className="text-center pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">Entry</th>
+                        <th className="text-center pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">Exit</th>
+                        <th className="text-right pb-3 text-xs font-black text-gray-400 uppercase tracking-wider">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-gray-50">
+                        <td className="py-3 font-bold text-gray-800">
+                          {checkIn.packageDetails?.packageName || "Day Access Package"}
+                        </td>
+                        <td className="py-3 text-center text-gray-600 text-xs">
+                          {checkIn.packageDetails?.entryTime
+                            ? new Date(checkIn.packageDetails.entryTime).toLocaleTimeString("en-IN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : "—"}
+                        </td>
+                        <td className="py-3 text-center text-gray-600 text-xs">
+                          {checkIn.packageDetails?.exitTime
+                            ? new Date(checkIn.packageDetails.exitTime).toLocaleTimeString("en-IN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : "—"}
+                        </td>
+                        <td className="py-3 text-right font-black text-amber-600">
+                          ₹{Number(roomTotal).toLocaleString()}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </Section>
+              )}
+
               {/* 1. Room Stay Breakdown */}
               <Section title="Room Stay Charges" accent="orange">
                 <table className="w-full text-sm">
@@ -270,7 +314,7 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {billData?.roomChargesBreakdown?.length > 0 ? (
+                    {!isDayAccess && billData?.roomChargesBreakdown?.length > 0 ? (
                       billData.roomChargesBreakdown.map(
                         (room: any, i: number) => (
                           <tr
@@ -315,7 +359,9 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
                           colSpan={6}
                           className="py-6 text-center text-gray-400 text-xs"
                         >
-                          No room charges found
+                          {isDayAccess
+                            ? "No room charges — this is a Day Access booking."
+                            : "No room charges found"}
                         </td>
                       </tr>
                     )}

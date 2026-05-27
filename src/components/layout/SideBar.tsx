@@ -162,6 +162,18 @@ const SideBar = () => {
                 >
                   Access Packages
                 </NavLink>
+                <NavLink
+                  to="/master/tax-gst"
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${
+                      isActive
+                        ? 'text-primary font-medium bg-primary/10'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-background'
+                    }`
+                  }
+                >
+                  Tax / GST
+                </NavLink>
               </div>
             </div>
           </div>

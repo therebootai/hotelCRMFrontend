@@ -96,7 +96,7 @@ const SideBar = () => {
             {/* Sub-menu Items */}
             <div 
               className={`flex flex-col gap-1 overflow-hidden transition-all duration-200 ease-in-out ${
-                isMastersOpen ? "max-h-60 opacity-100 mt-1" : "max-h-0 opacity-0"
+                isMastersOpen ? "max-h-80 opacity-100 mt-1" : "max-h-0 opacity-0"
               }`}
             >
               <div className="ml-6 pl-4 border-l border-border flex flex-col gap-1">

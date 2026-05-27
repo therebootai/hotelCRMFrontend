@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FiPlus, FiArrowLeft, FiLoader, FiCalendar } from "react-icons/fi";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 import { AxiosError } from "axios";
@@ -16,7 +16,6 @@ import AmenitiesMaster from "./components/AmenitiesMaster";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 
 export default function RoomMaster() {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Room Master");
   const [view, setView] = useState<"list" | "add">("list");
 

@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from "react";
 import { FiSearch } from "react-icons/fi";
 import type { CustomerProfile } from "../types";
 
@@ -11,7 +10,7 @@ interface CustomerDirectoryProps {
   totalPages: number;
   onSearchChange: (value: string) => void;
   onSelect: (id: string) => void;
-  onPageChange: Dispatch<SetStateAction<number>>;
+  onPageChange: (page: number) => void;
 }
 
 const CustomerDirectory = ({
@@ -88,7 +87,7 @@ const CustomerDirectory = ({
       <div className="p-4 border-t border-border flex justify-between items-center bg-gray-50 text-[10px] font-semibold text-text-secondary shrink-0">
         <button
           disabled={page <= 1}
-          onClick={() => onPageChange((p) => Math.max(1, p - 1))}
+          onClick={() => onPageChange(Math.max(1, page - 1))}
           className="px-2.5 py-1 border border-border rounded bg-white hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
         >
           Prev
@@ -98,7 +97,7 @@ const CustomerDirectory = ({
         </span>
         <button
           disabled={page >= totalPages}
-          onClick={() => onPageChange((p) => Math.min(totalPages, p + 1))}
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           className="px-2.5 py-1 border border-border rounded bg-white hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
         >
           Next

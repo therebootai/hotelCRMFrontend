@@ -172,6 +172,19 @@ const CreateBooking = ({
     setTotalNights(nights > 0 ? nights : 1);
   }, [checkInDate, checkOutDate]);
 
+  // Auto-select Day Access Package based on Booking Type
+  useEffect(() => {
+    if (bookingCategory === "Day Access" && accessPackages.length > 0) {
+      if (bookingType === "Individual") {
+        const pkg = accessPackages.find((p) => p.packageName === "Premium Combo");
+        if (pkg) setSelectedPackageId(pkg._id);
+      } else if (bookingType === "Corporate") {
+        const pkg = accessPackages.find((p) => p.packageName === "Corporate");
+        if (pkg) setSelectedPackageId(pkg._id);
+      }
+    }
+  }, [bookingType, bookingCategory, accessPackages]);
+
   // Search available rooms
   const searchRooms = async () => {
     if (!customerForm.name || !customerForm.phone) {
@@ -640,7 +653,17 @@ const CreateBooking = ({
                     className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
                   >
                     <option value="">-- Choose Access Package --</option>
-                    {accessPackages.map((pkg) => (
+                    {accessPackages
+                      .filter((pkg) => {
+                        if (bookingType === "Individual") {
+                          return pkg.packageType === "Premium Combo" || pkg.packageName === "Premium Combo";
+                        }
+                        if (bookingType === "Corporate") {
+                          return pkg.packageType === "Corporate" || pkg.packageName === "Corporate";
+                        }
+                        return true;
+                      })
+                      .map((pkg) => (
                       <option key={pkg._id} value={pkg._id}>
                         {pkg.packageName} (Adult: ₹{pkg.adult_price})
                       </option>

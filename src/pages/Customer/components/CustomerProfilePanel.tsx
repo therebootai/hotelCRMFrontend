@@ -118,8 +118,9 @@ const CustomerProfilePanel = ({
                 Preferences & Notes
               </h3>
               <div className="flex flex-wrap gap-1.5 mt-1">
-                {customer?.preferences && customer?.preferences?.length > 0 ? (
-                  customer?.preferences?.map((p, i) => (
+                {Array.isArray(customer.preferences) &&
+                customer.preferences.length > 0 ? (
+                  customer.preferences.map((p: string, i: number) => (
                     <span
                       key={i}
                       className="px-2.5 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full"

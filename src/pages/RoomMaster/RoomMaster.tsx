@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FiPlus, FiArrowLeft, FiLoader, FiCalendar } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 import { AxiosError } from "axios";
@@ -13,7 +13,6 @@ import ComingSoon from "./components/ComingSoon";
 import AddRoomForm from "./components/AddRoomForm";
 import RoomTypeMaster from "./components/RoomTypeMaster";
 import AmenitiesMaster from "./components/AmenitiesMaster";
-import TaxGstMaster from "./components/TaxGstMaster";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 
 export default function RoomMaster() {
@@ -40,7 +39,6 @@ export default function RoomMaster() {
   // Settings Modals State
   const [isRoomTypeModalOpen, setIsRoomTypeModalOpen] = useState(false);
   const [isAmenityModalOpen, setIsAmenityModalOpen] = useState(false);
-  const [isTaxModalOpen, setIsTaxModalOpen] = useState(false);
 
   const [filters, setFilters] = useState({ roomType: '', status: '' });
 
@@ -160,12 +158,12 @@ export default function RoomMaster() {
           <div className="flex items-center gap-3 animate-fade-in">
             {activeTab === "Room Master" && (
               <>
-                <button
-                  onClick={() => navigate('/master/rooms/rates')}
+                <Link
+                  to="/master/rooms/rates"
                   className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors border bg-card border-border text-text-primary hover:bg-background"
                 >
                   <FiCalendar size={16} /> Manage Rates
-                </button>
+                </Link>
                 <button
                   onClick={handleOpenAddForm}
                   className="btn-primary flex items-center gap-2 px-5 py-2.5"
@@ -188,14 +186,6 @@ export default function RoomMaster() {
                 className="btn-primary flex items-center gap-2 px-5 py-2.5"
               >
                 <FiPlus size={18} /> Add Amenities
-              </button>
-            )}
-            {activeTab === "Tax / GST Master" && (
-              <button
-                onClick={() => setIsTaxModalOpen(true)}
-                className="btn-primary flex items-center gap-2 px-5 py-2.5"
-              >
-                <FiPlus size={18} /> Add Tax/GST
               </button>
             )}
           </div>
@@ -251,11 +241,6 @@ export default function RoomMaster() {
         <AmenitiesMaster
           isAddModalOpen={isAmenityModalOpen}
           setIsAddModalOpen={setIsAmenityModalOpen}
-        />
-      ) : activeTab === "Tax / GST Master" ? (
-        <TaxGstMaster
-          isAddModalOpen={isTaxModalOpen}
-          setIsAddModalOpen={setIsTaxModalOpen}
         />
       ) : (
         <ComingSoon moduleName={activeTab} />

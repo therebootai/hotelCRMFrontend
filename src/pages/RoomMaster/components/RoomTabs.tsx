@@ -1,6 +1,6 @@
 import React from 'react';
 
-const TABS = ['Room Master', 'Room Type Master', 'Amenities Master', 'Tax / GST Master'];
+const TABS = ['Room Master', 'Room Type Master', 'Amenities Master'];
 
 interface RoomTabsProps {
   activeTab: string;

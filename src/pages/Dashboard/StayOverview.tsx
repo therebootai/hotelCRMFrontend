@@ -6,6 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import api from "../../lib/axios";
 import NewBookingButton from "../../components/ui/NewBookingButton";
 import ExtendStayModal from "../../components/checkinComp/ExtendStayModal";
+import RoomChangeModal from "../../components/checkinComp/RoomChangeModal";
 import { FaSnowflake } from "react-icons/fa";
 import { BiUser, BiWrench } from "react-icons/bi";
 
@@ -140,6 +141,10 @@ const StayOverview = () => {
 
   const [selectedCheckIn, setSelectedCheckIn] = useState<any>(null);
   const [extendOpen, setExtendOpen] = useState(false);
+  const [roomChangeOpen, setRoomChangeOpen] = useState(false);
+  const [roomChangeBooking, setRoomChangeBooking] = useState<any>(null);
+  const [dropTargetRoomId, setDropTargetRoomId] = useState<string | null>(null);
+  const [draggedSourceRoomId, setDraggedSourceRoomId] = useState<string | null>(null);
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -235,6 +240,7 @@ const StayOverview = () => {
       "booking",
       JSON.stringify({ booking, sourceRoomId: roomId }),
     );
+    setDraggedSourceRoomId(roomId);
   };
 
   // =====================================================
@@ -289,6 +295,38 @@ const StayOverview = () => {
     });
 
     setExtendOpen(true);
+  };
+
+  const handleRoomDrop = (
+    e: React.DragEvent,
+    targetRoom: any,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const raw = e.dataTransfer.getData("booking");
+    if (!raw) return;
+
+    const { booking } = JSON.parse(raw);
+
+    // Don't allow dropping on the same room
+    if (booking.roomId === targetRoom.id) return;
+
+    const roomTypeId = targetRoom.roomType?._id || targetRoom.roomType || "";
+    const roomTypeName = targetRoom.roomType?.name || "";
+
+    setRoomChangeBooking({
+      id: booking.id,
+      guest: booking.guest,
+      start: booking.start,
+      end: booking.end,
+      currentRoomId: booking.roomId,
+      currentRoomNumber: booking.roomNumber,
+      currentRoomTypeId: booking.roomType || "",
+      currentRoomTypeName: roomTypeName,
+      currentPricePerNight: booking.price || 0,
+    });
+    setRoomChangeOpen(true);
   };
 
   // =====================================================
@@ -484,8 +522,22 @@ const StayOverview = () => {
                 {category.rooms.map((room: any) => (
                   <div
                     key={room.id}
-                    className="grid border-b min-h-[70px] relative"
+                    className={`grid border-b min-h-[70px] relative ${
+                      dropTargetRoomId === room.id && draggedSourceRoomId !== room.id
+                        ? "ring-2 ring-primary/40 bg-primary/5"
+                        : ""
+                    }`}
                     style={{ gridTemplateColumns: gridTemplate }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      setDropTargetRoomId(room.id);
+                    }}
+                    onDragLeave={() => setDropTargetRoomId(null)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      handleRoomDrop(e, room);
+                    }}
                   >
                     {/* Room Cell */}
                     <div className="p-3 border-r bg-white z-20 flex flex-col justify-center">
@@ -574,6 +626,26 @@ const StayOverview = () => {
           )}
         </div>
       </div>
+
+      {roomChangeOpen && roomChangeBooking && (
+        <RoomChangeModal
+          booking={roomChangeBooking}
+          roomTypes={roomTypes}
+          onClose={() => {
+            setRoomChangeOpen(false);
+            setRoomChangeBooking(null);
+            setDropTargetRoomId(null);
+            setDraggedSourceRoomId(null);
+          }}
+          onSuccess={() => {
+            fetchOverview();
+            setRoomChangeOpen(false);
+            setRoomChangeBooking(null);
+            setDropTargetRoomId(null);
+            setDraggedSourceRoomId(null);
+          }}
+        />
+      )}
 
       {/* Extend Modal */}
       {extendOpen && selectedCheckIn && (

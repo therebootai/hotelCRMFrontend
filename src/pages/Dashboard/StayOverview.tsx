@@ -312,7 +312,6 @@ const StayOverview = () => {
     // Don't allow dropping on the same room
     if (booking.roomId === targetRoom.id) return;
 
-    const roomTypeId = targetRoom.roomType?._id || targetRoom.roomType || "";
     const roomTypeName = targetRoom.roomType?.name || "";
 
     setRoomChangeBooking({
@@ -615,6 +614,7 @@ const StayOverview = () => {
                           onDragStart={(e: React.DragEvent) =>
                             handleDragStart(e, booking, room.id)
                           }
+                          onDragEnd={() => setDraggedSourceRoomId(null)}
                           onResizeStart={handleResizeStart}
                         />
                       );

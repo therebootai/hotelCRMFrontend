@@ -196,11 +196,6 @@ const RoomChangeModal: React.FC<RoomChangeModalProps> = ({
                 </option>
               ))}
             </select>
-            {availableRooms.length === 0 && !fetchingRooms && selectedRoomTypeId && (
-              <p className="text-[11px] text-red-400 font-bold ml-1">
-                No rooms available for this category in the booking period
-              </p>
-            )}
           </div>
 
           {/* Price Impact */}

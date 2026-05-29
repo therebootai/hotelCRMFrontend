@@ -3,6 +3,14 @@ import { FiPlus, FiX, FiTrash2, FiChevronDown, FiAlertCircle, FiShield, FiSearch
 import api from "../../lib/axios";
 import toast from "react-hot-toast";
 
+interface TaxOption {
+  _id: string;
+  name: string;
+  percentage: number;
+  type: "Room" | "Food" | "Service";
+  isActive: boolean;
+}
+
 interface ProcessBillingModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,6 +43,8 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
   const [restaurantCharges, setRestaurantCharges] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [taxPercentage, setTaxPercentage] = useState(12); // Default GST
+  const [taxOptions, setTaxOptions] = useState<TaxOption[]>([]);
+  const [selectedTaxId, setSelectedTaxId] = useState<string>("");
   const [notes, setNotes] = useState("");
 
   // New Payment inputs
@@ -67,9 +77,19 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
       }
     };
 
+    const fetchTaxes = async () => {
+      try {
+        const res = await api.get("/tax-gst", { params: { activeOnly: "true" } });
+        setTaxOptions(res.data.data || []);
+      } catch (err) {
+        console.error("Error fetching taxes:", err);
+      }
+    };
+
     if (isOpen) {
       fetchActiveCheckIns();
       fetchDbExtraServices();
+      fetchTaxes();
       resetForm();
     }
   }, [isOpen]);
@@ -139,10 +159,20 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
         setTaxPercentage(preview.taxPercentage || 12);
         setNotes(preview.notes || "");
 
+        // Restore the booking's tax GST record for display
+        const storedPct = preview.taxPercentage ?? 12;
+        if (preview.taxGstId) {
+          const match = taxOptions.find((t) => t._id === preview.taxGstId);
+          setSelectedTaxId(match ? match._id : "");
+        } else {
+          const match = taxOptions.find((t) => t.percentage === storedPct);
+          setSelectedTaxId(match ? match._id : "");
+        }
+
         // Calculate recommended payment based on Net Payable (Grand Total - Advance)
         const roomTotal = preview.totalRoomCharges || 0;
         const subTotal = roomTotal + (preview.extraServices || []).reduce((acc: number, s: any) => acc + (s.total || 0), 0);
-        const taxAmt = (subTotal * 12) / 100;
+        const taxAmt = (subTotal * (preview.taxPercentage || 12)) / 100;
         const grandTotal = subTotal + taxAmt - (preview.discount || 0);
         const netPayable = Math.max(0, grandTotal - (preview.advanceDeducted || 0));
         const due = Math.max(0, netPayable - (preview.paidAmount || 0));
@@ -294,6 +324,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
     setRestaurantCharges(0);
     setDiscount(0);
     setTaxPercentage(12);
+    setSelectedTaxId("");
     setNotes("");
     setPaymentAmount(0);
     setPaymentMethod("Cash");
@@ -652,17 +683,33 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-[9px] uppercase font-black text-gray-400 tracking-wider block mb-1">Tax Percentage (%)</label>
+                    <label className="text-[9px] uppercase font-black text-gray-400 tracking-wider block mb-1">
+                      Tax GST
+                    </label>
                     <select
                       className="w-full px-3 py-2.5 bg-gray-50 border border-transparent rounded-xl outline-none text-xs font-bold text-gray-500"
-                      value={taxPercentage}
-                      onChange={(e) => setTaxPercentage(Number(e.target.value))}
+                      value={selectedTaxId}
+                      onChange={(e) => {
+                        const selected = taxOptions.find((t) => t._id === e.target.value);
+                        setSelectedTaxId(e.target.value);
+                        if (selected) {
+                          setTaxPercentage(selected.percentage);
+                        }
+                      }}
                     >
-                      <option value="0">No Tax (0%)</option>
-                      <option value="5">Luxury Room Tax (5%)</option>
-                      <option value="12">Standard GST (12%)</option>
-                      <option value="18">Premium Room GST (18%)</option>
+                      <option value="">— Select Tax —</option>
+                      {taxOptions.map((t) => (
+                        <option key={t._id} value={t._id}>
+                          {t.name} ({t.percentage}%)
+                        </option>
+                      ))}
                     </select>
+                    {selectedTaxId && (
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {taxOptions.find((t) => t._id === selectedTaxId)?.type} ·{" "}
+                        {taxPercentage}% applied
+                      </p>
+                    )}
                   </div>
                 </div>
 

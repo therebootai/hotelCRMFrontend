@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   FiBarChart2,
   FiCalendar,
@@ -9,6 +9,7 @@ import {
   FiUsers,
   FiFileText,
 } from "react-icons/fi";
+import { useSearchParams } from "react-router-dom";
 import api from "../../lib/axios";
 import {
   BarChart,
@@ -88,7 +89,17 @@ const COLORS = [
 ];
 
 const ReportsPage = () => {
-  const [activeTab, setActiveTab] = useState<ReportTab>("occupancy");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get("tab") as ReportTab) || "occupancy";
+
+  const setActiveTabId = (id: ReportTab) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", id);
+      return next;
+    });
+  };
+
   const [loading, setLoading] = useState(false);
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date();
@@ -516,7 +527,7 @@ const ReportsPage = () => {
         return (
           <div>
             <div className="mb-6 flex justify-center">
-              <ResponsiveContainer width={300} height={200}>
+              <ResponsiveContainer width={300} height={250}>
                 <PieChart>
                   <Pie
                     data={agingData}
@@ -635,7 +646,7 @@ const ReportsPage = () => {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => setActiveTabId(tab.id)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
               activeTab === tab.id
                 ? "bg-white text-text-primary shadow-sm"

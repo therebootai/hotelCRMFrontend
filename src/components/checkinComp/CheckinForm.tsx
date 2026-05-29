@@ -26,7 +26,7 @@ import {
 } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { addDays, differenceInDays, differenceInHours, format } from "date-fns";
+import { addDays, differenceInCalendarDays, differenceInHours, format } from "date-fns";
 import api from "../../lib/axios";
 import GuestRegistrationCard from "./GuestRegistrationCard";
 import { BiShield } from "react-icons/bi";
@@ -137,6 +137,8 @@ interface RoomEntry {
   extraBedCharge: number;
   extraBedAllowed: boolean;
   roomTypeName?: string;
+  slotIndex?: number;           // which booking.rooms[] entry this belongs to
+  requiredRoomTypeId?: string;  // expected room type for this slot (for filtering)
 }
 
 const CheckInForm = ({
@@ -149,6 +151,7 @@ const CheckInForm = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<string>("");
+  const [showSuccessActions, setShowSuccessActions] = useState(false);
   const [roomTypes, setRoomTypes] = useState<any[]>([]);
   const [availableRooms, setAvailableRooms] = useState<any[]>([]);
   const grcCardRef = useRef<any>(null);
@@ -160,6 +163,10 @@ const CheckInForm = ({
   // Signed GRC State
   const [signedGRCFile, setSignedGRCFile] = useState<File | null>(null);
   const [signedGRCPreview, setSignedGRCPreview] = useState<string | null>(null);
+
+  // Extra Services State
+  const [extraServices, setExtraServices] = useState<any[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
 
   // Initialize from edit mode data
   useEffect(() => {
@@ -312,7 +319,9 @@ const CheckInForm = ({
   const getInitialCheckInTime = () => {
     if (isDayAccess && bookingData?.accessPackageId) {
       const pkg = bookingData.accessPackageId;
-      const visitDate = bookingData.visitDate ? new Date(bookingData.visitDate) : new Date();
+      const visitDate = bookingData.visitDate
+        ? new Date(bookingData.visitDate)
+        : new Date();
       const entryStr = pkg.entry_time || "09:00";
       const [entryH, entryM] = entryStr.split(":").map(Number);
       visitDate.setHours(entryH, entryM, 0, 0);
@@ -398,10 +407,10 @@ const CheckInForm = ({
     remarks: "",
   });
 
-  // Calculate nights for display
+  // Calculate nights using calendar days (matches backend eachDayOfInterval logic)
   const nights = Math.max(
     1,
-    differenceInDays(
+    differenceInCalendarDays(
       new Date(stayFormData.expectedCheckOutTime),
       new Date(stayFormData.checkInTime),
     ),
@@ -419,46 +428,62 @@ const CheckInForm = ({
   // Selected Rooms
   const [selectedRooms, setSelectedRooms] = useState<RoomEntry[]>([]);
 
-  // Initialize selected rooms from bookingData
+  // Room type filter for the room grid (controlled)
+  const [roomTypeFilterId, setRoomTypeFilterId] = useState<string>("");
+
+  // Preferred room type from booking (when no specific room was assigned at booking time)
+  const preferredRoomType = (() => {
+    const r = bookingData?.rooms?.[0];
+    if (!r) return null;
+    const roomIdStr = typeof r.roomId === "object" ? r.roomId?._id : r.roomId;
+    if (roomIdStr) return null; // specific room already assigned, no preferred type needed
+    return r.roomType || null; // populated object { _id, name } or ObjectId string
+  })();
+  const preferredRoomTypeId: string =
+    preferredRoomType?._id?.toString() ||
+    (typeof preferredRoomType === "string" ? preferredRoomType : "");
+  const preferredRoomTypeName: string = preferredRoomType?.name || "";
+
+  // Initialize selected rooms from bookingData — one slot per booking.rooms[] entry
   useEffect(() => {
     const bookingRooms = bookingData?.rooms || [];
-    if (bookingRooms.length > 0) {
-      const initialRooms: RoomEntry[] = bookingRooms.map((r: any) => {
-        // Check multiple sources for extraBedAllowed
-        const roomIdObj = typeof r.roomId === "object" ? r.roomId : null;
-        const roomIdStr = roomIdObj ? r.roomId._id : r.roomId;
-        const roomNumber = roomIdObj?.roomNumber || r.roomNumber || "TBD";
-        const basePrice =
-          roomIdObj?.basePrice || r.pricePerNight || r.basePrice || 0;
-        const roomTypeObj = r.roomType || roomIdObj?.roomType;
-        const roomTypeName = roomTypeObj?.name || r.roomTypeName || "";
-        // Check ALL possible sources for extraBedAllowed
-        const extraBedAllowed =
-          r.hasExtraBed === true ||
-          r.extraBedAllowed === true ||
-          roomIdObj?.extraBedAllowed === true ||
-          r.extraBedCharge > 0;
+    if (bookingRooms.length === 0) return;
 
-        const extraBedCharge =
-          r.extraBedCharge ||
-          roomIdObj?.extraBedCharge ||
-          r.extraBedChargeTotal ||
-          0;
+    const slots: RoomEntry[] = bookingRooms.map((r: any, idx: number) => {
+      const roomIdObj = typeof r.roomId === "object" ? r.roomId : null;
+      const roomIdStr = roomIdObj?._id || (typeof r.roomId === "string" ? r.roomId : "");
+      const roomTypeObj = r.roomType || roomIdObj?.roomType || null;
+      const requiredRoomTypeId =
+        roomTypeObj?._id?.toString() ||
+        (typeof roomTypeObj === "string" ? roomTypeObj : "");
 
-        return {
-          roomId: roomIdStr,
-          roomNumber,
-          basePrice: Number(basePrice) || 0,
-          roomType: roomTypeObj,
-          roomTypeName,
-          hasExtraBed: extraBedAllowed,
-          extraBedCharge: Number(extraBedCharge) || 0,
-          extraBedAllowed,
-        };
-      });
-      setSelectedRooms(initialRooms);
+      return {
+        roomId: roomIdStr || "",
+        roomNumber: roomIdStr ? (roomIdObj?.roomNumber || r.roomNumber || "TBD") : "TBD",
+        basePrice: r.pricePerNight || r.basePrice || 0,
+        roomType: roomTypeObj,
+        roomTypeName: roomTypeObj?.name || r.roomTypeName || "",
+        hasExtraBed: false,
+        extraBedCharge: 0,
+        extraBedAllowed: false,
+        slotIndex: idx,
+        requiredRoomTypeId,
+      };
+    });
+
+    if (slots.length > 0) {
+      setSelectedRooms(slots);
     }
   }, [bookingData]);
+
+  // Auto-filter room grid by preferred room type on open
+  useEffect(() => {
+    if (!editMode && preferredRoomTypeId) {
+      setRoomTypeFilterId(preferredRoomTypeId);
+      fetchRoomsByType(preferredRoomTypeId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferredRoomTypeId]);
 
   // Fetch all rooms on mount
   useEffect(() => {
@@ -479,8 +504,25 @@ const CheckInForm = ({
         console.error("Error fetching rooms:", err);
       }
     };
+    const fetchExtraServices = async () => {
+      try {
+        const res = await api.get("/extra-services?activeOnly=true");
+        const services = res.data.data || [];
+        setExtraServices(services);
+        // Pre-select services that were booked as add-ons
+        if (bookingData?.addons?.length) {
+          const preSelected = bookingData.addons
+            .map((a: any) => a.serviceId)
+            .filter(Boolean);
+          setSelectedServices(preSelected);
+        }
+      } catch (err) {
+        console.error("Error fetching extra services:", err);
+      }
+    };
     fetchRoomTypes();
     fetchAllRooms();
+    fetchExtraServices();
   }, []);
 
   // Fetch all rooms when type filter changes
@@ -502,15 +544,18 @@ const CheckInForm = ({
   // Calculate totals
   // Package price for Day Access
   const packagePrice = isDayAccess
-    ? (bookingData?.pricingSummary?.grandTotal ||
-       bookingData?.accessPackageId?.adult_price ||
-       bookingData?.pricingSummary?.roomTotal ||
-       0)
+    ? bookingData?.pricingSummary?.grandTotal ||
+      bookingData?.accessPackageId?.adult_price ||
+      bookingData?.pricingSummary?.roomTotal ||
+      0
     : 0;
 
   // Room add-on charges (for Day Access rooms are charged as flat add-on, not per night)
   const roomAddOnTotal = isDayAccess
-    ? selectedRooms.reduce((sum: number, room: RoomEntry) => sum + (Number(room.basePrice) || 0), 0)
+    ? selectedRooms.reduce(
+        (sum: number, room: RoomEntry) => sum + (Number(room.basePrice) || 0),
+        0,
+      )
     : 0;
 
   const roomTotal = isDayAccess
@@ -743,7 +788,12 @@ const CheckInForm = ({
   // Step validation
   const canProceed = (step: number): boolean => {
     switch (step) {
-      case 1:
+      case 1: {
+        // All booking room slots must be assigned before proceeding
+        if (!isDayAccess && bookingData?.rooms?.length > 0) {
+          const allAssigned = selectedRooms.every((s) => !!s.roomId);
+          if (!allAssigned) return false;
+        }
         if (partyType === "Individual") {
           return (
             getPrimaryGuest()?.name?.trim() !== "" &&
@@ -751,6 +801,7 @@ const CheckInForm = ({
           );
         }
         return corporateDetails.companyName.trim() !== "";
+      }
       case 2:
         const primary = getPrimaryGuest();
         return !!(
@@ -981,6 +1032,7 @@ const CheckInForm = ({
         vehicleDetails: vehicles.filter(
           (v: any) => v.vehicleNumber && v.vehicleNumber.trim() !== "",
         ),
+        extraServices: selectedServices,
         specialRequests: stayFormData.specialRequests,
         notes: stayFormData.specialRequests,
         ...(editMode
@@ -1037,13 +1089,9 @@ const CheckInForm = ({
 
       if (res.data.success) {
         setLoadingStep("");
-        alert(
-          editMode
-            ? "Check-in updated successfully!"
-            : "Check-in completed successfully!",
-        );
+        // Show success actions instead of alert and close
+        setShowSuccessActions(true);
         if (onSuccess) onSuccess();
-        else onClose();
       }
     } catch (err: any) {
       console.error(editMode ? "Update Error:" : "Check-in Error:", err);
@@ -1217,8 +1265,13 @@ const CheckInForm = ({
                       </label>
                       {isDayAccess ? (
                         <div className="w-full p-2 bg-green-50 border border-green-200 rounded-lg text-[11px] font-bold text-green-600">
-                          {format(stayFormData.expectedCheckOutTime, "dd MMM, HH:mm")}
-                          <span className="text-[9px] ml-1">(from package)</span>
+                          {format(
+                            stayFormData.expectedCheckOutTime,
+                            "dd MMM, HH:mm",
+                          )}
+                          <span className="text-[9px] ml-1">
+                            (from package)
+                          </span>
                         </div>
                       ) : (
                         <DatePicker
@@ -1264,7 +1317,8 @@ const CheckInForm = ({
                         </label>
                         <div className="p-2 bg-gray-50 border border-border rounded-lg text-center">
                           <span className="text-sm font-black text-green-600">
-                            {bookingData?.accessPackageId?.packageName || "Day Access"}
+                            {bookingData?.accessPackageId?.packageName ||
+                              "Day Access"}
                           </span>
                         </div>
                       </div>
@@ -1277,17 +1331,26 @@ const CheckInForm = ({
                   <>
                     <div className="bg-[var(--color-card)] rounded-xl border border-border p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase tracking-widest flex items-center gap-2">
-                          <FiHome
-                            size={12}
-                            className="text-[var(--color-primary)]"
-                          />{" "}
-                          Room Selection
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                            <FiHome
+                              size={12}
+                              className="text-[var(--color-primary)]"
+                            />{" "}
+                            Room Selection
+                          </h3>
+                          {preferredRoomTypeName && (
+                            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-[9px] font-bold border border-primary/20">
+                              Preferred: {preferredRoomTypeName}
+                            </span>
+                          )}
+                        </div>
                         <select
-                          onChange={(e) =>
-                            fetchRoomsByType(e.target.value || undefined)
-                          }
+                          value={roomTypeFilterId}
+                          onChange={(e) => {
+                            setRoomTypeFilterId(e.target.value);
+                            fetchRoomsByType(e.target.value || undefined);
+                          }}
                           className="p-1.5 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none"
                         >
                           <option value="">All Rooms</option>
@@ -1299,6 +1362,90 @@ const CheckInForm = ({
                         </select>
                       </div>
 
+                      {/* Per-slot room assignment (when coming from a booking with room type selections) */}
+                      {!isDayAccess && bookingData?.rooms?.length > 0 && (
+                        <div className="space-y-3 mb-4">
+                          <h4 className="text-xs font-bold text-text-primary">Assign Rooms</h4>
+                          {selectedRooms.map((slot, idx) => (
+                            <div key={`slot-${slot.slotIndex ?? idx}-${slot.requiredRoomTypeId ?? "any"}`} className="border border-border rounded-xl p-3 bg-card">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-bold text-text-primary">
+                                  Room {idx + 1}{slot.roomTypeName ? ` · ${slot.roomTypeName}` : ""}
+                                </span>
+                                {slot.roomId ? (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 bg-green-100 text-green-600 rounded">
+                                    Assigned: {slot.roomNumber}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 text-amber-600 rounded">
+                                    Not Assigned
+                                  </span>
+                                )}
+                              </div>
+
+                              <select
+                                value={slot.roomId}
+                                onChange={(e) => {
+                                  const chosenRoom = availableRooms.find((r: any) => r._id === e.target.value);
+                                  if (!chosenRoom) return;
+                                  setSelectedRooms(
+                                    selectedRooms.map((s, i) =>
+                                      i === idx
+                                        ? {
+                                            ...s,
+                                            roomId: chosenRoom._id,
+                                            roomNumber: chosenRoom.roomNumber,
+                                            basePrice: chosenRoom.basePrice,
+                                            roomType: chosenRoom.roomType,
+                                            roomTypeName: chosenRoom.roomType?.name || "",
+                                            extraBedAllowed: chosenRoom.extraBedAllowed || false,
+                                            extraBedCharge: chosenRoom.extraBedCharge || 0,
+                                          }
+                                        : s
+                                    )
+                                  );
+                                }}
+                                className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
+                              >
+                                <option value="">-- Select Room --</option>
+                                {availableRooms
+                                  .filter((r: any) => {
+                                    if (!slot.requiredRoomTypeId) return true;
+                                    const roomTypeId =
+                                      typeof r.roomType === "object" ? r.roomType?._id : r.roomType;
+                                    return String(roomTypeId) === String(slot.requiredRoomTypeId);
+                                  })
+                                  .filter((r: any) =>
+                                    !selectedRooms.some((s, i) => i !== idx && s.roomId === r._id)
+                                  )
+                                  .map((r: any) => (
+                                    <option key={r._id} value={r._id}>
+                                      Room {r.roomNumber} · {r.roomType?.name || ""} · ₹{r.basePrice}/night
+                                    </option>
+                                  ))}
+                              </select>
+
+                              {slot.roomId && slot.extraBedAllowed && (
+                                <label className="flex items-center gap-2 mt-2 text-xs cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={slot.hasExtraBed}
+                                    onChange={(e) =>
+                                      setSelectedRooms(
+                                        selectedRooms.map((s, i) =>
+                                          i === idx ? { ...s, hasExtraBed: e.target.checked } : s
+                                        )
+                                      )
+                                    }
+                                  />
+                                  Extra Bed (+₹{slot.extraBedCharge}/night)
+                                </label>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       {/* All Rooms Grid */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-48 sm:max-h-60 overflow-y-auto">
                         {availableRooms.map((room: any) => {
@@ -1306,6 +1453,12 @@ const CheckInForm = ({
                             (r) => r.roomId === room._id,
                           );
                           const occupancy = getRoomOccupancy(room._id);
+                          const roomTypeId =
+                            room.roomType?._id?.toString() ||
+                            room.roomType?.toString();
+                          const isPreferred =
+                            !!preferredRoomTypeId &&
+                            roomTypeId === preferredRoomTypeId;
                           return (
                             <div
                               key={room._id}
@@ -1313,19 +1466,33 @@ const CheckInForm = ({
                               className={`relative p-2 sm:p-3 rounded-lg border-2 cursor-pointer transition-all ${
                                 isSelected
                                   ? "border-orange-500 bg-orange-50"
-                                  : "border-border hover:border-gray-300"
+                                  : isPreferred
+                                    ? "border-primary/40 bg-primary/5 hover:border-primary/60"
+                                    : "border-border hover:border-gray-300"
                               }`}
                             >
                               {isSelected && (
                                 <div className="absolute top-1 right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
-                                  <FiCheckCircle size={10} className="text-white" />
+                                  <FiCheckCircle
+                                    size={10}
+                                    className="text-white"
+                                  />
+                                </div>
+                              )}
+                              {isPreferred && !isSelected && (
+                                <div className="absolute top-1 right-1 px-1 py-0.5 bg-primary/20 rounded text-[7px] font-black text-primary leading-none">
+                                  Pref
                                 </div>
                               )}
                               <div className="flex items-center gap-2 mb-1">
                                 <FiCoffee
                                   size={12}
                                   className={
-                                    isSelected ? "text-orange-500" : "text-gray-400"
+                                    isSelected
+                                      ? "text-orange-500"
+                                      : isPreferred
+                                        ? "text-primary"
+                                        : "text-gray-400"
                                   }
                                 />
                                 <span className="text-[10px] sm:text-[11px] font-black">
@@ -1369,7 +1536,10 @@ const CheckInForm = ({
                               className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-orange-50 border border-orange-100 rounded-lg gap-2"
                             >
                               <div className="flex items-center gap-3">
-                                <FiCoffee size={16} className="text-orange-500" />
+                                <FiCoffee
+                                  size={16}
+                                  className="text-orange-500"
+                                />
                                 <div>
                                   <div className="flex items-center gap-2">
                                     <span className="font-bold text-xs">
@@ -1439,7 +1609,10 @@ const CheckInForm = ({
                         </span>
                       </div>
                       <p className="text-[11px] text-green-600 mt-1">
-                        Entry: {format(stayFormData.checkInTime, "HH:mm")} | Exit: {format(stayFormData.expectedCheckOutTime, "HH:mm")} ({durationHours}h)
+                        Entry: {format(stayFormData.checkInTime, "HH:mm")} |
+                        Exit:{" "}
+                        {format(stayFormData.expectedCheckOutTime, "HH:mm")} (
+                        {durationHours}h)
                       </p>
                     </div>
 
@@ -1447,7 +1620,10 @@ const CheckInForm = ({
                     <div className="bg-[var(--color-card)] rounded-xl border border-border p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase tracking-widest flex items-center gap-2">
-                          <FiHome size={12} className="text-[var(--color-primary)]" />
+                          <FiHome
+                            size={12}
+                            className="text-[var(--color-primary)]"
+                          />
                           Optional Room Add-on
                         </h3>
                         <span className="text-[9px] text-gray-400 font-bold">
@@ -1464,7 +1640,10 @@ const CheckInForm = ({
                                 className="flex items-center justify-between p-2 bg-orange-50 border border-orange-100 rounded-lg"
                               >
                                 <div className="flex items-center gap-2">
-                                  <FiCoffee size={14} className="text-orange-500" />
+                                  <FiCoffee
+                                    size={14}
+                                    className="text-orange-500"
+                                  />
                                   <span className="text-[11px] font-bold">
                                     Room {room.roomNumber || "TBD"}
                                   </span>
@@ -1492,8 +1671,13 @@ const CheckInForm = ({
                         onChange={(e) => {
                           const roomId = e.target.value;
                           if (!roomId) return;
-                          const room = availableRooms.find((r: any) => r._id === roomId);
-                          if (room && !selectedRooms.some((r) => r.roomId === room._id)) {
+                          const room = availableRooms.find(
+                            (r: any) => r._id === roomId,
+                          );
+                          if (
+                            room &&
+                            !selectedRooms.some((r) => r.roomId === room._id)
+                          ) {
                             setSelectedRooms([
                               ...selectedRooms,
                               {
@@ -1514,10 +1698,15 @@ const CheckInForm = ({
                       >
                         <option value="">+ Add a room (optional)</option>
                         {availableRooms
-                          .filter((room: any) => !selectedRooms.some((r) => r.roomId === room._id))
+                          .filter(
+                            (room: any) =>
+                              !selectedRooms.some((r) => r.roomId === room._id),
+                          )
                           .map((room: any) => (
                             <option key={room._id} value={room._id}>
-                              Room {room.roomNumber} - ₹{Number(room.basePrice) || 0} ({room.roomType?.name || "Standard"})
+                              Room {room.roomNumber} - ₹
+                              {Number(room.basePrice) || 0} (
+                              {room.roomType?.name || "Standard"})
                             </option>
                           ))}
                       </select>
@@ -1686,7 +1875,9 @@ const CheckInForm = ({
                   <div className="flex justify-between p-2 bg-gray-50 rounded-lg">
                     <span className="text-gray-500">Duration</span>
                     <span className="font-bold">
-                      {isDayAccess ? `${durationHours}h` : `${nights} Night${nights !== 1 ? "s" : ""}`}
+                      {isDayAccess
+                        ? `${durationHours}h`
+                        : `${nights} Night${nights !== 1 ? "s" : ""}`}
                     </span>
                   </div>
                   {!isDayAccess && (
@@ -1699,7 +1890,8 @@ const CheckInForm = ({
                     <div className="flex justify-between p-2 bg-green-50 rounded-lg">
                       <span className="text-green-600">Package</span>
                       <span className="font-bold text-green-600">
-                        {bookingData?.accessPackageId?.packageName || "Day Access"}
+                        {bookingData?.accessPackageId?.packageName ||
+                          "Day Access"}
                       </span>
                     </div>
                   )}
@@ -1745,7 +1937,9 @@ const CheckInForm = ({
                 </div>
                 <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
                   <div className="flex justify-between text-[11px]">
-                    <span className="font-bold">{isDayAccess ? "Total" : "Room Total"}</span>
+                    <span className="font-bold">
+                      {isDayAccess ? "Total" : "Room Total"}
+                    </span>
                     <span className="font-black text-[var(--color-primary)]">
                       ₹{roomTotal.toLocaleString()}
                     </span>
@@ -2245,6 +2439,60 @@ const CheckInForm = ({
                   </div>
                 </div>
 
+                {/* Add-on Services */}
+                {extraServices.length > 0 && (
+                  <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <FiPlus size={14} className="text-purple-600" />
+                      <h3 className="text-[10px] font-black text-purple-800 uppercase">
+                        Add-on Services
+                      </h3>
+                      <span className="text-[9px] text-purple-500">
+                        Optional additional services
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {extraServices.map((service) => (
+                        <label
+                          key={service._id}
+                          className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                            selectedServices.includes(service._id)
+                              ? "border-purple-500 bg-purple-100"
+                              : "border-purple-200 bg-white hover:border-purple-300"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedServices.includes(service._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedServices([...selectedServices, service._id]);
+                              } else {
+                                setSelectedServices(
+                                  selectedServices.filter((id) => id !== service._id)
+                                );
+                              }
+                            }}
+                            className="w-4 h-4 accent-purple-600 rounded"
+                          />
+                          <div className="flex-1">
+                            <span className="text-[10px] font-bold text-purple-800 block">
+                              {service.name}
+                            </span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    {selectedServices.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-purple-200">
+                        <span className="text-[9px] font-bold text-purple-600">
+                          {selectedServices.length} service(s) selected
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Collect Payment */}
                 <div className="bg-[var(--color-card)] rounded-xl border border-border p-4">
                   <h3 className="text-[10px] font-black text-[var(--color-text-secondary)] uppercase mb-3 flex items-center gap-2">
@@ -2585,24 +2833,30 @@ const CheckInForm = ({
                         </span>
                       </div>
                     </div>
-                    {selectedRooms.length > 0 && selectedRooms.map((room: RoomEntry) => {
-                      const safePrice = Number(room.basePrice) || 0;
-                      return (
-                        <div key={room.roomId} className="p-2 bg-gray-50 rounded-lg border border-border">
-                          <div className="flex justify-between text-[11px]">
-                            <span className="font-bold">
-                              Room {room.roomNumber || "TBD"} (add-on)
-                            </span>
-                            <span className="font-bold text-orange-600">
-                              +₹{safePrice.toLocaleString()}
-                            </span>
+                    {selectedRooms.length > 0 &&
+                      selectedRooms.map((room: RoomEntry) => {
+                        const safePrice = Number(room.basePrice) || 0;
+                        return (
+                          <div
+                            key={room.roomId}
+                            className="p-2 bg-gray-50 rounded-lg border border-border"
+                          >
+                            <div className="flex justify-between text-[11px]">
+                              <span className="font-bold">
+                                Room {room.roomNumber || "TBD"} (add-on)
+                              </span>
+                              <span className="font-bold text-orange-600">
+                                +₹{safePrice.toLocaleString()}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                     {selectedRooms.length > 0 && (
                       <div className="flex justify-between text-[11px]">
-                        <span className="text-gray-500">Room Add-ons Total</span>
+                        <span className="text-gray-500">
+                          Room Add-ons Total
+                        </span>
                         <span className="font-bold">
                           ₹{roomAddOnTotal.toLocaleString()}
                         </span>
@@ -2712,6 +2966,72 @@ const CheckInForm = ({
           </div>
         </div>
       </div>
+
+      {/* Success Actions - Post Check-in */}
+      {showSuccessActions && (
+        <div className="fixed inset-0 z-[65] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 animate-fade-in">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiCheckCircle size={32} className="text-green-600" />
+              </div>
+              <h2 className="text-xl font-black text-gray-800 mb-2">
+                Check-in Successful!
+              </h2>
+              <p className="text-sm text-gray-500">
+                Guest has been checked in successfully
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  // Open GRC modal
+                  handleOpenGRC();
+                }}
+                className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition-all"
+              >
+                <FiPrinter size={18} />
+                Print Registration Card
+              </button>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    // TODO: Implement print key card functionality
+                    alert("Print Key Card - Feature coming soon");
+                  }}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all"
+                >
+                  <FiFileText size={16} />
+                  Print Key Card
+                </button>
+
+                <button
+                  onClick={() => {
+                    // TODO: Implement view folio functionality
+                    alert("View Folio - Feature coming soon");
+                  }}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-600 text-white rounded-xl font-bold text-sm hover:bg-gray-700 transition-all"
+                >
+                  <FiFileText size={16} />
+                  View Folio
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowSuccessActions(false);
+                  onClose();
+                }}
+                className="w-full px-6 py-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* GRC A4 Print Modal */}
       {showGRCModal && grcData && (

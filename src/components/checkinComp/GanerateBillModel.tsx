@@ -26,6 +26,8 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
   const [restaurantCharges, setRestaurantCharges] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [taxPercentage, setTaxPercentage] = useState(12);
+  const [taxOptions, setTaxOptions] = useState<any[]>([]);
+  const [selectedTaxId, setSelectedTaxId] = useState<string>("");
   const [notes, setNotes] = useState("");
 
   // Payment settlement
@@ -47,9 +49,10 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [billRes, serviceRes] = await Promise.all([
+        const [billRes, serviceRes, taxRes] = await Promise.all([
           api.get(`/billing/preview/${checkIn._id}`),
           api.get(`/extra-services?activeOnly=true`),
+          api.get(`/tax-gst`, { params: { activeOnly: "true" } }),
         ]);
         if (billRes.data.success) {
           const d = billRes.data.data;
@@ -61,7 +64,18 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
           setRestaurantCharges(d.restaurantCharges || 0);
           setDiscount(d.discount || 0);
           setNotes(d.notes || "");
-          setTaxPercentage(d.taxPercentage ?? 12);
+          const storedPct = d.taxPercentage ?? 12;
+          setTaxPercentage(storedPct);
+          setTaxOptions(taxRes.data.data || []);
+
+          // Restore the booking's tax GST record for display
+          if (d.taxGstId) {
+            const match = (taxRes.data.data || []).find((t: any) => t._id === d.taxGstId);
+            setSelectedTaxId(match ? match._id : "");
+          } else {
+            const match = (taxRes.data.data || []).find((t: any) => t.percentage === storedPct);
+            setSelectedTaxId(match ? match._id : "");
+          }
 
           const lastPayment =
             d.payments?.length > 0 ? d.payments[d.payments.length - 1] : null;
@@ -838,22 +852,27 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
                   </button>
                 </div>
 
-                {/* Tax % input small */}
+                {/* Tax GST selector */}
                 <div className="flex items-center justify-between px-2">
-                  <span className="text-xs text-gray-400 font-bold">
-                    Tax Rate
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      className="w-14 p-1.5 border border-gray-200 rounded-lg text-center text-xs font-bold outline-none"
-                      value={taxPercentage}
-                      onChange={(e) => setTaxPercentage(Number(e.target.value))}
-                    />
-                    <span className="text-xs text-gray-400 font-bold">%</span>
-                  </div>
+                  <span className="text-xs text-gray-400 font-bold">Tax GST</span>
+                  <select
+                    className="text-xs font-bold border border-gray-200 rounded-lg px-2 py-1.5 outline-none text-gray-600 bg-white max-w-[140px]"
+                    value={selectedTaxId}
+                    onChange={(e) => {
+                      const selected = taxOptions.find((t: any) => t._id === e.target.value);
+                      setSelectedTaxId(e.target.value);
+                      if (selected) {
+                        setTaxPercentage(selected.percentage);
+                      }
+                    }}
+                  >
+                    <option value="">— Select —</option>
+                    {taxOptions.map((t: any) => (
+                      <option key={t._id} value={t._id}>
+                        {t.name} ({t.percentage}%)
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>

@@ -6,7 +6,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import api from "../../lib/axios";
 import NewBookingButton from "../../components/ui/NewBookingButton";
 import ExtendStayModal from "../../components/checkinComp/ExtendStayModal";
-import RoomChangeModal from "../../components/checkinComp/RoomChangeModal";
 import { FaSnowflake } from "react-icons/fa";
 import { BiUser, BiWrench } from "react-icons/bi";
 
@@ -135,16 +134,11 @@ const StayOverview = () => {
   });
 
   const [timelineData, setTimelineData] = useState<any[]>([]);
-  const [roomTypes, setRoomTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
 
   const [selectedCheckIn, setSelectedCheckIn] = useState<any>(null);
   const [extendOpen, setExtendOpen] = useState(false);
-  const [roomChangeOpen, setRoomChangeOpen] = useState(false);
-  const [roomChangeBooking, setRoomChangeBooking] = useState<any>(null);
-  const [dropTargetRoomId, setDropTargetRoomId] = useState<string | null>(null);
-  const [draggedSourceRoomId, setDraggedSourceRoomId] = useState<string | null>(null);
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -175,22 +169,9 @@ const StayOverview = () => {
     }
   };
 
-  const fetchRoomTypes = async () => {
-    try {
-      const res = await api.get("/room-types");
-      setRoomTypes(res.data.data || []);
-    } catch (err) {
-      console.error("Room types fetch failed", err);
-    }
-  };
-
   useEffect(() => {
     fetchOverview();
   }, [viewStart, viewEnd]);
-
-  useEffect(() => {
-    fetchRoomTypes();
-  }, []);
 
   // =====================================================
   // SUMMARY
@@ -231,24 +212,15 @@ const StayOverview = () => {
   // =====================================================
   // DRAG & DROP
   // =====================================================
-  const handleDragStart = (
-    e: React.DragEvent,
-    booking: any,
-    roomId: string,
-  ) => {
-    e.dataTransfer.setData(
-      "booking",
-      JSON.stringify({ booking, sourceRoomId: roomId }),
-    );
-    setDraggedSourceRoomId(roomId);
+  const handleDragStart = (e: React.DragEvent, booking: any) => {
+    e.dataTransfer.setData("booking", JSON.stringify({ booking }));
   };
 
   // =====================================================
-  // DRAG & DROP — replace your existing handleDrop
+  // DRAG & DROP
   // =====================================================
   const handleDrop = (
     e: React.DragEvent,
-    targetRoom: any,
     colIndex: number,
   ) => {
     e.preventDefault();
@@ -259,23 +231,16 @@ const StayOverview = () => {
 
     const { booking } = JSON.parse(raw);
 
-    // ✅ newCheckout = the column the user dropped on
     const dropDate = new Date(datesArray[colIndex]);
     dropDate.setHours(12, 0, 0, 0);
 
-    // ✅ Don't change if dropped on same date as current end
     const currentEnd = new Date(booking.end);
     if (dropDate <= currentEnd) return;
-
-    const isSameRoom = booking.roomId === targetRoom.id;
 
     setSelectedCheckIn({
       _id: booking.id,
       guests: [{ name: booking.guest, mobileNo: booking.phone }],
-
-      // ✅ ORIGINAL checkout — modal calculates extension FROM this
       expectedCheckOutTime: new Date(booking.end),
-
       roomDetails: [
         {
           roomId: booking.roomId,
@@ -285,47 +250,10 @@ const StayOverview = () => {
         },
       ],
       totalAdvanceAmount: booking.totalAdvanceAmount || 0,
-
-      // ✅ NEW checkout = where user dropped
       _prefillCheckout: dropDate,
-      _prefillRoomId: isSameRoom ? booking.roomId : targetRoom.id,
-      _prefillRoomType: isSameRoom
-        ? booking.roomType || ""
-        : targetRoom.roomType?._id || targetRoom.roomType || "",
     });
 
     setExtendOpen(true);
-  };
-
-  const handleRoomDrop = (
-    e: React.DragEvent,
-    targetRoom: any,
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const raw = e.dataTransfer.getData("booking");
-    if (!raw) return;
-
-    const { booking } = JSON.parse(raw);
-
-    // Don't allow dropping on the same room
-    if (booking.roomId === targetRoom.id) return;
-
-    const roomTypeName = targetRoom.roomType?.name || "";
-
-    setRoomChangeBooking({
-      id: booking.id,
-      guest: booking.guest,
-      start: booking.start,
-      end: booking.end,
-      currentRoomId: booking.roomId,
-      currentRoomNumber: booking.roomNumber,
-      currentRoomTypeId: booking.roomType || "",
-      currentRoomTypeName: roomTypeName,
-      currentPricePerNight: booking.price || 0,
-    });
-    setRoomChangeOpen(true);
   };
 
   // =====================================================
@@ -374,10 +302,7 @@ const StayOverview = () => {
       setSelectedCheckIn({
         _id: booking.id,
         guests: [{ name: booking.guest }],
-
-        // ✅ ORIGINAL checkout — extension calculated FROM this
         expectedCheckOutTime: originalEnd,
-
         roomDetails: [
           {
             roomId: booking.roomId,
@@ -387,11 +312,7 @@ const StayOverview = () => {
           },
         ],
         totalAdvanceAmount: booking.totalAdvanceAmount || 0,
-
-        // ✅ NEW checkout = where user released mouse
         _prefillCheckout: finalDate,
-        _prefillRoomId: booking.roomId,
-        _prefillRoomType: booking.roomType || "",
       });
 
       setExtendOpen(true);
@@ -521,22 +442,8 @@ const StayOverview = () => {
                 {category.rooms.map((room: any) => (
                   <div
                     key={room.id}
-                    className={`grid border-b min-h-[70px] relative ${
-                      dropTargetRoomId === room.id && draggedSourceRoomId !== room.id
-                        ? "ring-2 ring-primary/40 bg-primary/5"
-                        : ""
-                    }`}
+                    className="grid border-b min-h-[70px] relative"
                     style={{ gridTemplateColumns: gridTemplate }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.dataTransfer.dropEffect = "move";
-                      setDropTargetRoomId(room.id);
-                    }}
-                    onDragLeave={() => setDropTargetRoomId(null)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      handleRoomDrop(e, room);
-                    }}
                   >
                     {/* Room Cell */}
                     <div className="p-3 border-r bg-white z-20 flex flex-col justify-center">
@@ -564,7 +471,7 @@ const StayOverview = () => {
                           e.preventDefault();
                           e.dataTransfer.dropEffect = "move";
                         }}
-                        onDrop={(e) => handleDrop(e, room, i)}
+                        onDrop={(e) => handleDrop(e, i)}
                       />
                     ))}
 
@@ -612,9 +519,8 @@ const StayOverview = () => {
                           span={visualSpan}
                           actualSpan={actualSpan}
                           onDragStart={(e: React.DragEvent) =>
-                            handleDragStart(e, booking, room.id)
+                            handleDragStart(e, { ...booking, roomId: room.id })
                           }
-                          onDragEnd={() => setDraggedSourceRoomId(null)}
                           onResizeStart={handleResizeStart}
                         />
                       );
@@ -627,27 +533,6 @@ const StayOverview = () => {
         </div>
       </div>
 
-      {roomChangeOpen && roomChangeBooking && (
-        <RoomChangeModal
-          booking={roomChangeBooking}
-          roomTypes={roomTypes}
-          onClose={() => {
-            setRoomChangeOpen(false);
-            setRoomChangeBooking(null);
-            setDropTargetRoomId(null);
-            setDraggedSourceRoomId(null);
-          }}
-          onSuccess={() => {
-            fetchOverview();
-            setRoomChangeOpen(false);
-            setRoomChangeBooking(null);
-            setDropTargetRoomId(null);
-            setDraggedSourceRoomId(null);
-          }}
-        />
-      )}
-
-      {/* Extend Modal */}
       {extendOpen && selectedCheckIn && (
         <ExtendStayModal
           checkIn={selectedCheckIn}
@@ -660,11 +545,7 @@ const StayOverview = () => {
             setExtendOpen(false);
             setSelectedCheckIn(null);
           }}
-          roomTypes={roomTypes}
-          prefillRoomId={selectedCheckIn._prefillRoomId}
-          prefillRoomType={selectedCheckIn._prefillRoomType}
           prefillCheckout={selectedCheckIn._prefillCheckout}
-          triggeredFromOverview={true}
         />
       )}
     </div>

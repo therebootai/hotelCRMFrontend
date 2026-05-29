@@ -64,6 +64,24 @@ interface SelectedRoom extends RoomSearchResult {
   extraBedChargeTotal: number;
 }
 
+interface TaxOption {
+  _id: string;
+  name: string;
+  percentage: number;
+  type: "Room" | "Food" | "Service";
+  isActive: boolean;
+}
+
+interface RoomTypeEntry {
+  id: string;
+  roomTypeId: string;
+  roomTypeName: string;
+  basePrice: number;
+  count: number;
+  adults: number;
+  children: number;
+}
+
 const CreateBooking = ({
   onClose,
   refreshBookings,
@@ -96,13 +114,17 @@ const CreateBooking = ({
   const [visitDate, setVisitDate] = useState<Date>(new Date());
 
   // Search Filters
-  const [roomTypeFilter, setRoomTypeFilter] = useState("");
+  const [roomTypeFilter] = useState("");
   const [adultsFilter, setAdultsFilter] = useState(1);
   const [childrenFilter, setChildrenFilter] = useState(0);
 
-  // Search Results
+  // Search Results - now reference only, not for selection
   const [searchResults, setSearchResults] = useState<RoomSearchResult[]>([]);
-  const [selectedRooms, setSelectedRooms] = useState<SelectedRoom[]>([]);
+
+  // Multi-room type selection
+  const [selectedRoomTypes, setSelectedRoomTypes] = useState<RoomTypeEntry[]>([
+    { id: "row-0", roomTypeId: "", roomTypeName: "", basePrice: 0, count: 1, adults: 1, children: 0 },
+  ]);
 
   // Customer Details
   const [customerForm, setCustomerForm] = useState({
@@ -120,8 +142,15 @@ const CreateBooking = ({
     negotiatedRate: 0,
   });
 
-  // Source & Preferences
+  // Source & Preferences - changed from dropdown to tabs
+  const [sourceTab, setSourceTab] = useState<"Direct" | "OTA" | "Travel Agent">(
+    "Direct",
+  );
   const [source, setSource] = useState("Walk-in");
+
+  // Travel Agent Reference Info (separate from customer)
+  const [travelAgentName, setTravelAgentName] = useState("");
+  const [travelAgentRefId, setTravelAgentRefId] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
 
@@ -135,11 +164,21 @@ const CreateBooking = ({
     }[]
   >([]);
 
+  // Add-on Services
+  const [extraServices, setExtraServices] = useState<{ _id: string; name: string; price: number }[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<
+    { serviceId: string; serviceName: string; quantity: number; rate: number; total: number }[]
+  >([]);
+
   // Payment
   const [paymentForm, setPaymentForm] = useState({
     advanceAmount: 0,
     paymentMode: "Cash",
   });
+
+  // Tax
+  const [taxOptions, setTaxOptions] = useState<TaxOption[]>([]);
+  const [selectedTaxId, setSelectedTaxId] = useState("");
 
   // Room Types List
   const [roomTypes, setRoomTypes] = useState<any[]>([]);
@@ -162,9 +201,36 @@ const CreateBooking = ({
         console.error("Error fetching access packages:", err);
       }
     };
+    const fetchExtraServices = async () => {
+      try {
+        const res = await api.get("/extra-services?activeOnly=true");
+        setExtraServices(res.data.data || []);
+      } catch (err) {
+        console.error("Error fetching extra services:", err);
+      }
+    };
     fetchRoomTypes();
     fetchAccessPackages();
+    fetchExtraServices();
   }, []);
+
+  // Fetch taxes filtered by booking category type
+  useEffect(() => {
+    const fetchTaxes = async () => {
+      const taxType = bookingCategory === "Day Access" ? "Service" : "Room";
+      try {
+        const res = await api.get("/tax-gst", {
+          params: { type: taxType, activeOnly: "true" },
+        });
+        const taxes: TaxOption[] = res.data.data || [];
+        setTaxOptions(taxes);
+        setSelectedTaxId(taxes.length > 0 ? taxes[0]._id : "");
+      } catch (err) {
+        console.error("Error fetching taxes:", err);
+      }
+    };
+    fetchTaxes();
+  }, [bookingCategory]);
 
   // Update total nights
   useEffect(() => {
@@ -172,11 +238,30 @@ const CreateBooking = ({
     setTotalNights(nights > 0 ? nights : 1);
   }, [checkInDate, checkOutDate]);
 
+  // Validate check-out time is after check-in time for same-day bookings
+  useEffect(() => {
+    if (checkInDate && checkOutDate) {
+      const checkInTime = checkInDate.getTime();
+      const checkOutTime = checkOutDate.getTime();
+
+      // If same day and check-out time is before or equal to check-in time
+      if (
+        checkInTime >= checkOutTime &&
+        checkInDate.toDateString() === checkOutDate.toDateString()
+      ) {
+        // Set check-out to check-in date + 1 day at same time
+        setCheckOutDate(addDays(checkInDate, 1));
+      }
+    }
+  }, [checkInDate]);
+
   // Auto-select Day Access Package based on Booking Type
   useEffect(() => {
     if (bookingCategory === "Day Access" && accessPackages.length > 0) {
       if (bookingType === "Individual") {
-        const pkg = accessPackages.find((p) => p.packageName === "Premium Combo");
+        const pkg = accessPackages.find(
+          (p) => p.packageName === "Premium Combo",
+        );
         if (pkg) setSelectedPackageId(pkg._id);
       } else if (bookingType === "Corporate") {
         const pkg = accessPackages.find((p) => p.packageName === "Corporate");
@@ -208,46 +293,11 @@ const CreateBooking = ({
     }
   };
 
-  // Toggle room selection with extra bed
-  const toggleRoomSelection = (room: RoomSearchResult) => {
-    const isSelected = selectedRooms.find((r) => r.room._id === room.room._id);
-    if (isSelected) {
-      setSelectedRooms(
-        selectedRooms.filter((r) => r.room._id !== room.room._id),
-      );
-    } else {
-      setSelectedRooms([
-        ...selectedRooms,
-        {
-          ...room,
-          hasExtraBed: false,
-          extraBedChargeTotal: 0,
-        },
-      ]);
-    }
-  };
-
-  // Toggle extra bed
-  const toggleExtraBed = (roomId: string) => {
-    setSelectedRooms(
-      selectedRooms.map((r) => {
-        if (r.room._id === roomId) {
-          const newHasExtraBed = !r.hasExtraBed;
-          return {
-            ...r,
-            hasExtraBed: newHasExtraBed,
-            extraBedChargeTotal: newHasExtraBed
-              ? r.room.extraBedCharge * totalNights
-              : 0,
-          };
-        }
-        return r;
-      }),
-    );
-  };
-
   // Calculate totals
   const calculateTotals = useCallback(() => {
+    const selectedTax = taxOptions.find((t) => t._id === selectedTaxId);
+    const taxRate = selectedTax ? selectedTax.percentage / 100 : 0;
+
     if (bookingCategory === "Day Access") {
       const pkg = accessPackages.find((p) => p._id === selectedPackageId);
       const rate = pkg ? pkg.adult_price : 0;
@@ -255,7 +305,7 @@ const CreateBooking = ({
       const roomTotal = rate * count;
       const extraBedTotal = 0;
       const subtotal = roomTotal;
-      const taxAmount = Math.round(subtotal * 0.12);
+      const taxAmount = Math.round(subtotal * taxRate);
       const grandTotal = subtotal + taxAmount;
       const paidAmount = paymentForm.advanceAmount || 0;
       const dueAmount = grandTotal - paidAmount;
@@ -270,16 +320,14 @@ const CreateBooking = ({
       };
     }
 
-    const roomTotal = selectedRooms.reduce(
-      (sum, r) => sum + r.pricing.totalPrice,
+    // Calculate based on all selected room types
+    const roomTotal = selectedRoomTypes.reduce(
+      (sum, entry) => sum + entry.basePrice * entry.count * totalNights,
       0,
     );
-    const extraBedTotal = selectedRooms.reduce(
-      (sum, r) => sum + r.extraBedChargeTotal,
-      0,
-    );
+    const extraBedTotal = 0;
     const subtotal = roomTotal + extraBedTotal;
-    const taxAmount = Math.round(subtotal * 0.12);
+    const taxAmount = Math.round(subtotal * taxRate);
     const grandTotal = subtotal + taxAmount;
     const paidAmount = paymentForm.advanceAmount || 0;
     const dueAmount = grandTotal - paidAmount;
@@ -294,14 +342,16 @@ const CreateBooking = ({
       dueAmount,
     };
   }, [
-    selectedRooms,
-    paymentForm.advanceAmount,
+    selectedRoomTypes,
     totalNights,
+    paymentForm.advanceAmount,
     bookingCategory,
     selectedPackageId,
     accessPackages,
     adultsFilter,
     childrenFilter,
+    taxOptions,
+    selectedTaxId,
   ]);
 
   const {
@@ -339,35 +389,46 @@ const CreateBooking = ({
       toast.error("Please fill guest name and phone");
       return;
     }
-    if (bookingCategory === "Room Stay" && selectedRooms.length === 0) {
-      toast.error("Please select at least one room");
+    const validRooms = selectedRoomTypes.filter((e) => e.roomTypeId);
+    if (bookingCategory === "Room Stay" && validRooms.length === 0) {
+      toast.error("Please select at least one room type");
+      return;
+    }
+    if (bookingCategory === "Room Stay" && validRooms.some((e) => e.count < 1)) {
+      toast.error("Each room type must have a count of at least 1");
       return;
     }
     if (bookingCategory === "Day Access" && !selectedPackageId) {
       toast.error("Please select an access package");
       return;
     }
+    if (sourceTab === "Travel Agent" && (!travelAgentName || !travelAgentRefId)) {
+      toast.error("Please fill travel agent name and reference ID");
+      return;
+    }
 
     setLoading(true);
     try {
-      const rooms =
+      const roomTypesData =
         bookingCategory === "Room Stay"
-          ? selectedRooms.map((r) => ({
-              roomType: r.roomType?._id || r.roomType,
-              roomId: r.room._id,
+          ? validRooms.map((entry) => ({
+              roomTypeId: entry.roomTypeId,
+              roomTypeName: entry.roomTypeName,
+              basePrice: entry.basePrice,
+              count: entry.count,
               checkInDate: checkInDate.toISOString(),
               checkOutDate: checkOutDate.toISOString(),
-              adults: adultsFilter,
-              children: childrenFilter,
-              pricePerNight:
-                (r.pricing.totalPrice + r.extraBedChargeTotal) / totalNights,
-              hasExtraBed: r.hasExtraBed,
-              extraBedCharge: r.hasExtraBed ? r.room.extraBedCharge : 0,
+              adults: entry.adults,
+              children: entry.children,
             }))
           : undefined;
 
       const payload: any = {
-        customerDetails: customerForm,
+        customerDetails: {
+          name: customerForm.name,
+          phone: customerForm.phone,
+          ...(customerForm.email.trim() ? { email: customerForm.email.trim() } : {}),
+        },
         bookingCategory,
         bookingType,
         source,
@@ -379,17 +440,36 @@ const CreateBooking = ({
         vehicleDetails: vehicles,
         adults: adultsFilter,
         children: childrenFilter,
+        addons: selectedAddons,
       };
 
       if (bookingCategory === "Day Access") {
         payload.accessPackageId = selectedPackageId;
         payload.visitDate = visitDate.toISOString();
       } else {
-        payload.rooms = rooms;
+        payload.roomTypesData = roomTypesData;
+        const totalAdultsPayload = validRooms.reduce((s, e) => s + e.adults * e.count, 0);
+        const totalChildrenPayload = validRooms.reduce((s, e) => s + e.children * e.count, 0);
+        payload.adults = totalAdultsPayload || adultsFilter;
+        payload.children = totalChildrenPayload || childrenFilter;
       }
 
       if (bookingType === "Corporate") {
         payload.corporateDetails = corporateForm;
+      }
+
+      // Add travel agent reference when source is Travel Agent
+      if (sourceTab === "Travel Agent" && travelAgentName && travelAgentRefId) {
+        payload.travelAgentInfo = {
+          name: travelAgentName,
+          referenceId: travelAgentRefId,
+        };
+        // Also store reference ID in externalBookingId for OTA/Travel Agent tracking
+        payload.externalBookingId = travelAgentRefId;
+      }
+
+      if (selectedTaxId) {
+        payload.selectedTaxId = selectedTaxId;
       }
 
       const res = await api.post("/bookings/create", payload);
@@ -415,7 +495,7 @@ const CreateBooking = ({
               <p className="text-xs text-white/70">
                 {bookingCategory === "Day Access"
                   ? `${format(visitDate, "dd MMM yyyy")} • Day Access`
-                  : `${format(checkInDate, "dd MMM")} - ${format(checkOutDate, "dd MMM")} • ${totalNights} Night(s)`}
+                  : `${format(checkInDate, "dd MMM HH:mm")} - ${format(checkOutDate, "dd MMM HH:mm")} • ${totalNights} Night(s)`}
               </p>
             </div>
             <div className="flex gap-2">
@@ -465,7 +545,7 @@ const CreateBooking = ({
                 Guest Information
               </h3>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-[10px] font-bold text-text-secondary uppercase">
                   Name *
@@ -485,7 +565,10 @@ const CreateBooking = ({
                   Phone *
                 </label>
                 <input
-                  type="text"
+                  type="tel"
+                  maxLength={10}
+                  pattern="[0-9]{10}"
+                  title="Please enter a 10-digit phone number"
                   value={customerForm.phone}
                   onChange={(e) =>
                     setCustomerForm({ ...customerForm, phone: e.target.value })
@@ -508,25 +591,131 @@ const CreateBooking = ({
                   placeholder="Email"
                 />
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-text-secondary uppercase">
+              <div className="col-span-4">
+                <label className="text-[10px] font-bold text-text-secondary uppercase mb-2 block">
                   Source
                 </label>
-                <select
-                  value={source}
-                  onChange={(e) => setSource(e.target.value)}
-                  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
-                >
-                  <option value="Walk-in">Walk-in</option>
-                  <option value="Phone">Phone</option>
-                  <option value="Website">Website</option>
-                  <option value="Booking.com">Booking.com</option>
-                  <option value="Agoda">Agoda</option>
-                  <option value="Goibibo">Goibibo</option>
-                  <option value="MakeMyTrip">MakeMyTrip</option>
-                  <option value="Corporate">Corporate</option>
-                  <option value="Travel Agent">Travel Agent</option>
-                </select>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSourceTab("Direct")}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                      sourceTab === "Direct"
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    Direct
+                  </button>
+                  <button
+                    onClick={() => setSourceTab("OTA")}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                      sourceTab === "OTA"
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    OTA
+                  </button>
+                  <button
+                    onClick={() => setSourceTab("Travel Agent")}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                      sourceTab === "Travel Agent"
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    Travel Agent
+                  </button>
+                </div>
+                {/* Sub-options based on selected tab */}
+                {sourceTab === "Direct" && (
+                  <div className="mt-2 flex gap-2">
+                    {["Walk-in", "Phone", "Website"].map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => setSource(option)}
+                        className={`flex-1 py-1.5 px-2 rounded text-[10px] font-bold transition-all ${
+                          source === option
+                            ? "bg-primary/20 text-primary border border-primary"
+                            : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent"
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {sourceTab === "OTA" && (
+                  <div className="mt-2 flex gap-2 flex-wrap">
+                    {["Booking.com", "Agoda", "Goibibo", "MakeMyTrip"].map(
+                      (option) => (
+                        <button
+                          key={option}
+                          onClick={() => setSource(option)}
+                          className={`py-1 px-2 rounded text-[10px] font-bold transition-all ${
+                            source === option
+                              ? "bg-primary/20 text-primary border border-primary"
+                              : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent"
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                )}
+                {sourceTab === "Travel Agent" && (
+                  <div className="mt-2 grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[9px] font-bold text-gray-500 uppercase block mb-1">
+                        Travel Agent Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={travelAgentName}
+                        onChange={(e) => setTravelAgentName(e.target.value)}
+                        className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
+                        placeholder="Agency name"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-bold text-gray-500 uppercase block mb-1">
+                        Reference ID *
+                      </label>
+                      <input
+                        type="text"
+                        value={travelAgentRefId}
+                        onChange={(e) => setTravelAgentRefId(e.target.value)}
+                        className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
+                        placeholder="e.g., TA-001, REF-123"
+                      />
+                    </div>
+                    {/* Quick select from common agents */}
+                    <div className="col-span-2 mt-2">
+                      <label className="text-[9px] font-bold text-gray-500 uppercase block mb-1">
+                        Quick Select
+                      </label>
+                      <div className="flex gap-2 flex-wrap">
+                        {[
+                          { name: "ABC Travels", ref: "TA-001" },
+                          { name: "XYZ Holidays", ref: "TA-002" },
+                          { name: "Global Tours", ref: "TA-003" },
+                        ].map((agent) => (
+                          <button
+                            key={agent.ref}
+                            onClick={() => {
+                              setTravelAgentName(agent.name);
+                              setTravelAgentRefId(agent.ref);
+                            }}
+                            className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-[10px] font-bold hover:bg-purple-200 transition-all"
+                          >
+                            {agent.name} ({agent.ref})
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -656,18 +845,24 @@ const CreateBooking = ({
                     {accessPackages
                       .filter((pkg) => {
                         if (bookingType === "Individual") {
-                          return pkg.packageType === "Premium Combo" || pkg.packageName === "Premium Combo";
+                          return (
+                            pkg.packageType === "Premium Combo" ||
+                            pkg.packageName === "Premium Combo"
+                          );
                         }
                         if (bookingType === "Corporate") {
-                          return pkg.packageType === "Corporate" || pkg.packageName === "Corporate";
+                          return (
+                            pkg.packageType === "Corporate" ||
+                            pkg.packageName === "Corporate"
+                          );
                         }
                         return true;
                       })
                       .map((pkg) => (
-                      <option key={pkg._id} value={pkg._id}>
-                        {pkg.packageName} (Adult: ₹{pkg.adult_price})
-                      </option>
-                    ))}
+                        <option key={pkg._id} value={pkg._id}>
+                          {pkg.packageName} (Adult: ₹{pkg.adult_price})
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div>
@@ -721,7 +916,10 @@ const CreateBooking = ({
                     selected={checkInDate}
                     onChange={(d) => setCheckInDate(d || new Date())}
                     className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
-                    dateFormat="dd MMM"
+                    dateFormat="dd MMM HH:mm"
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={30}
                   />
                 </div>
                 <div>
@@ -730,62 +928,23 @@ const CreateBooking = ({
                   </label>
                   <DatePicker
                     selected={checkOutDate}
-                    onChange={(d) =>
-                      setCheckOutDate(d || addDays(new Date(), 1))
-                    }
+                    onChange={(date) => {
+                      if (!date) return;
+                      const newDate = new Date(date);
+                      // Ensure check-out is at least same day as check-in
+                      if (newDate < checkInDate) {
+                        setCheckOutDate(addDays(checkInDate, 1));
+                      } else {
+                        setCheckOutDate(newDate);
+                      }
+                    }}
                     className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
-                    dateFormat="dd MMM"
-                    minDate={addDays(checkInDate, 1)}
+                    dateFormat="dd MMM HH:mm"
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={30}
+                    minDate={checkInDate}
                   />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-text-secondary uppercase">
-                    Adults
-                  </label>
-                  <select
-                    value={adultsFilter}
-                    onChange={(e) => setAdultsFilter(Number(e.target.value))}
-                    className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
-                  >
-                    {[1, 2, 3, 4, 5, 6].map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-text-secondary uppercase">
-                    Children
-                  </label>
-                  <select
-                    value={childrenFilter}
-                    onChange={(e) => setChildrenFilter(Number(e.target.value))}
-                    className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
-                  >
-                    {[0, 1, 2, 3, 4].map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-span-2">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase">
-                    Room Type
-                  </label>
-                  <select
-                    value={roomTypeFilter}
-                    onChange={(e) => setRoomTypeFilter(e.target.value)}
-                    className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
-                  >
-                    <option value="">All Types</option>
-                    {roomTypes.map((t: any) => (
-                      <option key={t._id} value={t._id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
                 </div>
                 <div className="flex items-end">
                   <button
@@ -805,151 +964,188 @@ const CreateBooking = ({
                     {searchingRooms ? "Searching..." : "Search"}
                   </button>
                 </div>
+                {/* Room Type Rows */}
+                <div className="col-span-full mt-2">
+                  <label className="text-[10px] font-bold text-text-secondary uppercase block mb-2">
+                    Room Types & Counts *
+                  </label>
+                  <div className="space-y-2">
+                    {selectedRoomTypes.map((entry, idx) => (
+                      <div key={entry.id} className="grid grid-cols-6 gap-2 items-end">
+                        {/* Room Type */}
+                        <div className="col-span-2">
+                          {idx === 0 && <label className="text-[9px] font-bold text-text-secondary uppercase block mb-1">Room Type</label>}
+                          <select
+                            value={entry.roomTypeId}
+                            onChange={(e) => {
+                              const t = roomTypes.find((rt: any) => rt._id === e.target.value);
+                              setSelectedRoomTypes(
+                                selectedRoomTypes.map((r) =>
+                                  r.id === entry.id
+                                    ? { ...r, roomTypeId: e.target.value, roomTypeName: t?.name || "", basePrice: t?.basePrice || 0 }
+                                    : r
+                                )
+                              );
+                            }}
+                            className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none font-bold"
+                          >
+                            <option value="">-- Select Room Type --</option>
+                            {roomTypes.map((t: any) => (
+                              <option key={t._id} value={t._id}>
+                                {t.name} (₹{t.basePrice}/night)
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Count */}
+                        <div>
+                          {idx === 0 && <label className="text-[9px] font-bold text-text-secondary uppercase block mb-1">Rooms</label>}
+                          <input
+                            type="number"
+                            min={1}
+                            max={20}
+                            value={entry.count}
+                            onChange={(e) =>
+                              setSelectedRoomTypes(
+                                selectedRoomTypes.map((r) =>
+                                  r.id === entry.id ? { ...r, count: Math.max(1, Number(e.target.value)) } : r
+                                )
+                              )
+                            }
+                            className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none text-center font-bold"
+                          />
+                        </div>
+
+                        {/* Adults */}
+                        <div>
+                          {idx === 0 && <label className="text-[9px] font-bold text-text-secondary uppercase block mb-1">Adults</label>}
+                          <select
+                            value={entry.adults}
+                            onChange={(e) =>
+                              setSelectedRoomTypes(
+                                selectedRoomTypes.map((r) =>
+                                  r.id === entry.id ? { ...r, adults: Number(e.target.value) } : r
+                                )
+                              )
+                            }
+                            className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
+                          >
+                            {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        </div>
+
+                        {/* Children */}
+                        <div>
+                          {idx === 0 && <label className="text-[9px] font-bold text-text-secondary uppercase block mb-1">Children</label>}
+                          <select
+                            value={entry.children}
+                            onChange={(e) =>
+                              setSelectedRoomTypes(
+                                selectedRoomTypes.map((r) =>
+                                  r.id === entry.id ? { ...r, children: Number(e.target.value) } : r
+                                )
+                              )
+                            }
+                            className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
+                          >
+                            {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        </div>
+
+                        {/* Subtotal + Remove */}
+                        <div className="flex items-end gap-1">
+                          <span className="text-xs font-bold text-primary flex-1 text-right pb-2">
+                            ₹{(entry.basePrice * entry.count * totalNights).toLocaleString()}
+                          </span>
+                          {selectedRoomTypes.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedRoomTypes(selectedRoomTypes.filter((r) => r.id !== entry.id))}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                            >
+                              <FiX size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add Row + Total Count */}
+                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-border">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedRoomTypes([
+                          ...selectedRoomTypes,
+                          { id: `row-${Date.now()}`, roomTypeId: "", roomTypeName: "", basePrice: 0, count: 1, adults: 1, children: 0 },
+                        ])
+                      }
+                      className="flex items-center gap-1 text-xs text-primary font-bold hover:underline"
+                    >
+                      <FiPlus size={12} /> Add Room Type
+                    </button>
+                    <span className="text-xs text-text-secondary font-bold">
+                      {selectedRoomTypes.reduce((s, e) => s + e.count, 0)} room(s) total
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* SECTION 3: Available Rooms (only for Room Stay category) */}
+          {/* SECTION 3: Available Rooms (only for Room Stay category) - Reference only */}
           {bookingCategory === "Room Stay" && searchResults.length > 0 && (
             <div className="bg-card border border-border rounded-xl p-4">
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold text-text-primary text-sm flex items-center gap-2">
                   <FiDollarSign size={14} className="text-primary" />
-                  Available Rooms ({searchResults.length})
+                  Available Rooms - Reference ({searchResults.length})
                 </h4>
                 <span className="text-xs text-text-secondary">
-                  {selectedRooms.length} selected
+                  Room assignment at check-in
                 </span>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[250px] overflow-y-auto">
-                {searchResults.map((result) => {
-                  const isSelected = selectedRooms.find(
-                    (r) => r.room._id === result.room._id,
-                  );
-                  return (
-                    <div
-                      key={result.room._id}
-                      onClick={() => toggleRoomSelection(result)}
-                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${isSelected ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-bold text-text-primary text-sm">
-                            Room {result.room.roomNumber}
-                          </h4>
-                          <p className="text-[10px] text-text-secondary">
-                            {result.roomType.name}
-                          </p>
-                        </div>
-                        <span
-                          className={`px-2 py-0.5 rounded text-[9px] font-bold ${isSelected ? "bg-primary text-white" : "bg-gray-100 text-text-secondary"}`}
-                        >
-                          {isSelected ? "✓" : "+"}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {result.amenities.slice(0, 3).map((a) => {
-                          const Icon = amenityIcons[a.icon] || FiWifi;
-                          return (
-                            <span
-                              key={a._id}
-                              className="px-1.5 py-0.5 bg-gray-100 rounded text-[9px] text-text-secondary flex items-center gap-0.5"
-                            >
-                              <Icon size={8} /> {a.name}
-                            </span>
-                          );
-                        })}
-                      </div>
-                      <div className="mt-2 pt-2 border-t border-border flex justify-between items-center">
-                        <span className="text-[10px] text-text-secondary">
-                          Base: ₹{result.room.basePrice}
-                        </span>
-                        <span className="font-bold text-primary text-sm">
-                          ₹{result.pricing.totalPrice.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* SECTION 4: Selected Rooms with Extra Bed (only for Room Stay category) */}
-          {bookingCategory === "Room Stay" && selectedRooms.length > 0 && (
-            <div className="bg-success/5 border border-success/20 rounded-xl p-4">
-              <h4 className="font-bold text-text-primary text-sm mb-2">
-                Selected Rooms
-              </h4>
-              <div className="space-y-2">
-                {selectedRooms.map((r) => (
+                {searchResults.map((result) => (
                   <div
-                    key={r.room._id}
-                    className="flex justify-between items-start p-3 bg-white border border-border rounded-lg"
+                    key={result.room._id}
+                    className="p-3 rounded-xl border border-border bg-gray-50"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-text-primary text-sm">
-                          Room {r.room.roomNumber}
-                        </span>
-                        <span className="text-xs text-text-secondary">
-                          {r.roomType.name}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {r.amenities.slice(0, 3).map((a) => (
-                          <span
-                            key={a._id}
-                            className="px-1.5 py-0.5 bg-gray-100 rounded text-[9px] text-text-secondary"
-                          >
-                            {a.name}
-                          </span>
-                        ))}
-                      </div>
-                      {/* Extra Bed Option */}
-                      {r.room.extraBedAllowed && (
-                        <label className="flex items-center gap-2 mt-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={r.hasExtraBed}
-                            onChange={() => toggleExtraBed(r.room._id)}
-                            className="w-4 h-4 accent-primary rounded"
-                          />
-                          <span className="text-xs font-medium text-text-primary">
-                            Extra Bed (+₹{r.room.extraBedCharge}/night = ₹
-                            {r.room.extraBedCharge * totalNights} for{" "}
-                            {totalNights} nights)
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <span className="text-sm font-bold text-text-primary">
-                          ₹{r.pricing.totalPrice.toLocaleString()}
-                        </span>
-                        {r.hasExtraBed && (
-                          <p className="text-[10px] text-primary font-bold">
-                            +₹{r.extraBedChargeTotal.toLocaleString()} (Extra
-                            Bed)
-                          </p>
-                        )}
-                        <p className="text-[9px] text-text-secondary">
-                          {totalNights} nights
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-text-primary text-sm">
+                          Room {result.room.roomNumber}
+                        </h4>
+                        <p className="text-[10px] text-text-secondary">
+                          {result.roomType.name}
                         </p>
                       </div>
-                      <button
-                        onClick={() =>
-                          setSelectedRooms(
-                            selectedRooms.filter(
-                              (s) => s.room._id !== r.room._id,
-                            ),
-                          )
-                        }
-                        className="p-1.5 text-danger hover:bg-danger/10 rounded-lg transition-all"
-                      >
-                        <FiX size={14} />
-                      </button>
+                      <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-600">
+                        Available
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {result.amenities.slice(0, 3).map((a) => {
+                        const Icon = amenityIcons[a.icon] || FiWifi;
+                        return (
+                          <span
+                            key={a._id}
+                            className="px-1.5 py-0.5 bg-gray-100 rounded text-[9px] text-text-secondary flex items-center gap-0.5"
+                          >
+                            <Icon size={8} /> {a.name}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-border flex justify-between items-center">
+                      <span className="text-[10px] text-text-secondary">
+                        Base: ₹{result.room.basePrice}
+                      </span>
+                      <span className="font-bold text-primary text-sm">
+                        ₹{result.pricing.totalPrice.toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -1068,7 +1264,86 @@ const CreateBooking = ({
             )}
           </div>
 
-          {/* SECTION 7: Payment */}
+          {/* SECTION 7: Add-on Services */}
+          {extraServices.length > 0 && (
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <FiPlus size={14} className="text-purple-600" />
+                <h3 className="font-bold text-purple-800 text-sm">Add-on Services</h3>
+                <span className="text-[10px] text-purple-500">Optional services included with stay</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {extraServices.map((service) => {
+                  const existing = selectedAddons.find((a) => a.serviceId === service._id);
+                  const isSelected = !!existing;
+                  return (
+                    <div
+                      key={service._id}
+                      className={`rounded-lg border-2 p-3 transition-all ${isSelected ? "border-purple-500 bg-purple-100" : "border-purple-200 bg-white hover:border-purple-300"}`}
+                    >
+                      <label className="flex items-start gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedAddons([
+                                ...selectedAddons,
+                                { serviceId: service._id, serviceName: service.name, quantity: 1, rate: service.price ?? 0, total: service.price ?? 0 },
+                              ]);
+                            } else {
+                              setSelectedAddons(selectedAddons.filter((a) => a.serviceId !== service._id));
+                            }
+                          }}
+                          className="w-4 h-4 accent-purple-600 mt-0.5 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[11px] font-bold text-purple-800 block truncate">{service.name}</span>
+                          <span className="text-[10px] text-purple-500">₹{(service.price ?? 0).toLocaleString()}/unit</span>
+                        </div>
+                      </label>
+                      {isSelected && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <label className="text-[10px] text-purple-600 font-bold">Qty</label>
+                          <input
+                            type="number"
+                            min={1}
+                            value={existing.quantity}
+                            onChange={(e) => {
+                              const qty = Math.max(1, Number(e.target.value));
+                              setSelectedAddons(
+                                selectedAddons.map((a) =>
+                                  a.serviceId === service._id
+                                    ? { ...a, quantity: qty, total: qty * a.rate }
+                                    : a
+                                )
+                              );
+                            }}
+                            className="w-14 border border-purple-300 rounded px-1 py-0.5 text-[11px] text-center"
+                          />
+                          <span className="text-[10px] font-bold text-purple-700 ml-auto">
+                            ₹{(existing.quantity * existing.rate).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {selectedAddons.length > 0 && (
+                <div className="mt-3 pt-2 border-t border-purple-200 flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-purple-600">
+                    {selectedAddons.length} service(s) selected
+                  </span>
+                  <span className="text-[11px] font-black text-purple-800">
+                    Add-on Total: ₹{selectedAddons.reduce((s, a) => s + a.total, 0).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* SECTION 8: Payment */}
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <FiCreditCard size={14} className="text-primary" />
@@ -1076,7 +1351,7 @@ const CreateBooking = ({
                 Payment Details
               </h3>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <div>
                 <label className="text-[10px] font-bold text-text-secondary uppercase">
                   Advance Amount
@@ -1115,6 +1390,23 @@ const CreateBooking = ({
                   <option value="Wallet">Wallet</option>
                 </select>
               </div>
+              <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">
+                  Tax / GST
+                </label>
+                <select
+                  value={selectedTaxId}
+                  onChange={(e) => setSelectedTaxId(e.target.value)}
+                  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
+                >
+                  <option value="">No Tax</option>
+                  {taxOptions.map((t) => (
+                    <option key={t._id} value={t._id}>
+                      {t.name} ({t.percentage}%)
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="col-span-2">
                 <label className="text-[10px] font-bold text-text-secondary uppercase">
                   Price Summary
@@ -1136,12 +1428,21 @@ const CreateBooking = ({
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between text-xs">
-                    <span className="text-text-secondary">Tax (12%)</span>
-                    <span className="font-bold">
-                      ₹{taxAmount.toLocaleString()}
-                    </span>
-                  </div>
+                  {taxAmount > 0 && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-text-secondary">
+                        {(() => {
+                          const t = taxOptions.find(
+                            (x) => x._id === selectedTaxId,
+                          );
+                          return t ? `${t.name} (${t.percentage}%)` : "Tax";
+                        })()}
+                      </span>
+                      <span className="font-bold">
+                        ₹{taxAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-xs pt-1 border-t border-border">
                     <span className="font-bold text-success">Grand Total</span>
                     <span className="font-bold text-success">
@@ -1184,7 +1485,7 @@ const CreateBooking = ({
               loading ||
               !customerForm.name ||
               !customerForm.phone ||
-              (bookingCategory === "Room Stay" && selectedRooms.length === 0) ||
+              (bookingCategory === "Room Stay" && !selectedRoomTypes.some((e) => e.roomTypeId)) ||
               (bookingCategory === "Day Access" && !selectedPackageId)
             }
             className="px-8 py-2 bg-success hover:bg-success/90 text-white rounded-lg font-bold text-sm flex items-center gap-2 disabled:opacity-50 transition-all"

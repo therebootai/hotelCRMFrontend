@@ -30,21 +30,25 @@ const StayHistoryTable = ({ bookings }: StayHistoryTableProps) => {
                     {b.bookingId || "N/A"}
                   </td>
                   <td className="px-4 py-2 text-text-secondary">
-                    {b.rooms?.[0]?.checkInDate
-                      ? new Date(b.rooms[0].checkInDate).toLocaleDateString("en-IN", {
+                    {b.bookingCategory === "Day Access" && b.visitDate
+                      ? new Date(b.visitDate).toLocaleDateString("en-IN", {
                           day: "2-digit",
                           month: "short",
                           year: "numeric",
                         })
-                      : "—"}{" "}
-                    —{" "}
-                    {b.rooms?.[0]?.checkOutDate
-                      ? new Date(b.rooms[0].checkOutDate).toLocaleDateString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : "—"}
+                      : b.rooms?.[0]?.checkInDate
+                        ? `${new Date(b.rooms[0].checkInDate).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })} — ${b.rooms[0].checkOutDate
+                              ? new Date(b.rooms[0].checkOutDate).toLocaleDateString("en-IN", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                })
+                              : "—"}`
+                        : "—"}
                   </td>
                   <td className="px-4 py-2">
                     {typeof b.pricingSummary?.grandTotal === "number"

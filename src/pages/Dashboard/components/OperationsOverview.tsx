@@ -1,37 +1,37 @@
 import React from 'react';
+import type { ArrivalGuest, FloorOccupancy, DepartureGuest } from '../useDashboardData';
 
-// --- MOCK DATA (Now using semantic theme classes) ---
-const arrivalsData = [
-  { id: 1, initials: 'SM', name: 'Sarah Mitchell', room: 'Room 402 • Deluxe King', status: 'Check-in', statusType: 'text', avatarBg: 'bg-primary/10', avatarColor: 'text-primary' },
-  { id: 2, initials: 'RK', name: 'Robert King', room: 'Room 105 • Executive Suite', status: 'DONE', statusType: 'badge', avatarBg: 'bg-gray-200', avatarColor: 'text-text-secondary' },
-  { id: 3, initials: 'AJ', name: 'Alice Johnson', room: 'Room 312 • Standard Twin', status: 'Check-in', statusType: 'text', avatarBg: 'bg-primary/10', avatarColor: 'text-primary' },
-];
-
-const occupancyData = [
-  { id: 1, label: 'FLOOR 04 - PREMIUM', occupied: 18, total: 20, percentage: 90 },
-  { id: 2, label: 'FLOOR 03 - STANDARD', occupied: 15, total: 24, percentage: 62 },
-  { id: 3, label: 'FLOOR 02 - STANDARD', occupied: 22, total: 24, percentage: 91 },
-];
-
-const departuresData = [
-  { id: 1, name: 'Mr. Leonard Cohen', time: 'DUE 11:00 AM', isUrgent: true },
-  { id: 2, name: 'The Smiths (Family)', time: 'DUE 12:00 PM', isUrgent: false },
-  { id: 3, name: 'David Byrne', time: 'DUE 12:30 PM', isUrgent: false },
-];
+interface OperationsOverviewProps {
+  arrivals: ArrivalGuest[];
+  departures: DepartureGuest[];
+  floorOccupancy: FloorOccupancy[];
+  arrivalsCount: number;
+  departuresCount: number;
+  loading?: boolean;
+}
 
 // --- SUB-COMPONENTS ---
 
-const ExpectedArrivalsCard = () => (
+interface CardProps {
+  arrivals: ArrivalGuest[];
+  floorOccupancy: FloorOccupancy[];
+  departures: DepartureGuest[];
+  arrivalsCount: number;
+  departuresCount: number;
+  loading?: boolean;
+}
+
+const ExpectedArrivalsCard = ({ arrivals, arrivalsCount, loading }: { arrivals: ArrivalGuest[]; arrivalsCount: number; loading?: boolean }) => (
   <div className="flex flex-col h-full">
     {/* Header */}
     <div className="flex justify-between items-center mb-4">
       <h3 className="text-[16px] font-semibold text-text-primary">Expected Arrivals</h3>
-      <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md tracking-wide">12 Today</span>
+      <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md tracking-wide">{arrivalsCount} Today</span>
     </div>
 
     {/* List */}
     <div className="flex flex-col gap-3 flex-1">
-      {arrivalsData.map((guest) => (
+      {(arrivals.length > 0 ? arrivals : []).map((guest) => (
         <div key={guest.id} className="flex items-center justify-between bg-gray-100 rounded-xl p-3">
           <div className="flex items-center gap-3">
             {/* Avatar */}
@@ -60,17 +60,21 @@ const ExpectedArrivalsCard = () => (
   </div>
 );
 
-const OccupiedRoomsCard = () => (
+const OccupiedRoomsCard = ({ floorOccupancy, loading }: { floorOccupancy: FloorOccupancy[]; loading?: boolean }) => (
   <div className="flex flex-col h-full">
     {/* Header */}
     <div className="flex justify-between items-center mb-4">
       <h3 className="text-[16px] font-semibold text-text-primary">Occupied Rooms</h3>
-      <span className="text-[12px] font-semibold text-text-secondary">84% Capacity</span>
+      <span className="text-[12px] font-semibold text-text-secondary">
+        {floorOccupancy.length > 0
+          ? Math.round(floorOccupancy.reduce((sum, f) => sum + f.percentage, 0) / floorOccupancy.length)
+          : 0}% Capacity
+      </span>
     </div>
 
     {/* List */}
     <div className="flex flex-col gap-6 flex-1 justify-center pb-4">
-      {occupancyData.map((floor) => (
+      {(floorOccupancy.length > 0 ? floorOccupancy : []).map((floor) => (
         <div key={floor.id} className="flex flex-col gap-2">
           <div className="flex justify-between items-end">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{floor.label}</span>
@@ -90,17 +94,17 @@ const OccupiedRoomsCard = () => (
   </div>
 );
 
-const ExpectedDeparturesCard = () => (
+const ExpectedDeparturesCard = ({ departures, departuresCount, loading }: { departures: DepartureGuest[]; departuresCount: number; loading?: boolean }) => (
   <div className="flex flex-col h-full">
     {/* Header */}
     <div className="flex justify-between items-center mb-4">
       <h3 className="text-[16px] font-semibold text-text-primary">Expected Departures</h3>
-      <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md tracking-wide">8 Today</span>
+      <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md tracking-wide">{departuresCount} Today</span>
     </div>
 
     {/* List */}
     <div className="flex flex-col gap-3 flex-1">
-      {departuresData.map((guest) => (
+      {(departures.length > 0 ? departures : []).map((guest) => (
         <div key={guest.id} className="flex items-center justify-between bg-gray-100 rounded-xl p-3 relative overflow-hidden">
           
           {/* Urgent Red Marker */}
@@ -128,12 +132,12 @@ const ExpectedDeparturesCard = () => (
 
 // --- MAIN COMPONENT ---
 
-const OperationsOverview = () => {
+const OperationsOverview = ({ arrivals, departures, floorOccupancy, arrivalsCount, departuresCount, loading }: OperationsOverviewProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-19">
-      <ExpectedArrivalsCard />
-      <OccupiedRoomsCard />
-      <ExpectedDeparturesCard />
+      <ExpectedArrivalsCard arrivals={arrivals} arrivalsCount={arrivalsCount} loading={loading} />
+      <OccupiedRoomsCard floorOccupancy={floorOccupancy} loading={loading} />
+      <ExpectedDeparturesCard departures={departures} departuresCount={departuresCount} loading={loading} />
     </div>
   );
 };

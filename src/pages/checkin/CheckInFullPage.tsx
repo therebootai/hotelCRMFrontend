@@ -318,9 +318,11 @@ const handleCheckoutClick = (item: any) => {
                       <button onClick={() => { setSelectedItem(item); setIsExtendModalOpen(true); }} className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all" title="Extend">
                         <FiCalendar size={12} />
                       </button>
-                      <button onClick={() => handleCheckoutClick(item)} className="px-3 py-1.5 bg-orange-500 text-white rounded-lg font-bold text-[9px] uppercase hover:bg-orange-600 shadow-sm transition-all">
-                        Checkout
-                      </button>
+                      {item.status === "Active" && (
+                        <button onClick={() => handleCheckoutClick(item)} className="px-3 py-1.5 bg-orange-500 text-white rounded-lg font-bold text-[9px] uppercase hover:bg-orange-600 shadow-sm transition-all">
+                          Checkout
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -345,7 +347,6 @@ const handleCheckoutClick = (item: any) => {
     checkIn={selectedItem}
     onClose={() => setIsExtendModalOpen(false)}
     onSuccess={fetchCheckins}
-    roomTypes={roomTypes}
   />
 )}
 

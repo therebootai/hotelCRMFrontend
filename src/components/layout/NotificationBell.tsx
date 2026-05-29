@@ -43,7 +43,10 @@ const NotificationBell = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -55,7 +58,7 @@ const NotificationBell = () => {
     try {
       const response = await api.patch("/notifications/read");
       if (response.data?.success) {
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         setUnreadCount(0);
       }
     } catch (error) {
@@ -68,8 +71,10 @@ const NotificationBell = () => {
     try {
       const response = await api.patch(`/notifications/read/${id}`);
       if (response.data?.success) {
-        setNotifications(prev => prev.map(n => (n._id === id ? { ...n, isRead: true } : n)));
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setNotifications((prev) =>
+          prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)),
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       }
     } catch (error) {
       console.error("Error marking notification as read:", error);
@@ -81,11 +86,11 @@ const NotificationBell = () => {
     try {
       const response = await api.delete(`/notifications/${id}`);
       if (response.data?.success) {
-        const target = notifications.find(n => n._id === id);
+        const target = notifications.find((n) => n._id === id);
         if (target && !target.isRead) {
-          setUnreadCount(prev => Math.max(0, prev - 1));
+          setUnreadCount((prev) => Math.max(0, prev - 1));
         }
-        setNotifications(prev => prev.filter(n => n._id !== id));
+        setNotifications((prev) => prev.filter((n) => n._id !== id));
       }
     } catch (error) {
       console.error("Error deleting notification:", error);
@@ -96,8 +101,10 @@ const NotificationBell = () => {
     if (!notif.isRead) {
       try {
         await api.patch(`/notifications/read/${notif._id}`);
-        setUnreadCount(prev => Math.max(0, prev - 1));
-        setNotifications(prev => prev.map(n => (n._id === notif._id ? { ...n, isRead: true } : n)));
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+        setNotifications((prev) =>
+          prev.map((n) => (n._id === notif._id ? { ...n, isRead: true } : n)),
+        );
       } catch (error) {
         console.error("Failed to mark click-through as read:", error);
       }
@@ -132,7 +139,7 @@ const NotificationBell = () => {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-3.5 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-fade-in origin-top-right z-30">
+        <div className="absolute right-0 mt-3.5 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-fade-in origin-top-right z-70">
           <div className="p-4 border-b border-gray-100 flex items-center justify-between">
             <h3 className="font-semibold text-text-primary text-sm flex items-center gap-2">
               Notifications
@@ -155,7 +162,7 @@ const NotificationBell = () => {
 
           <div className="max-h-96 overflow-y-auto divide-y divide-gray-50">
             {notifications.length > 0 ? (
-              notifications.map(notif => (
+              notifications.map((notif) => (
                 <div
                   key={notif._id}
                   onClick={() => handleNotificationClick(notif)}
@@ -167,18 +174,25 @@ const NotificationBell = () => {
                   <div className="mt-1 flex-shrink-0">
                     <span
                       className={`block w-2.5 h-2.5 rounded-full ${
-                        !notif.isRead ? "bg-primary animate-pulse" : "bg-gray-300"
+                        !notif.isRead
+                          ? "bg-primary animate-pulse"
+                          : "bg-gray-300"
                       }`}
                     ></span>
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-1">
-                      <p className={`text-xs font-semibold text-text-primary truncate ${!notif.isRead ? "font-bold" : ""}`}>
+                      <p
+                        className={`text-xs font-semibold text-text-primary truncate ${!notif.isRead ? "font-bold" : ""}`}
+                      >
                         {notif.title}
                       </p>
                       <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                        {new Date(notif.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(notif.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     </div>
                     <p className="text-[11px] text-text-secondary leading-normal mt-0.5 line-clamp-2">
@@ -209,7 +223,9 @@ const NotificationBell = () => {
               <div className="p-8 flex flex-col items-center justify-center text-center text-gray-400">
                 <FiInbox size={32} className="mb-2 text-gray-300" />
                 <p className="text-xs">All caught up!</p>
-                <p className="text-[10px] mt-0.5">No notifications to display.</p>
+                <p className="text-[10px] mt-0.5">
+                  No notifications to display.
+                </p>
               </div>
             )}
           </div>

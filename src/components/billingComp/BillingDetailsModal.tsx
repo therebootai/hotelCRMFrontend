@@ -1,5 +1,6 @@
 import React from "react";
-import { FiX, FiUser, FiPhone } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
+import { FaDownload } from "react-icons/fa";
 import { format } from "date-fns";
 import type { BillingItem } from "../../pages/billing/BillingPage";
 
@@ -14,6 +15,12 @@ const BillingDetailsModal: React.FC<BillingDetailsModalProps> = ({
   onClose,
   selectedBill,
 }) => {
+  const handleDownloadPdf = () => {
+    if (!selectedBill) return;
+    const base = import.meta.env.VITE_API_URL as string;
+    window.open(`${base}/billing/${selectedBill._id}/invoice-pdf`, "_blank");
+  };
+
   if (!isOpen || !selectedBill) return null;
 
   return (
@@ -263,7 +270,13 @@ const BillingDetailsModal: React.FC<BillingDetailsModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex justify-end">
+        <div className="border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex justify-between items-center">
+          <button
+            onClick={handleDownloadPdf}
+            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl font-bold text-xs transition-all active:scale-95"
+          >
+            <FaDownload size={11} /> Download Invoice PDF
+          </button>
           <button
             onClick={onClose}
             className="px-5 py-2.5 bg-gray-800 text-white rounded-xl hover:bg-gray-900 font-bold text-xs"

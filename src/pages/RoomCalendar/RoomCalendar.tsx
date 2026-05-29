@@ -8,7 +8,7 @@ import {
   FiRefreshCw,
   FiLogIn,
 } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import api from "../../lib/axios";
 
 interface CalendarRoom {
@@ -249,14 +249,8 @@ const RoomCalendar = () => {
                           }`}
                         >
                           {booking ? (
-                            <div
-                              onClick={() =>
-                                navigate(
-                                  booking.type === "checkin"
-                                    ? "/checkin"
-                                    : "/bookings",
-                                )
-                              }
+                            <Link
+                              to={booking.type === "checkin" ? "/checkin" : "/bookings"}
                               className={`absolute inset-x-1.5 inset-y-1.5 rounded-lg p-1.5 flex flex-col justify-between cursor-pointer transition-transform hover:scale-[1.02] shadow-sm ${
                                 booking.status === "Checked-In" ||
                                 booking.type === "checkin"
@@ -272,16 +266,16 @@ const RoomCalendar = () => {
                                   ? "Starts Checkin"
                                   : "Stay Active"}
                               </div>
-                            </div>
+                            </Link>
                           ) : (
-                            <div
-                              onClick={() => navigate("/bookings")}
+                            <Link
+                              to="/bookings"
                               className="absolute inset-0 hover:bg-gray-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer group"
                             >
                               <span className="text-[9px] font-semibold text-primary flex items-center gap-0.5 bg-primary/10 px-2 py-1 rounded-full">
                                 <FiLogIn size={9} /> Book Room
                               </span>
-                            </div>
+                            </Link>
                           )}
                         </td>
                       );

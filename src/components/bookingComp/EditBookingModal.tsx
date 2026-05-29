@@ -21,6 +21,14 @@ interface EditBookingModalProps {
   onSuccess: () => void;
 }
 
+interface TaxOption {
+  _id: string;
+  name: string;
+  percentage: number;
+  type: "Room" | "Food" | "Service";
+  isActive: boolean;
+}
+
 const EditBookingModal = ({ booking, onClose, onSuccess }: EditBookingModalProps) => {
   const [loading, setLoading] = useState(false);
   const [searchingRooms, setSearchingRooms] = useState(false);
@@ -64,6 +72,10 @@ const EditBookingModal = ({ booking, onClose, onSuccess }: EditBookingModalProps
   const [advanceAmount, setAdvanceAmount] = useState(booking.advanceAmount || 0);
   const [paymentMode, setPaymentMode] = useState("Cash");
 
+  // Tax
+  const [taxOptions, setTaxOptions] = useState<TaxOption[]>([]);
+  const [selectedTaxId, setSelectedTaxId] = useState("");
+
   // Load room types
   useEffect(() => {
     const fetchRoomTypes = async () => {
@@ -76,6 +88,30 @@ const EditBookingModal = ({ booking, onClose, onSuccess }: EditBookingModalProps
     };
     fetchRoomTypes();
   }, []);
+
+  // Fetch taxes based on booking category
+  useEffect(() => {
+    const fetchTaxes = async () => {
+      const taxType = booking.bookingCategory === "Day Access" ? "Service" : "Room";
+      try {
+        const res = await api.get("/tax-gst", {
+          params: { type: taxType, activeOnly: "true" },
+        });
+        const taxes: TaxOption[] = res.data.data || [];
+        setTaxOptions(taxes);
+        // Restore the booking's stored tax — match by _id or find by percentage
+        const storedPct = booking.pricingSummary?.taxPercentage ?? 12;
+        const match =
+          (booking as any).taxGstId
+            ? taxes.find((t) => t._id === (booking as any).taxGstId)
+            : taxes.find((t) => t.percentage === storedPct);
+        setSelectedTaxId(match ? match._id : taxes[0]?._id ?? "");
+      } catch (err) {
+        console.error("Error fetching taxes:", err);
+      }
+    };
+    fetchTaxes();
+  }, [booking.bookingCategory]);
 
   // Pre-populate selected rooms from booking
   useEffect(() => {
@@ -187,11 +223,13 @@ const EditBookingModal = ({ booking, onClose, onSuccess }: EditBookingModalProps
 
   // Calculate totals
   const calculateTotals = () => {
+    const selectedTax = taxOptions.find((t) => t._id === selectedTaxId);
+    const taxRate = selectedTax ? selectedTax.percentage / 100 : 0;
     const roomTotal = selectedRooms.reduce((sum, r) => {
       const basePrice = r.pricing?.totalPrice || r.room.basePrice * totalNights;
       return sum + basePrice + (r.extraBedChargeTotal || 0);
     }, 0);
-    const taxAmount = Math.round(roomTotal * 0.12);
+    const taxAmount = Math.round(roomTotal * taxRate);
     const grandTotal = roomTotal + taxAmount;
     return { roomTotal, taxAmount, grandTotal };
   };
@@ -542,7 +580,7 @@ const EditBookingModal = ({ booking, onClose, onSuccess }: EditBookingModalProps
           {/* SECTION 5: Payment */}
           <div className="bg-blue-50/30 border border-blue-100 rounded-xl p-4">
             <h3 className="font-bold text-text-primary text-sm mb-3">Payment Summary</h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <label className="text-[10px] font-bold text-text-secondary uppercase">Advance Amount</label>
                 <input
@@ -567,11 +605,35 @@ const EditBookingModal = ({ booking, onClose, onSuccess }: EditBookingModalProps
                 </select>
               </div>
               <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Tax / GST</label>
+                <select
+                  value={selectedTaxId}
+                  onChange={(e) => setSelectedTaxId(e.target.value)}
+                  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
+                >
+                  <option value="">No Tax</option>
+                  {taxOptions.map((t) => (
+                    <option key={t._id} value={t._id}>
+                      {t.name} ({t.percentage}%)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="text-[10px] font-bold text-text-secondary uppercase">Updated Total</label>
                 <div className="p-2 bg-white border border-blue-200 rounded-lg">
                   <div className="text-xs text-text-secondary">Room Total</div>
                   <div className="font-bold text-blue-700">₹{roomTotal.toLocaleString()}</div>
-                  <div className="text-xs text-text-secondary">+ Tax (12%) ₹{taxAmount.toLocaleString()}</div>
+                  {taxAmount > 0 && (
+                    <div className="text-xs text-text-secondary">
+                      +{" "}
+                      {(() => {
+                        const t = taxOptions.find((x) => x._id === selectedTaxId);
+                        return t ? `${t.name} (${t.percentage}%)` : "Tax";
+                      })()}{" "}
+                      ₹{taxAmount.toLocaleString()}
+                    </div>
+                  )}
                   <div className="font-bold text-blue-800 border-t border-blue-200 mt-1 pt-1">₹{grandTotal.toLocaleString()}</div>
                 </div>
               </div>

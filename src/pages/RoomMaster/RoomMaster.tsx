@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FiPlus, FiArrowLeft, FiLoader, FiCalendar } from "react-icons/fi";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 import { AxiosError } from "axios";
@@ -15,8 +15,26 @@ import RoomTypeMaster from "./components/RoomTypeMaster";
 import AmenitiesMaster from "./components/AmenitiesMaster";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 
+const TABS = [
+  { id: "room-master",       label: "Room Master" },
+  { id: "room-type-master",  label: "Room Type Master" },
+  { id: "amenities-master",  label: "Amenities Master" },
+] as const;
+type TabId = typeof TABS[number]["id"];
+
 export default function RoomMaster() {
-  const [activeTab, setActiveTab] = useState("Room Master");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabId = (searchParams.get("tab") as TabId) || "room-master";
+  const activeTab = TABS.find((t) => t.id === tabId)?.label ?? "Room Master";
+
+  const setActiveTabId = (id: TabId) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", id);
+      return next;
+    });
+  };
+
   const [view, setView] = useState<"list" | "add">("list");
 
   // Real Data State
@@ -74,10 +92,10 @@ export default function RoomMaster() {
   };
 
   useEffect(() => {
-    if (activeTab === "Room Master") {
+    if (tabId === "room-master") {
       fetchRooms();
     }
-  }, [activeTab, currentPage, filters]);
+  }, [tabId, currentPage, filters]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -150,12 +168,12 @@ export default function RoomMaster() {
             </h1>
           </div>
         ) : (
-          <RoomTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+          <RoomTabs activeTabId={tabId} onTabChange={setActiveTabId} />
         )}
 
         {view === "list" && (
           <div className="flex items-center gap-3 animate-fade-in">
-            {activeTab === "Room Master" && (
+            {tabId === "room-master" && (
               <>
                 <Link
                   to="/master/rooms/rates"
@@ -171,7 +189,7 @@ export default function RoomMaster() {
                 </button>
               </>
             )}
-            {activeTab === "Room Type Master" && (
+            {tabId === "room-type-master" && (
               <button
                 onClick={() => setIsRoomTypeModalOpen(true)}
                 className="btn-primary flex items-center gap-2 px-5 py-2.5"
@@ -179,7 +197,7 @@ export default function RoomMaster() {
                 <FiPlus size={18} /> Add Room Type
               </button>
             )}
-            {activeTab === "Amenities Master" && (
+            {tabId === "amenities-master" && (
               <button
                 onClick={() => setIsAmenityModalOpen(true)}
                 className="btn-primary flex items-center gap-2 px-5 py-2.5"
@@ -197,7 +215,7 @@ export default function RoomMaster() {
           onSuccess={handleFormSuccess}
           initialData={editingRoom}
         />
-      ) : activeTab === "Room Master" ? (
+      ) : tabId === "room-master" ? (
         <>
           <RoomFilters
             filters={filters}
@@ -231,12 +249,12 @@ export default function RoomMaster() {
             </div>
           </div>
         </>
-      ) : activeTab === "Room Type Master" ? (
+      ) : tabId === "room-type-master" ? (
         <RoomTypeMaster
           isAddModalOpen={isRoomTypeModalOpen}
           setIsAddModalOpen={setIsRoomTypeModalOpen}
         />
-      ) : activeTab === "Amenities Master" ? (
+      ) : tabId === "amenities-master" ? (
         <AmenitiesMaster
           isAddModalOpen={isAmenityModalOpen}
           setIsAddModalOpen={setIsAmenityModalOpen}

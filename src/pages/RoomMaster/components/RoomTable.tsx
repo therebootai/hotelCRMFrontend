@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Edit2, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FiChevronLeft, FiChevronRight, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../lib/axios';
 import { AxiosError } from 'axios';
@@ -209,13 +209,13 @@ export default function RoomTable({
                             onClick={() => onEdit(room)}
                             className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                           >
-                            <Edit2 size={16} />
+                            <FiEdit2 size={16} />
                           </button>
                           <button 
                             onClick={() => onDelete(room)}
                             className="p-2 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
                           >
-                            <Trash2 size={16} />
+                            <FiTrash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -239,7 +239,7 @@ export default function RoomTable({
             disabled={currentPage <= 1} 
             className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-background disabled:opacity-50 transition-colors cursor-pointer"
           >
-            <ChevronLeft size={16} />
+            <FiChevronLeft size={16} />
           </button>
           <span className={`px-2 font-medium text-text-primary ${textScale}`}>
             {currentPage} / {totalPages || 1}
@@ -249,7 +249,7 @@ export default function RoomTable({
             disabled={currentPage >= totalPages || totalPages === 0} 
             className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-background disabled:opacity-50 transition-colors cursor-pointer"
           >
-            <ChevronRight size={16} />
+            <FiChevronRight size={16} />
           </button>
         </div>
       </div>

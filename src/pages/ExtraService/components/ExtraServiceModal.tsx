@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../lib/axios';
 import { AxiosError } from 'axios';
@@ -7,6 +7,7 @@ import { AxiosError } from 'axios';
 interface ExtraServiceData {
   _id?: string;
   name: string;
+  price?: number;
   isActive?: boolean;
 }
 
@@ -21,23 +22,24 @@ export default function ExtraServiceModal({ isOpen, onClose, onSuccess, initialD
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    price: 0,
   });
-  const [errors, setErrors] = useState<{ name?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; price?: string }>({});
 
   useEffect(() => {
     setErrors({});
-    
+
     if (initialData) {
-      setFormData({ name: initialData.name });
+      setFormData({ name: initialData.name, price: initialData.price ?? 0 });
     } else {
-      setFormData({ name: '' });
+      setFormData({ name: '', price: 0 });
     }
   }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 
   const validate = () => {
-    const newErrors: { name?: string } = {};
+    const newErrors: { name?: string; price?: string } = {};
     const trimmedName = formData.name.trim();
 
     if (!trimmedName) {
@@ -46,15 +48,22 @@ export default function ExtraServiceModal({ isOpen, onClose, onSuccess, initialD
       newErrors.name = "Name must be at least 2 characters";
     }
 
+    if (formData.price < 0) {
+      newErrors.price = "Price must be 0 or more";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ name: e.target.value });
-    if (errors.name) {
-      setErrors({});
-    }
+    setFormData(prev => ({ ...prev, name: e.target.value }));
+    if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, price: Number(e.target.value) }));
+    if (errors.price) setErrors(prev => ({ ...prev, price: undefined }));
   };
 
   const handleSubmit = async () => {
@@ -111,26 +120,43 @@ export default function ExtraServiceModal({ isOpen, onClose, onSuccess, initialD
             disabled={isLoading}
             className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors disabled:opacity-50"
           >
-            <X size={20} />
+            <FiX size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6">
+        <div className="p-6 flex flex-col gap-4">
           <div>
             <label className="input-label uppercase tracking-wider text-[10px]">Service Name</label>
-            <input 
-              type="text" 
-              placeholder="e.g. Laundry / Ironing" 
-              value={formData.name} 
+            <input
+              type="text"
+              placeholder="e.g. Laundry / Ironing"
+              value={formData.name}
               onChange={handleNameChange}
               disabled={isLoading}
               className={`input-field disabled:opacity-70 disabled:cursor-not-allowed ${
                 errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
-              }`} 
+              }`}
             />
             {errors.name && (
               <p className="text-red-500 text-xs mt-1.5 font-medium animate-fade-in">{errors.name}</p>
+            )}
+          </div>
+          <div>
+            <label className="input-label uppercase tracking-wider text-[10px]">Price (₹)</label>
+            <input
+              type="number"
+              min={0}
+              placeholder="e.g. 150"
+              value={formData.price}
+              onChange={handlePriceChange}
+              disabled={isLoading}
+              className={`input-field disabled:opacity-70 disabled:cursor-not-allowed ${
+                errors.price ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
+              }`}
+            />
+            {errors.price && (
+              <p className="text-red-500 text-xs mt-1.5 font-medium animate-fade-in">{errors.price}</p>
             )}
           </div>
         </div>

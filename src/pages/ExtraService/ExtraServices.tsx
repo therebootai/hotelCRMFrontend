@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Edit2, Trash2, Loader2, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FiEdit2, FiTrash2, FiLoader, FiPlus } from 'react-icons/fi';
 import ExtraServiceModal from './components/ExtraServiceModal';
 import DeleteModal from '../StaffMaster/Components/DeleteModal';
 import toast from 'react-hot-toast';
@@ -9,6 +9,7 @@ import { AxiosError } from 'axios';
 export interface ExtraService {
   _id: string;
   name: string;
+  price: number;
   isActive: boolean;
 }
 
@@ -123,7 +124,7 @@ export default function ExtraServiceMaster() {
           }}
           className="btn-primary flex items-center gap-2"
         >
-          <Plus size={18} />
+          <FiPlus size={18} />
           <span>Add Service</span>
         </button>
       </div>
@@ -134,7 +135,8 @@ export default function ExtraServiceMaster() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-background/50 border-b border-border">
               <tr>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-[50%]">Service Name</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-[40%]">Service Name</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">Price</th>
                 <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right w-32">Actions</th>
               </tr>
@@ -142,9 +144,9 @@ export default function ExtraServiceMaster() {
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center text-text-secondary">
+                  <td colSpan={4} className="px-6 py-12 text-center text-text-secondary">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      <FiLoader className="w-6 h-6 animate-spin text-primary" />
                       <span className="text-sm">Loading extra services...</span>
                     </div>
                   </td>
@@ -155,8 +157,13 @@ export default function ExtraServiceMaster() {
                     <td className="px-6 py-4">
                       <span className="font-bold text-text-primary text-sm">{service.name}</span>
                     </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-text-primary font-medium">
+                        ₹{(service.price ?? 0).toLocaleString()}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-left">
-                      <button 
+                      <button
                         onClick={() => handleToggleStatus(service._id, service.isActive)}
                         className={`w-10 h-5 rounded-full relative transition-colors duration-200 ${service.isActive ? 'bg-primary' : 'bg-border'}`}
                       >
@@ -169,13 +176,13 @@ export default function ExtraServiceMaster() {
                           onClick={() => handleEditClick(service)}
                           className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                         >
-                          <Edit2 size={16} />
+                          <FiEdit2 size={16} />
                         </button>
                         <button 
                           onClick={() => handleDeleteClick(service)}
                           className="p-2 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
                         >
-                          <Trash2 size={16} />
+                          <FiTrash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -183,7 +190,7 @@ export default function ExtraServiceMaster() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center text-text-secondary">
+                  <td colSpan={4} className="px-6 py-12 text-center text-text-secondary">
                     No extra services registered yet.
                   </td>
                 </tr>

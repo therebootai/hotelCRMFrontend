@@ -1,15 +1,15 @@
 import React, { useState, useEffect, forwardRef, useCallback } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Edit2,
-  Check,
-  X,
-  BedDouble,
-  User,
-  Loader2,
-  UploadCloud,
-} from "lucide-react";
+  FiChevronLeft,
+  FiChevronRight,
+  FiEdit2,
+  FiCheck,
+  FiX,
+  FiUser,
+  FiLoader,
+  FiUpload,
+  FiCoffee,
+} from "react-icons/fi";
 import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import { addDays, differenceInDays, format } from "date-fns";
@@ -267,14 +267,14 @@ export default function RoomRates() {
               disabled={isPublishing}
               className="flex items-center gap-2 px-4 py-2 bg-success text-white rounded-lg font-medium shadow-sm hover:bg-success/90 transition-colors animate-fade-in disabled:opacity-50"
             >
-              {isPublishing ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+              {isPublishing ? <FiLoader size={16} className="animate-spin" /> : <FiUpload size={16} />}
               Publish Changes ({Object.keys(editedPrices).length})
             </button>
           )}
 
           <div className="flex items-center gap-2 bg-card border border-border p-1.5 rounded-lg shadow-sm">
             <button onClick={handlePrev} className="p-2 text-text-secondary hover:bg-background rounded-md transition-colors disabled:opacity-50" disabled={isLoading}>
-              <ChevronLeft size={18} />
+              <FiChevronLeft size={18} />
             </button>
 
             <div className="flex items-center px-1">
@@ -291,7 +291,7 @@ export default function RoomRates() {
             </div>
 
             <button onClick={handleNext} className="p-2 text-text-secondary hover:bg-background rounded-md transition-colors disabled:opacity-50" disabled={isLoading}>
-              <ChevronRight size={18} />
+              <FiChevronRight size={18} />
             </button>
           </div>
         </div>
@@ -300,7 +300,7 @@ export default function RoomRates() {
       <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden w-full relative min-h-100">
         {isLoading && (
           <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[1px] flex flex-col items-center justify-center text-text-secondary">
-            <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+            <FiLoader className="w-8 h-8 animate-spin text-primary mb-3" />
             <p className="font-medium text-sm">Loading inventory grid...</p>
           </div>
         )}
@@ -336,17 +336,17 @@ export default function RoomRates() {
                   <td className="px-4 py-3 border-r border-border font-semibold truncate">
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-2 truncate pr-2 text-text-primary">
-                        <BedDouble size={16} className="text-primary shrink-0" />
+                        <FiCoffee size={16} className="text-primary shrink-0" />
                         <span className="truncate">{category.name}</span>
                       </span>
                       {editingCategoryId === category.id ? (
                         <div className="flex gap-1 bg-white rounded shadow-sm border border-border p-0.5 shrink-0">
-                          <button onClick={() => saveEditing()} className="p-1 text-success hover:bg-success/10 rounded"><Check size={14} /></button>
-                          <button onClick={cancelEditing} className="p-1 text-danger hover:bg-danger/10 rounded"><X size={14} /></button>
+                          <button onClick={() => saveEditing()} className="p-1 text-success hover:bg-success/10 rounded"><FiCheck size={14} /></button>
+                          <button onClick={cancelEditing} className="p-1 text-danger hover:bg-danger/10 rounded"><FiX size={14} /></button>
                         </div>
                       ) : (
                         <button onClick={() => startEditing(category.id, false)} className="p-1 text-text-secondary opacity-0 group-hover:opacity-100 hover:text-primary transition-all shrink-0">
-                          <Edit2 size={14} />
+                          <FiEdit2 size={14} />
                         </button>
                       )}
                     </div>
@@ -376,15 +376,15 @@ export default function RoomRates() {
                   <tr key={room.id} className="hover:bg-background/20 group/room transition-colors">
                     <td className="px-6 py-2.5 border-r border-border pl-12 text-sm text-text-secondary sticky left-0 bg-white group-hover/room:bg-gray-50 z-10 transition-colors">
                       <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-2"><User size={12} /> Room {room.roomNumber}</span>
+                        <span className="flex items-center gap-2"><FiUser size={12} /> Room {room.roomNumber}</span>
                         {editingRoomId === room.id ? (
                           <div className="flex gap-1 bg-white rounded shadow-sm border border-border p-0.5">
-                            <button onClick={() => saveEditing()} className="p-1 text-success hover:bg-success/10 rounded"><Check size={14} /></button>
-                            <button onClick={cancelEditing} className="p-1 text-danger hover:bg-danger/10 rounded"><X size={14} /></button>
+                            <button onClick={() => saveEditing()} className="p-1 text-success hover:bg-success/10 rounded"><FiCheck size={14} /></button>
+                            <button onClick={cancelEditing} className="p-1 text-danger hover:bg-danger/10 rounded"><FiX size={14} /></button>
                           </div>
                         ) : (
                           <button onClick={() => startEditing(room.id, true)} className="p-1 text-text-secondary opacity-0 group-hover/room:opacity-100 hover:text-primary transition-all">
-                            <Edit2 size={14} />
+                            <FiEdit2 size={14} />
                           </button>
                         )}
                       </div>

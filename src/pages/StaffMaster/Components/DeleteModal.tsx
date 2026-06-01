@@ -1,5 +1,5 @@
-import React from "react";
-import { AlertTriangle } from "lucide-react";
+import { FiAlertTriangle } from "react-icons/fi";
+import useClickOutside from "../../../hooks/useClickOutside";
 
 interface DeleteModalProps {
   isOpen: boolean;
@@ -10,30 +10,37 @@ interface DeleteModalProps {
   isLoading: boolean;
 }
 
-const DeleteModal = ({ isOpen, onClose, onConfirm, title, message, isLoading }: DeleteModalProps) => {
+const DeleteModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  isLoading,
+}: DeleteModalProps) => {
+  const modalRef = useClickOutside<HTMLDivElement>(() => {
+    if (!isLoading) onClose();
+  }, isOpen);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
-        onClick={!isLoading ? onClose : undefined}
-      ></div>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"></div>
 
       {/* Modal Box */}
-      <div className="bg-card rounded-2xl shadow-modal w-full max-w-[40%] relative z-10 animate-fade-in overflow-hidden flex flex-col">
+      <div
+        ref={modalRef}
+        className="bg-card rounded-2xl shadow-modal w-full max-w-[40%] relative z-10 animate-fade-in overflow-hidden flex flex-col"
+      >
         <div className="p-6 sm:p-8 text-center flex flex-col items-center">
-          
           <div className="w-16 h-16 bg-red-50 text-danger rounded-full flex items-center justify-center mb-6">
-            <AlertTriangle size={32} />
+            <FiAlertTriangle size={32} />
           </div>
-          
-          <h2 className="text-xl font-bold text-text-primary mb-2">{title}</h2>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            {message}
-          </p>
 
+          <h2 className="text-xl font-bold text-text-primary mb-2">{title}</h2>
+          <p className="text-sm text-text-secondary leading-relaxed">{message}</p>
         </div>
 
         {/* Action Footer */}

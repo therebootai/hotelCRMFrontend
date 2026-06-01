@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Edit2, Trash2, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FiEdit2, FiTrash2, FiLoader } from 'react-icons/fi';
 import AmenityModal, { ICON_MAP } from './AmenityModal';
 import DeleteModal from '../../StaffMaster/Components/DeleteModal';
 import toast from 'react-hot-toast';
@@ -134,7 +134,7 @@ export default function AmenitiesMaster({ isAddModalOpen, setIsAddModalOpen }: A
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-text-secondary">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      <FiLoader className="w-6 h-6 animate-spin text-primary" />
                       <span className="text-sm">Loading amenities...</span>
                     </div>
                   </td>
@@ -167,13 +167,13 @@ export default function AmenitiesMaster({ isAddModalOpen, setIsAddModalOpen }: A
                             onClick={() => handleEditClick(amenity)}
                             className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                           >
-                            <Edit2 size={16} />
+                            <FiEdit2 size={16} />
                           </button>
                           <button 
                             onClick={() => handleDeleteClick(amenity)}
                             className="p-2 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
                           >
-                            <Trash2 size={16} />
+                            <FiTrash2 size={16} />
                           </button>
                         </div>
                       </td>

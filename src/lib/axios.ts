@@ -14,7 +14,7 @@ api.interceptors.response.use(
     if (error?.response?.status === 401 && !isLoginRequest && !isMeEndpoint) {
       try {
         await axios.post(
-          `${api.defaults.baseURL}/api/v1/users/logout`,
+          `${api.defaults.baseURL}/users/logout`,
           {},
           { withCredentials: true },
         );

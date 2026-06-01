@@ -1,20 +1,28 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FaPlus } from "react-icons/fa";
 import api from "../../lib/axios";
 import CreateBooking from "../../components/bookingComp/CreateBooking";
 import ManageBooking from "../../components/bookingComp/ManageBooking";
+import BookingOverview from "../../components/bookingComp/BookingOverview";
 import CheckInForm from "../../components/checkinComp/CheckinForm";
+import EditBookingModal from "../../components/bookingComp/EditBookingModal";
+import CancelBookingModal from "../../components/bookingComp/CancelBookingModal";
 
 const BookingFullPage = () => {
   const [showPopup, setShowPopup] = useState(false);
+  const [bookingKey, setBookingKey] = useState(0);
 
   // Data States
   const [bookings, setBookings] = useState([]);
-  const [overviewData, setOverviewData] = useState([]);
+  // const [overviewData, setOverviewData] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [showCheckIn, setShowCheckIn] = useState(false);
-const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+
+  // Edit & Cancel State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   // Pagination & Filters
   const [pagination, setPagination] = useState({
@@ -32,6 +40,17 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
   });
+
+  // Edit & Cancel Handlers
+  const handleOpenEdit = (booking: any) => {
+    setSelectedBooking(booking);
+    setShowEditModal(true);
+  };
+
+  const handleOpenCancel = (booking: any) => {
+    setSelectedBooking(booking);
+    setShowCancelModal(true);
+  };
 
   const handleOpenCheckIn = (booking: any) => {
   setSelectedBooking(booking);
@@ -66,10 +85,10 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
   // 2. Fetch Overview/Timeline Data
   const fetchOverview = useCallback(async () => {
     try {
-      const res = await api.get("/bookings/overview", {
+      await api.get("/bookings/overview", {
         params: { month: filters.month, year: filters.year },
       });
-      setOverviewData(res.data.data);
+      // setOverviewData(res.data.data);
     } catch (err) {
       console.error(err);
     }
@@ -82,7 +101,7 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
   }, [fetchBookingList, fetchOverview]);
 
   return (
-    <div className="flex flex-col gap-10 p-8 min-h-screen bg-[#F8F9FA] scroll-smooth">
+    <div className="flex flex-col gap-4 p-8 min-h-screen bg-[#F8F9FA] scroll-smooth">
       {/* Header (Sticky thakle bhalo hoy) */}
       <div className="sticky top-0 z-50 bg-[#F8F9FA]/80 backdrop-blur-md py-4 flex flex-row justify-between items-center border-b border-gray-100">
         <div className="flex flex-col">
@@ -94,7 +113,10 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
           </p>
         </div>
         <button
-          onClick={() => setShowPopup(true)}
+          onClick={() => {
+            setBookingKey(prev => prev + 1);
+            setShowPopup(true);
+          }}
           className="h-[2.8rem] px-6 flex justify-center items-center bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 transition-all rounded-xl text-white font-bold gap-2 shadow-lg shadow-orange-100 active:scale-95"
         >
           <FaPlus /> New Booking
@@ -102,15 +124,10 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
       </div>
 
       <section className="flex flex-col gap-4">
-        {/* <BookingTimeline data={overviewData} filters={filters} setFilters={setFilters} /> */}
+        <BookingOverview />
       </section>
 
-      <section className="flex flex-col gap-4 pt-4">
-        <div className="flex items-center gap-3 px-2">
-          <h2 className="text-lg font-black text-gray-800 uppercase tracking-wider">
-            Recent Booking
-          </h2>
-        </div>
+      <section className="flex flex-col gap-4">
         <ManageBooking
           data={bookings}
           loading={loading}
@@ -121,29 +138,65 @@ const [selectedBooking, setSelectedBooking] = useState<any>(null);
             setPagination({ ...pagination, currentPage: page })
           }
           onCheckIn={handleOpenCheckIn}
+          onEdit={handleOpenEdit}
+          onCancel={handleOpenCancel}
         />
       </section>
 
       {/* Booking Popup */}
       {showPopup && (
         <CreateBooking
+          key={bookingKey}
           onClose={() => {
             setShowPopup(false);
+            fetchBookingList();
+            fetchOverview();
+          }}
+          refreshBookings={fetchBookingList}
+        />
+      )}
+
+      {showCheckIn && (
+  <CheckInForm
+    bookingData={selectedBooking}
+    onClose={() => {
+      setShowCheckIn(false);
+      fetchBookingList();
+    }}
+  />
+)}
+
+      {showEditModal && selectedBooking && (
+        <EditBookingModal
+          booking={selectedBooking}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedBooking(null);
+          }}
+          refreshBookings={() => {
+            setShowEditModal(false);
+            setSelectedBooking(null);
             fetchBookingList();
             fetchOverview();
           }}
         />
       )}
 
-      {showCheckIn && (
-  <CheckInForm 
-    bookingData={selectedBooking} 
-    onClose={() => {
-      setShowCheckIn(false);
-      fetchBookingList(); // Refresh list after check-in
-    }} 
-  />
-)}
+      {showCancelModal && selectedBooking && (
+        <CancelBookingModal
+          booking={selectedBooking}
+          onClose={() => {
+            setShowCancelModal(false);
+            setSelectedBooking(null);
+          }}
+          onSuccess={() => {
+            setShowCancelModal(false);
+            setSelectedBooking(null);
+            fetchBookingList();
+            fetchOverview();
+          }}
+        />
+      )}
     </div>
   );
 };

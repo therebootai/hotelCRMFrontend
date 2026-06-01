@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Plus, ArrowLeft, Loader2, CalendarRange } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { FiPlus, FiArrowLeft, FiLoader, FiCalendar } from "react-icons/fi";
+import { Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 import { AxiosError } from "axios";
@@ -13,12 +13,28 @@ import ComingSoon from "./components/ComingSoon";
 import AddRoomForm from "./components/AddRoomForm";
 import RoomTypeMaster from "./components/RoomTypeMaster";
 import AmenitiesMaster from "./components/AmenitiesMaster";
-import TaxGstMaster from "./components/TaxGstMaster";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 
+const TABS = [
+  { id: "room-master",       label: "Room Master" },
+  { id: "room-type-master",  label: "Room Type Master" },
+  { id: "amenities-master",  label: "Amenities Master" },
+] as const;
+type TabId = typeof TABS[number]["id"];
+
 export default function RoomMaster() {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("Room Master");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabId = (searchParams.get("tab") as TabId) || "room-master";
+  const activeTab = TABS.find((t) => t.id === tabId)?.label ?? "Room Master";
+
+  const setActiveTabId = (id: TabId) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", id);
+      return next;
+    });
+  };
+
   const [view, setView] = useState<"list" | "add">("list");
 
   // Real Data State
@@ -40,7 +56,6 @@ export default function RoomMaster() {
   // Settings Modals State
   const [isRoomTypeModalOpen, setIsRoomTypeModalOpen] = useState(false);
   const [isAmenityModalOpen, setIsAmenityModalOpen] = useState(false);
-  const [isTaxModalOpen, setIsTaxModalOpen] = useState(false);
 
   const [filters, setFilters] = useState({ roomType: '', status: '' });
 
@@ -77,10 +92,10 @@ export default function RoomMaster() {
   };
 
   useEffect(() => {
-    if (activeTab === "Room Master") {
+    if (tabId === "room-master") {
       fetchRooms();
     }
-  }, [activeTab, currentPage, filters]);
+  }, [tabId, currentPage, filters]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -144,7 +159,7 @@ export default function RoomMaster() {
               onClick={handleCloseForm}
               className="p-2 bg-card border border-border text-text-secondary hover:text-text-primary rounded-lg transition-colors"
             >
-              <ArrowLeft size={18} />
+              <FiArrowLeft size={18} />
             </button>
             <h1 className="text-xl font-bold text-text-primary">
               {editingRoom
@@ -153,49 +168,41 @@ export default function RoomMaster() {
             </h1>
           </div>
         ) : (
-          <RoomTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+          <RoomTabs activeTabId={tabId} onTabChange={setActiveTabId} />
         )}
 
         {view === "list" && (
           <div className="flex items-center gap-3 animate-fade-in">
-            {activeTab === "Room Master" && (
+            {tabId === "room-master" && (
               <>
-                <button
-                  onClick={() => navigate('/master/rooms/rates')}
+                <Link
+                  to="/master/rooms/rates"
                   className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors border bg-card border-border text-text-primary hover:bg-background"
                 >
-                  <CalendarRange size={16} /> Manage Rates
-                </button>
+                  <FiCalendar size={16} /> Manage Rates
+                </Link>
                 <button
                   onClick={handleOpenAddForm}
                   className="btn-primary flex items-center gap-2 px-5 py-2.5"
                 >
-                  <Plus size={18} /> Add Room
+                  <FiPlus size={18} /> Add Room
                 </button>
               </>
             )}
-            {activeTab === "Room Type Master" && (
+            {tabId === "room-type-master" && (
               <button
                 onClick={() => setIsRoomTypeModalOpen(true)}
                 className="btn-primary flex items-center gap-2 px-5 py-2.5"
               >
-                <Plus size={18} /> Add Room Type
+                <FiPlus size={18} /> Add Room Type
               </button>
             )}
-            {activeTab === "Amenities Master" && (
+            {tabId === "amenities-master" && (
               <button
                 onClick={() => setIsAmenityModalOpen(true)}
                 className="btn-primary flex items-center gap-2 px-5 py-2.5"
               >
-                <Plus size={18} /> Add Amenities
-              </button>
-            )}
-            {activeTab === "Tax / GST Master" && (
-              <button
-                onClick={() => setIsTaxModalOpen(true)}
-                className="btn-primary flex items-center gap-2 px-5 py-2.5"
-              >
-                <Plus size={18} /> Add Tax/GST
+                <FiPlus size={18} /> Add Amenities
               </button>
             )}
           </div>
@@ -208,7 +215,7 @@ export default function RoomMaster() {
           onSuccess={handleFormSuccess}
           initialData={editingRoom}
         />
-      ) : activeTab === "Room Master" ? (
+      ) : tabId === "room-master" ? (
         <>
           <RoomFilters
             filters={filters}
@@ -221,7 +228,7 @@ export default function RoomMaster() {
             <div className="flex-1 min-w-0 transition-all duration-300 w-full">
               {isLoadingRooms ? (
                 <div className="bg-card border border-border rounded-xl p-12 flex flex-col items-center justify-center text-text-secondary">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+                  <FiLoader className="w-8 h-8 animate-spin text-primary mb-3" />
                   <p className="font-medium">Loading rooms...</p>
                 </div>
               ) : (
@@ -242,20 +249,15 @@ export default function RoomMaster() {
             </div>
           </div>
         </>
-      ) : activeTab === "Room Type Master" ? (
+      ) : tabId === "room-type-master" ? (
         <RoomTypeMaster
           isAddModalOpen={isRoomTypeModalOpen}
           setIsAddModalOpen={setIsRoomTypeModalOpen}
         />
-      ) : activeTab === "Amenities Master" ? (
+      ) : tabId === "amenities-master" ? (
         <AmenitiesMaster
           isAddModalOpen={isAmenityModalOpen}
           setIsAddModalOpen={setIsAmenityModalOpen}
-        />
-      ) : activeTab === "Tax / GST Master" ? (
-        <TaxGstMaster
-          isAddModalOpen={isTaxModalOpen}
-          setIsAddModalOpen={setIsTaxModalOpen}
         />
       ) : (
         <ComingSoon moduleName={activeTab} />

@@ -1,10 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Edit2, Trash2, BedDouble, Loader2 } from 'lucide-react';
-import RoomTypeModal from './RoomTypeModal';
-import DeleteModal from '../../StaffMaster/Components/DeleteModal'; 
-import toast from 'react-hot-toast';
-import api from '../../../lib/axios';
-import { AxiosError } from 'axios';
+import { useState, useEffect } from "react";
+import {
+  FiSearch,
+  FiEdit2,
+  FiTrash2,
+  FiLoader,
+  FiCoffee,
+} from "react-icons/fi";
+import RoomTypeModal from "./RoomTypeModal";
+import DeleteModal from "../../StaffMaster/Components/DeleteModal";
+import toast from "react-hot-toast";
+import api from "../../../lib/axios";
+import { AxiosError } from "axios";
 
 export interface RoomType {
   _id: string;
@@ -18,11 +24,14 @@ interface RoomTypeMasterProps {
   setIsAddModalOpen: (isOpen: boolean) => void;
 }
 
-export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: RoomTypeMasterProps) {
+export default function RoomTypeMaster({
+  isAddModalOpen,
+  setIsAddModalOpen,
+}: RoomTypeMasterProps) {
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [editingData, setEditingData] = useState<RoomType | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [typeToDelete, setTypeToDelete] = useState<RoomType | null>(null);
@@ -31,8 +40,8 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
   const fetchRoomTypes = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/room-types');
-      const data = response.data?.data || []; 
+      const response = await api.get("/room-types");
+      const data = response.data?.data || [];
       setRoomTypes(data);
     } catch (error: unknown) {
       let errorMsg = "Failed to fetch room types";
@@ -63,12 +72,12 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
 
   const confirmDelete = async () => {
     if (!typeToDelete) return;
-    
+
     try {
       setIsDeleting(true);
       await api.delete(`/room-types/${typeToDelete._id}`);
       toast.success(`${typeToDelete.name} deleted successfully!`);
-      
+
       setIsDeleteModalOpen(false);
       setTypeToDelete(null);
       fetchRoomTypes();
@@ -88,20 +97,18 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
     setTimeout(() => setEditingData(null), 200);
   };
 
-  const filteredTypes = roomTypes.filter(rt => 
-    rt.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTypes = roomTypes.filter((rt) =>
+    rt.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
     <div className="mt-4 animate-fade-in space-y-6">
-      
       {/* Main Table Card */}
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-        
         {/* Header & Search */}
         <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-text-primary">
-            <BedDouble size={20} className="text-primary" />
+            <FiCoffee size={20} className="text-primary" />
             <h2 className="text-lg font-bold">Registered Room Types</h2>
             {!isLoading && (
               <span className="bg-background px-2.5 py-0.5 rounded-full text-xs font-medium text-text-secondary border border-border">
@@ -109,12 +116,15 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
               </span>
             )}
           </div>
-          
+
           <div className="relative w-full sm:w-72">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
-            <input 
-              type="text" 
-              placeholder="Search types..." 
+            <FiSearch
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
+            />
+            <input
+              type="text"
+              placeholder="Search types..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="input-field pl-9 py-2"
@@ -128,50 +138,68 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
           <table className="w-full text-left border-collapse">
             <thead className="bg-background/50 border-b border-border">
               <tr>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-1/4">Type Name</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-2/3">Description</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right">Actions</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-1/4">
+                  Type Name
+                </th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-2/3">
+                  Description
+                </th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center text-text-secondary">
+                  <td
+                    colSpan={3}
+                    className="px-6 py-12 text-center text-text-secondary"
+                  >
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      <FiLoader className="w-6 h-6 animate-spin text-primary" />
                       <span className="text-sm">Loading room types...</span>
                     </div>
                   </td>
                 </tr>
               ) : filteredTypes.length > 0 ? (
                 filteredTypes.map((rt) => (
-                  <tr key={rt._id} className="hover:bg-background/50 transition-colors group">
+                  <tr
+                    key={rt._id}
+                    className="hover:bg-background/50 transition-colors group"
+                  >
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                          <BedDouble size={18} />
+                          <FiCoffee size={18} />
                         </div>
-                        <span className="font-bold text-text-primary text-sm">{rt.name}</span>
+                        <span className="font-bold text-text-primary text-sm">
+                          {rt.name}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-5">
                       <p className="text-sm text-text-secondary leading-relaxed max-w-[60%]">
-                        {rt.description || <span className="italic text-text-secondary/50">No description provided</span>}
+                        {rt.description || (
+                          <span className="italic text-text-secondary/50">
+                            No description provided
+                          </span>
+                        )}
                       </p>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <button
                           onClick={() => handleEditClick(rt)}
                           className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                         >
-                          <Edit2 size={16} />
+                          <FiEdit2 size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteClick(rt)}
                           className="p-2 text-text-secondary hover:text-danger hover:bg-red-50 rounded-lg transition-colors"
                         >
-                          <Trash2 size={16} />
+                          <FiTrash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -179,8 +207,13 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center text-text-secondary">
-                    {searchQuery ? `No room types found matching "${searchQuery}"` : "No room types registered yet."}
+                  <td
+                    colSpan={3}
+                    className="px-6 py-12 text-center text-text-secondary"
+                  >
+                    {searchQuery
+                      ? `No room types found matching "${searchQuery}"`
+                      : "No room types registered yet."}
                   </td>
                 </tr>
               )}
@@ -190,11 +223,11 @@ export default function RoomTypeMaster({ isAddModalOpen, setIsAddModalOpen }: Ro
       </div>
 
       {/* Modals */}
-      <RoomTypeModal 
-        isOpen={isAddModalOpen} 
+      <RoomTypeModal
+        isOpen={isAddModalOpen}
         onClose={handleModalClose}
-        onSuccess={fetchRoomTypes} 
-        initialData={editingData as any} 
+        onSuccess={fetchRoomTypes}
+        initialData={editingData as any}
       />
 
       <DeleteModal

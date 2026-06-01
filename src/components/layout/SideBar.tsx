@@ -1,22 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  CalendarDays, 
-  BookOpen, 
-  ArrowRightToLine, 
-  Users, 
-  ArrowLeftFromLine,
-  BarChart3,
-  Database,
-  Settings,
-  PlusCircle,
-  ChevronDown,
-  ChevronRight
-} from 'lucide-react';
+import {
+  FiLayout,
+  FiCalendar,
+  FiBookOpen,
+  FiLogIn,
+  FiUsers,
+  FiLogOut,
+  FiBarChart2,
+  FiDatabase,
+  FiSettings,
+  FiPlusCircle,
+  FiChevronDown,
+  FiChevronRight,
+  FiPhone
+} from 'react-icons/fi';
 
 // Helper component for standard, single-level links
-const NavItem = ({ to, icon: Icon, label }) => (
+const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: string; }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
@@ -50,25 +51,26 @@ const SideBar = () => {
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {/* Logo Area */}
         <div className="h-17.5 flex flex-col justify-center px-6 border-b border-border sticky top-0 bg-card z-10">
-          <h1 className="text-xl font-bold text-text-primary tracking-tight">REBOO ERP</h1>
+          <h1 className="text-xl font-bold text-text-primary tracking-tight">REBOOT ERP</h1>
           <span className="text-[10px] text-primary font-semibold tracking-widest uppercase">Premium Management</span>
         </div>
 
         {/* Navigation Links */}
         <nav className="flex flex-col gap-1 px-4 mt-6">
-          <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
-          <NavItem to="/room-calendar" icon={CalendarDays} label="Room Calendar" />
-          <NavItem to="/bookings" icon={BookOpen} label="Bookings" />
-          <NavItem to="/checkin" icon={ArrowRightToLine} label="Check-in" />
-          <NavItem to="/active-guests" icon={Users} label="Active Guests" />
-          <NavItem to="/checkout" icon={ArrowLeftFromLine} label="Checkout" />
+          <NavItem to="/dashboard" icon={FiLayout} label="Dashboard" />
+          <NavItem to="/room-calendar" icon={FiCalendar} label="Room Calendar" />
+          <NavItem to="/bookings" icon={FiBookOpen} label="Bookings" />
+          <NavItem to="/checkin" icon={FiLogIn} label="Check-in" />
+          <NavItem to="/active-guests" icon={FiUsers} label="Active Guests" />
+          <NavItem to="/customers" icon={FiPhone} label="Customer Directory" />
+          <NavItem to="/billing" icon={FiLogOut} label="Billing & Checkout" />
 
           {/* Admin Section */}
           <div className="mt-6 mb-2 px-4">
             <span className="text-[11px] font-semibold text-text-secondary opacity-70 uppercase tracking-wider">Admin</span>
           </div>
           
-          <NavItem to="/reports" icon={BarChart3} label="Reports" />
+          <NavItem to="/reports" icon={FiBarChart2} label="Reports" />
 
           {/* Collapsible Masters Menu */}
           <div className="flex flex-col gap-1">
@@ -81,20 +83,20 @@ const SideBar = () => {
               }`}
             >
               <div className="flex items-center gap-3">
-                <Database size={18} className={isMasterActive ? "text-primary" : ""} />
+                <FiDatabase size={18} className={isMasterActive ? "text-primary" : ""} />
                 <span className={`text-sm ${isMasterActive ? "text-primary font-medium" : ""}`}>Masters</span>
               </div>
               {isMastersOpen ? (
-                <ChevronDown size={16} className={isMasterActive ? "text-primary" : ""} />
+                <FiChevronDown size={16} className={isMasterActive ? "text-primary" : ""} />
               ) : (
-                <ChevronRight size={16} className={isMasterActive ? "text-primary" : ""} />
+                <FiChevronRight size={16} className={isMasterActive ? "text-primary" : ""} />
               )}
             </button>
 
             {/* Sub-menu Items */}
             <div 
               className={`flex flex-col gap-1 overflow-hidden transition-all duration-200 ease-in-out ${
-                isMastersOpen ? "max-h-60 opacity-100 mt-1" : "max-h-0 opacity-0"
+                isMastersOpen ? "max-h-80 opacity-100 mt-1" : "max-h-0 opacity-0"
               }`}
             >
               <div className="ml-6 pl-4 border-l border-border flex flex-col gap-1">
@@ -148,11 +150,35 @@ const SideBar = () => {
                 >
                   Extra Services
                 </NavLink>
+                <NavLink
+                  to="/master/access-packages"
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${
+                      isActive
+                        ? 'text-primary font-medium bg-primary/10'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-background'
+                    }`
+                  }
+                >
+                  Access Packages
+                </NavLink>
+                <NavLink
+                  to="/master/tax-gst"
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${
+                      isActive
+                        ? 'text-primary font-medium bg-primary/10'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-background'
+                    }`
+                  }
+                >
+                  Tax / GST
+                </NavLink>
               </div>
             </div>
           </div>
 
-          <NavItem to="/settings" icon={Settings} label="Settings" />
+          <NavItem to="/settings" icon={FiSettings} label="Settings" />
         </nav>
       </div>
 
@@ -160,7 +186,7 @@ const SideBar = () => {
       <div className="p-6 border-t border-border bg-card">
         {/* Replaced manual styling with your global .btn-primary class */}
         <button className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-base">
-          <PlusCircle size={18} />
+          <FiPlusCircle size={18} />
           <span>New Booking</span>
         </button>
       </div>

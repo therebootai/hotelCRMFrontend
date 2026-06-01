@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { X, Snowflake, Wifi, Tv, Coffee, Waves, Dumbbell, Utensils, Wine, Car, PawPrint, Ban } from 'lucide-react';
+import { FiX } from 'react-icons/fi';
+import { IoSnowOutline } from 'react-icons/io5';
+import { FiWifi, FiTv, FiCoffee, FiStar, FiTrendingUp, FiShield, FiDelete, FiPhone } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../lib/axios';
 import { AxiosError } from 'axios';
 
-// Map string identifiers to actual Lucide icons
+// Map string identifiers to react-icons
 export const ICON_MAP: Record<string, React.ElementType> = {
-  snowflake: Snowflake,
-  wifi: Wifi,
-  tv: Tv,
-  coffee: Coffee,
-  waves: Waves,
-  dumbbell: Dumbbell,
-  utensils: Utensils,
-  wine: Wine,
-  car: Car,
-  paw: PawPrint,
-  ban: Ban,
+  snowflake: IoSnowOutline,
+  wifi: FiWifi,
+  tv: FiTv,
+  coffee: FiCoffee,
+  waves: FiStar,
+  dumbbell: FiTrendingUp,
+  utensils: FiCoffee,
+  wine: FiCoffee,
+  car: FiPhone,
+  paw: FiDelete,
+  ban: FiShield,
 };
 
 const AVAILABLE_ICONS = Object.keys(ICON_MAP);
@@ -124,7 +126,7 @@ export default function AmenityModal({ isOpen, onClose, onSuccess, initialData }
     }
   };
 
-  const SelectedIcon = ICON_MAP[formData.icon] || Wifi;
+  const SelectedIcon = ICON_MAP[formData.icon] || FiWifi;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -146,7 +148,7 @@ export default function AmenityModal({ isOpen, onClose, onSuccess, initialData }
             disabled={isLoading}
             className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors disabled:opacity-50"
           >
-            <X size={20} />
+            <FiX size={20} />
           </button>
         </div>
 

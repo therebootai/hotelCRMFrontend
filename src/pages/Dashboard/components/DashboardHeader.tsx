@@ -1,5 +1,4 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { FiChevronLeft, FiChevronRight, FiPlus } from 'react-icons/fi';
 
 const DashboardHeader = () => {
   return (
@@ -8,7 +7,7 @@ const DashboardHeader = () => {
       {/* Date Filter Control - Uses btn-primary with opacity hover for the chevrons */}
       <div className="btn-primary w-45 h-11.5 flex items-center justify-between px-3 shrink-0">
         <button className="text-white opacity-70 hover:opacity-100 transition-opacity flex items-center justify-center">
-          <ChevronLeft size={18} strokeWidth={2.5} />
+          <FiChevronLeft size={18} strokeWidth={2.5} />
         </button>
         
         <h4 className="text-[13px] font-bold text-white">
@@ -16,13 +15,13 @@ const DashboardHeader = () => {
         </h4>
         
         <button className="text-white opacity-70 hover:opacity-100 transition-opacity flex items-center justify-center">
-          <ChevronRight size={18} strokeWidth={2.5} />
+          <FiChevronRight size={18} strokeWidth={2.5} />
         </button>
       </div>
 
       {/* Primary Action */}
       <button className="btn-primary flex items-center gap-2 shadow-md shadow-primary/20">
-        <Plus size={18} />
+        <FiPlus size={18} />
         <span>New Booking</span>
       </button>
 

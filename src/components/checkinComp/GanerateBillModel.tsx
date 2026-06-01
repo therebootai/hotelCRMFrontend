@@ -8,6 +8,7 @@ import {
   FiCreditCard,
   FiDollarSign,
   FiPhone,
+  FiTrash2,
 } from "react-icons/fi";
 import api from "../../lib/axios";
 import { startOfDay } from "date-fns";
@@ -15,7 +16,7 @@ import { FaUtensils } from "react-icons/fa";
 import { BiBuilding } from "react-icons/bi";
 import useClickOutside from "../../hooks/useClickOutside";
 
-const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
+const GenerateBillModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose: () => void; onSuccess: () => void; }) => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [billData, setBillData] = useState<any>(null);
@@ -34,7 +35,7 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [receivedAmount, setReceivedAmount] = useState<number | "">("");
   const [paymentNote, setPaymentNote] = useState("");
-  const [isExisting, setIsExisting] = useState(false);
+  // Payment settlement
 
   const isDayAccess = checkIn.bookingCategory === "Day Access";
 
@@ -58,7 +59,7 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }) => {
           const d = billRes.data.data;
 
           setBillData(d);
-          setIsExisting(billRes.data.isExisting);
+          setBillData(d);
 
           setExtraServices(d.extraServices || []);
           setRestaurantCharges(d.restaurantCharges || 0);

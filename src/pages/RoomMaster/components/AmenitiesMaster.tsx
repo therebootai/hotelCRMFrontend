@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FiEdit2, FiTrash2, FiLoader } from 'react-icons/fi';
 import AmenityModal, { ICON_MAP } from './AmenityModal';
 import DeleteModal from '../../StaffMaster/Components/DeleteModal';

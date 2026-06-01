@@ -17,7 +17,7 @@ import {
 } from 'react-icons/fi';
 
 // Helper component for standard, single-level links
-const NavItem = ({ to, icon: Icon, label }) => (
+const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: string; }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>

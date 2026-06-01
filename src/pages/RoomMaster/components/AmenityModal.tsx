@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import { IoSnowOutline } from 'react-icons/io5';
-import { FiWifi, FiTv, FiCoffee, FiStar, FiTrendingUp, FiDollarSign, FiShield, FiDelete, FiPhone } from 'react-icons/fi';
+import { FiWifi, FiTv, FiCoffee, FiStar, FiTrendingUp, FiShield, FiDelete, FiPhone } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../lib/axios';
 import { AxiosError } from 'axios';

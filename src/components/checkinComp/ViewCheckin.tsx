@@ -1,5 +1,6 @@
-import React from "react";
-import { FiX, FiUser, FiPhone, FiCalendar, FiUsers, FiCreditCard, FiFileText, FiMail, FiMapPin, FiShield, FiCoffee } from "react-icons/fi";
+import { FiX, FiUser, FiCalendar, FiUsers, FiCreditCard, FiFileText, FiShield, FiCoffee } from "react-icons/fi";
+import { FaCar } from "react-icons/fa";
+import { BiBuilding } from "react-icons/bi";
 import { format } from "date-fns";
 
 interface ViewCheckinProps {
@@ -190,7 +191,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
           {checkIn.vehicleDetails?.length > 0 && checkIn.vehicleDetails.some((v: any) => v.vehicleNumber) && (
             <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
               <div className="flex items-center gap-2 mb-2">
-                <Car size={12} className="text-gray-400" />
+                <FaCar size={12} className="text-gray-400" />
                 <span className="text-[10px] font-black text-gray-500 uppercase">Vehicles</span>
               </div>
               <div className="space-y-1">
@@ -232,7 +233,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
           {checkIn.checkInType === "Corporate" && checkIn.corporateCheckInDetails && (
             <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
               <div className="flex items-center gap-2 mb-2">
-                <Building2 size={12} className="text-blue-600" />
+                <BiBuilding size={12} className="text-blue-600" />
                 <span className="text-[10px] font-black text-blue-700 uppercase">Corporate Details</span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-[10px]">

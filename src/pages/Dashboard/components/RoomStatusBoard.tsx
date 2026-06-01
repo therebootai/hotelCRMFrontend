@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import type { RoomStatusData } from "../useDashboardData";
 
@@ -84,10 +84,9 @@ const StatusColumn = ({ statusKey, count, rooms }: any) => {
 
 interface RoomStatusBoardProps {
   boardData: RoomStatusData[];
-  loading?: boolean;
 }
 
-const RoomStatusBoard = ({ boardData: propBoardData, loading }: RoomStatusBoardProps) => {
+const RoomStatusBoard = ({ boardData: propBoardData }: RoomStatusBoardProps) => {
   const [internalBoardData, setInternalBoardData] = useState<RoomStatusData[]>([]);
   const boardData = propBoardData.length > 0 ? propBoardData : internalBoardData;
 

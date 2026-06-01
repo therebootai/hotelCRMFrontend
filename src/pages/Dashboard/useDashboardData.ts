@@ -60,21 +60,7 @@ export interface KpiMetric {
   iconColor: string;
 }
 
-interface StayOverviewRoom {
-  roomNumber: string;
-  roomType?: { name: string };
-  bookings: Array<{
-    guest: string;
-    checkIn: string;
-    checkOut: string;
-    status: string;
-  }>;
-}
 
-interface StayOverviewCategory {
-  category: string;
-  rooms: StayOverviewRoom[];
-}
 
 interface CheckInListItem {
   _id: string;
@@ -101,12 +87,6 @@ interface OverviewStats {
   pendingAmount: number;
 }
 
-interface BillingStats {
-  pendingPostings: number;
-  housekeepingClear: number;
-  avgRoomRent: string;
-  channelIssues: string;
-}
 
 function getInitials(name: string): string {
   return name

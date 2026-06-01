@@ -56,6 +56,7 @@ const ExtendStayModal = ({ checkIn, onClose, onSuccess, prefillCheckout }: Exten
       onSuccess();
       onClose();
     } catch (err) {
+      console.log(err);
       alert("Extension failed.");
     } finally {
       setLoading(false);
@@ -90,7 +91,7 @@ const ExtendStayModal = ({ checkIn, onClose, onSuccess, prefillCheckout }: Exten
               <span className="text-[10px] font-black text-blue-400 uppercase mb-1 block">New Checkout Date</span>
               <DatePicker
                 selected={newCheckout}
-                onChange={(date: Date) => setNewCheckout(date)}
+                onChange={(date: Date | null) => date && setNewCheckout(date)}
                 minDate={new Date(checkIn.expectedCheckOutTime)}
                 className="w-full bg-transparent font-black text-blue-700 outline-none"
               />

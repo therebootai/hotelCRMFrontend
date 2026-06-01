@@ -66,19 +66,6 @@ interface TimelineData {
 }
 
 // ==========================================
-// BOOKING TYPE BADGE
-// ==========================================
-
-const BookingTypeBadge: React.FC<{ type: string }> = ({ type }) => {
-  const isIndividual = type === "Individual";
-  return (
-    <span className={`px-1 py-0.5 rounded text-[8px] font-bold ${isIndividual ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-700"}`}>
-      {isIndividual ? "Individual" : "Corporate"}
-    </span>
-  );
-};
-
-// ==========================================
 // BOOKING BAR COMPONENT
 // ==========================================
 

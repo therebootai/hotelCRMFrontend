@@ -1,4 +1,3 @@
-import React from 'react';
 import { FiDollarSign, FiAlertTriangle, FiEdit2, FiRepeat } from 'react-icons/fi';
 import type { KpiMetric } from '../useDashboardData';
 

@@ -360,7 +360,7 @@ const StayOverview = () => {
             <div className="absolute top-full right-0 mt-2 bg-white border rounded-xl shadow-xl z-50 p-4 flex gap-3">
               <DatePicker
                 selected={viewStart}
-                onChange={(date: Date) => setViewStart(date)}
+                onChange={(date: Date | null) => date && setViewStart(date)}
                 selectsStart
                 startDate={viewStart}
                 endDate={viewEnd}
@@ -368,7 +368,7 @@ const StayOverview = () => {
               />
               <DatePicker
                 selected={viewEnd}
-                onChange={(date: Date) => setViewEnd(date)}
+                onChange={(date: Date | null) => date && setViewEnd(date)}
                 selectsEnd
                 startDate={viewStart}
                 endDate={viewEnd}

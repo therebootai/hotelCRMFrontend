@@ -36,7 +36,6 @@ const Dashboard = () => {
       <section className="w-full">
         <RoomStatusBoard
           boardData={roomStatus}
-          loading={loading}
         />
       </section>
 

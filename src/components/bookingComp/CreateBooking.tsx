@@ -59,10 +59,10 @@ interface RoomSearchResult {
   unavailableReason?: string;
 }
 
-interface SelectedRoom extends RoomSearchResult {
-  hasExtraBed: boolean;
-  extraBedChargeTotal: number;
-}
+// interface SelectedRoom extends RoomSearchResult {
+//   hasExtraBed: boolean;
+//   extraBedChargeTotal: number;
+// }
 
 interface TaxOption {
   _id: string;
@@ -827,7 +827,7 @@ const CreateBooking = ({
                   </label>
                   <DatePicker
                     selected={visitDate}
-                    onChange={(d) => setVisitDate(d || new Date())}
+                    onChange={(d: Date | null) => setVisitDate(d || new Date())}
                     className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none"
                     dateFormat="dd MMM yyyy"
                   />
@@ -914,7 +914,7 @@ const CreateBooking = ({
                   </label>
                   <DatePicker
                     selected={checkInDate}
-                    onChange={(d) => setCheckInDate(d || new Date())}
+                    onChange={(d: Date | null) => setCheckInDate(d || new Date())}
                     className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none"
                     dateFormat="dd MMM HH:mm"
                     showTimeSelect
@@ -928,7 +928,7 @@ const CreateBooking = ({
                   </label>
                   <DatePicker
                     selected={checkOutDate}
-                    onChange={(date) => {
+                    onChange={(date: Date | null) => {
                       if (!date) return;
                       const newDate = new Date(date);
                       // Ensure check-out is at least same day as check-in

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FiChevronDown, FiArrowDown } from 'react-icons/fi';
 import api from '../../../lib/axios';
 

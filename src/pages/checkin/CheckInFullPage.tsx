@@ -1,16 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   FiSearch,
   FiCalendar,
-  FiFilter,
   FiUser,
   FiHome,
-  FiMoreVertical,
   FiEdit2,
-  FiLogOut,
   FiRefreshCw,
-  FiX,
-  FiCoffee,
   FiChevronRight,
 } from "react-icons/fi";
 import DatePicker from "react-datepicker";
@@ -207,7 +202,7 @@ const handleCheckoutClick = (item: any) => {
           <FiCalendar className="text-gray-400 mr-2" size={14} />
           <DatePicker
             selected={filters.startDate}
-            onChange={(date) => setFilters({ ...filters, startDate: date })}
+            onChange={(date: Date | null) => setFilters({ ...filters, startDate: date })}
             placeholderText="Start"
             className="bg-transparent outline-none text-[10px] font-black w-20 uppercase"
             isClearable
@@ -215,7 +210,7 @@ const handleCheckoutClick = (item: any) => {
           <FiChevronRight className="text-gray-300 mx-1" size={12} />
           <DatePicker
             selected={filters.endDate}
-            onChange={(date) => setFilters({ ...filters, endDate: date })}
+            onChange={(date: Date | null) => setFilters({ ...filters, endDate: date })}
             placeholderText="End"
             className="bg-transparent outline-none text-[10px] font-black w-20 uppercase"
             isClearable

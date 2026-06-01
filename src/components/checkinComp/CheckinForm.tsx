@@ -1248,8 +1248,8 @@ const CheckInForm = ({
                       </label>
                       <DatePicker
                         selected={stayFormData.checkInTime}
-                        onChange={(date: Date) =>
-                          setStayFormData({
+                        onChange={(date: Date | null) =>
+                          date && setStayFormData({
                             ...stayFormData,
                             checkInTime: date,
                           })
@@ -1276,8 +1276,8 @@ const CheckInForm = ({
                       ) : (
                         <DatePicker
                           selected={stayFormData.expectedCheckOutTime}
-                          onChange={(date: Date) =>
-                            setStayFormData({
+                          onChange={(date: Date | null) =>
+                            date && setStayFormData({
                               ...stayFormData,
                               expectedCheckOutTime: date,
                             })

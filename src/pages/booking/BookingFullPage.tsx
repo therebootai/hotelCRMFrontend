@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FaPlus } from "react-icons/fa";
 import api from "../../lib/axios";
 import CreateBooking from "../../components/bookingComp/CreateBooking";
@@ -14,7 +14,7 @@ const BookingFullPage = () => {
 
   // Data States
   const [bookings, setBookings] = useState([]);
-  const [overviewData, setOverviewData] = useState([]);
+  // const [overviewData, setOverviewData] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [showCheckIn, setShowCheckIn] = useState(false);
@@ -85,10 +85,10 @@ const BookingFullPage = () => {
   // 2. Fetch Overview/Timeline Data
   const fetchOverview = useCallback(async () => {
     try {
-      const res = await api.get("/bookings/overview", {
+      await api.get("/bookings/overview", {
         params: { month: filters.month, year: filters.year },
       });
-      setOverviewData(res.data.data);
+      // setOverviewData(res.data.data);
     } catch (err) {
       console.error(err);
     }
@@ -173,7 +173,7 @@ const BookingFullPage = () => {
             setShowEditModal(false);
             setSelectedBooking(null);
           }}
-          onSuccess={() => {
+          refreshBookings={() => {
             setShowEditModal(false);
             setSelectedBooking(null);
             fetchBookingList();

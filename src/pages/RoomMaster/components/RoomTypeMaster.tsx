@@ -16,6 +16,7 @@ export interface RoomType {
   _id: string;
   name: string;
   description?: string;
+  basePrice: number;
   isActive: boolean;
 }
 
@@ -144,6 +145,9 @@ export default function RoomTypeMaster({
                 <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-2/3">
                   Description
                 </th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+                  Base Price
+                </th>
                 <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right">
                   Actions
                 </th>
@@ -153,7 +157,7 @@ export default function RoomTypeMaster({
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={3}
+                    colSpan={4}
                     className="px-6 py-12 text-center text-text-secondary"
                   >
                     <div className="flex flex-col items-center justify-center gap-2">
@@ -188,6 +192,11 @@ export default function RoomTypeMaster({
                       </p>
                     </td>
                     <td className="px-6 py-5">
+                      <span className="text-sm text-text-primary font-medium">
+                        ₹{rt.basePrice?.toLocaleString() ?? "—"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEditClick(rt)}
@@ -208,7 +217,7 @@ export default function RoomTypeMaster({
               ) : (
                 <tr>
                   <td
-                    colSpan={3}
+                    colSpan={4}
                     className="px-6 py-12 text-center text-text-secondary"
                   >
                     {searchQuery

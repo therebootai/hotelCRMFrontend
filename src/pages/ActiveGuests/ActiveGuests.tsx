@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { FiUsers, FiSearch, FiLogOut, FiClock, FiRepeat } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import api from "../../lib/axios";
+import { useQueryParams } from "../../hooks/useQueryParams";
+import { useDebounce } from "../../hooks/useDebounce";
 
 interface ActiveGuest {
   _id: string;
@@ -42,16 +44,19 @@ interface ActiveGuest {
 }
 
 const ActiveGuests = () => {
+  const { getParam, updateFilters } = useQueryParams();
+  const searchTerm = getParam("search") ?? "";
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
   const [guests, setGuests] = useState<ActiveGuest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchActiveGuests = async () => {
     setLoading(true);
     try {
       // Filter for Active status (DB enum: "Active" | "Checked-Out" | "Shifted")
       const response = await api.get(
-        `/checkin/list?status=Active&search=${searchTerm}`,
+        `/checkin/list?status=Active&search=${debouncedSearch}`,
       );
       if (response.data?.success) {
         setGuests(response.data.data || []);
@@ -65,10 +70,11 @@ const ActiveGuests = () => {
 
   useEffect(() => {
     fetchActiveGuests();
-  }, [searchTerm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+    updateFilters("search", e.target.value, { replace: true });
   };
 
   return (

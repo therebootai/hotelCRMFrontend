@@ -625,7 +625,7 @@ const EditBookingModal = ({
         <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-primary text-white">
           <div className="flex items-center gap-4">
             <div>
-              <h2 className="text-lg font-bold">New Reservation</h2>
+              <h2 className="text-lg font-bold">Edit Reservation</h2>
               <p className="text-xs text-white/70">
                 {bookingCategory === "Day Access"
                   ? `${format(visitDate, "dd MMM yyyy")} • Day Access`

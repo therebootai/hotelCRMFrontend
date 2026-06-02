@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { FiSearch, FiFileText, FiPlus, FiCheckCircle, FiClock, FiDollarSign } from "react-icons/fi";
 import api from "../../lib/axios";
 import toast from "react-hot-toast";
+import { useQueryParams } from "../../hooks/useQueryParams";
+import { useDebounce } from "../../hooks/useDebounce";
 
 // Subcomponents
 import BillingTable from "../../components/billingComp/BillingTable";
@@ -39,14 +41,16 @@ export interface BillingItem {
 }
 
 const BillingPage = () => {
+  const { getParam, updateFilters, setMultipleParams } = useQueryParams();
+
+  const search = getParam("search") ?? "";
+  const statusFilter = getParam("status") ?? "";
+  const currentPage = Number(getParam("page") ?? "1");
+  const debouncedSearch = useDebounce(search, 300);
+
   // Page state
   const [billings, setBillings] = useState<BillingItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
 
@@ -62,7 +66,7 @@ const BillingPage = () => {
       const params = {
         page: currentPage,
         limit,
-        search,
+        search: debouncedSearch,
         status: statusFilter
       };
       const res = await api.get("/billing/list", { params });
@@ -76,7 +80,7 @@ const BillingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, search, statusFilter]);
+  }, [currentPage, debouncedSearch, statusFilter]);
 
   useEffect(() => {
     fetchBillings();
@@ -181,20 +185,14 @@ const BillingPage = () => {
             placeholder="Search by invoice code, guest name..."
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-xl outline-none transition-all text-xs"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setMultipleParams({ search: e.target.value, page: "1" }, { replace: true })}
           />
         </div>
 
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setMultipleParams({ status: e.target.value, page: "1" })}
             className="px-3 py-2.5 bg-gray-50 border border-transparent rounded-xl outline-none font-bold text-[10px] uppercase tracking-widest text-gray-500"
           >
             <option value="">All Payment Status</option>
@@ -212,7 +210,7 @@ const BillingPage = () => {
         onViewDetails={handleOpenDetails}
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
+        onPageChange={(p: number) => updateFilters("page", String(p))}
         getStatusBadge={getStatusBadge}
       />
 

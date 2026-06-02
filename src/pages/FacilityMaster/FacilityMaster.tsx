@@ -15,6 +15,7 @@ import { isAxiosError } from "axios";
 import AddFacilityModal from "./components/AddFacilityModal";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 import { useDebounce } from "../../hooks/useDebounce";
+import { useQueryParams } from "../../hooks/useQueryParams";
 
 export interface Facility {
   _id: string;
@@ -68,17 +69,18 @@ const FacilityMaster = () => {
   );
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const { getParam, updateFilters, setMultipleParams } = useQueryParams();
+
+  const searchInput = getParam("search") ?? "";
+  const typeFilter = getParam("type") ?? "all";
+  const statusFilter = getParam("status") ?? "all";
+  const sortOrder = getParam("sort") ?? "newest";
+  const debouncedSearch = useDebounce(searchInput, 300);
+
   const [facilityList, setFacilityList] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [searchInput, setSearchInput] = useState("");
-
-  const debouncedSearch = useDebounce(searchInput, 300);
-
   const [isMoreFiltersOpen, setIsMoreFiltersOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortOrder, setSortOrder] = useState("newest");
 
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -260,7 +262,7 @@ const FacilityMaster = () => {
           <input
             type="text"
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => updateFilters("search", e.target.value, { replace: true })}
             placeholder="Search by facility name or description..."
             className="input-field pl-10 py-2.5"
           />
@@ -269,7 +271,7 @@ const FacilityMaster = () => {
         <div className="relative min-w-45">
           <select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
+            onChange={(e) => updateFilters("type", e.target.value === "all" ? "" : e.target.value)}
             className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-text-primary focus:outline-none cursor-pointer"
           >
             <option value="all">All Types</option>
@@ -307,7 +309,7 @@ const FacilityMaster = () => {
                 </label>
                 <select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(e) => updateFilters("status", e.target.value === "all" ? "" : e.target.value)}
                   className="input-field py-2 text-sm"
                 >
                   <option value="all">All Statuses</option>
@@ -322,7 +324,7 @@ const FacilityMaster = () => {
                 </label>
                 <select
                   value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
+                  onChange={(e) => updateFilters("sort", e.target.value === "newest" ? "" : e.target.value)}
                   className="input-field py-2 text-sm"
                 >
                   <option value="newest">Newest First</option>
@@ -331,10 +333,7 @@ const FacilityMaster = () => {
               </div>
               {(statusFilter !== "all" || sortOrder !== "newest") && (
                 <button
-                  onClick={() => {
-                    setStatusFilter("all");
-                    setSortOrder("newest");
-                  }}
+                  onClick={() => setMultipleParams({ status: "", sort: "" })}
                   className="w-full mt-4 text-xs font-semibold text-danger hover:text-red-700 transition-colors"
                 >
                   Clear Filters

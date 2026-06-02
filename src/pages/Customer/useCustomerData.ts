@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
+import { useQueryParams } from "../../hooks/useQueryParams";
+import { useDebounce } from "../../hooks/useDebounce";
 import type { CustomerProfile, CustomerDetail, CustomerFormPayload } from "./types";
 
 const extractErrorMessage = (error: unknown): string => {
@@ -10,20 +12,24 @@ const extractErrorMessage = (error: unknown): string => {
 };
 
 export function useCustomerData() {
+  const { getParam, updateFilters, setMultipleParams } = useQueryParams();
+
+  const searchQuery = getParam("query") ?? "";
+  const page = Number(getParam("page") ?? "1");
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerDetail | null>(null);
   const [loadingList, setLoadingList] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [searchQuery, setSearchQueryState] = useState("");
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   const fetchCustomers = async () => {
     setLoadingList(true);
     try {
       const response = await api.get(
-        `/customers?query=${searchQuery}&page=${page}&limit=10`,
+        `/customers?query=${debouncedSearch}&page=${page}&limit=10`,
       );
       if (response.data?.success) {
         const list = response.data.data.customers || [];
@@ -57,7 +63,7 @@ export function useCustomerData() {
   useEffect(() => {
     fetchCustomers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, page]);
+  }, [debouncedSearch, page]);
 
   useEffect(() => {
     if (selectedCustomerId) {
@@ -68,8 +74,11 @@ export function useCustomerData() {
   }, [selectedCustomerId]);
 
   const setSearchQuery = (q: string) => {
-    setSearchQueryState(q);
-    setPage(1);
+    setMultipleParams({ query: q, page: "1" }, { replace: true });
+  };
+
+  const setPage = (p: number) => {
+    updateFilters("page", String(p), { replace: true });
   };
 
   const createCustomer = async (payload: CustomerFormPayload): Promise<boolean> => {

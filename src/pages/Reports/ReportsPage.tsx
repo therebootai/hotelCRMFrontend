@@ -9,8 +9,8 @@ import {
   FiUsers,
   FiFileText,
 } from "react-icons/fi";
-import { useSearchParams } from "react-router-dom";
 import api from "../../lib/axios";
+import { useQueryParams } from "../../hooks/useQueryParams";
 import {
   BarChart,
   Bar,
@@ -89,26 +89,20 @@ const COLORS = [
 ];
 
 const ReportsPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get("tab") as ReportTab) || "occupancy";
+  const { getParam, updateFilters } = useQueryParams();
 
-  const setActiveTabId = (id: ReportTab) => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.set("tab", id);
-      return next;
-    });
-  };
+  const activeTab = (getParam("tab") as ReportTab) ?? "occupancy";
+  const setActiveTabId = (id: ReportTab) => updateFilters("tab", id);
 
-  const [loading, setLoading] = useState(false);
-  const [dateFrom, setDateFrom] = useState(() => {
+  const defaultFrom = (() => {
     const d = new Date();
     d.setMonth(d.getMonth() - 1);
     return d.toISOString().slice(0, 10);
-  });
-  const [dateTo, setDateTo] = useState(() =>
-    new Date().toISOString().slice(0, 10),
-  );
+  })();
+  const dateFrom = getParam("from") ?? defaultFrom;
+  const dateTo = getParam("to") ?? new Date().toISOString().slice(0, 10);
+
+  const [loading, setLoading] = useState(false);
 
   const [occupancy, setOccupancy] = useState<OccupancyData[]>([]);
   const [revenue, setRevenue] = useState<RevenueData | null>(null);
@@ -605,14 +599,14 @@ const ReportsPage = () => {
             <input
               type="date"
               value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
+              onChange={(e) => updateFilters("from", e.target.value)}
               className="text-xs text-text-primary outline-none bg-transparent"
             />
             <span className="text-text-secondary text-xs">to</span>
             <input
               type="date"
               value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
+              onChange={(e) => updateFilters("to", e.target.value)}
               className="text-xs text-text-primary outline-none bg-transparent"
             />
           </div>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { FiChevronLeft, FiChevronRight, FiPlus } from 'react-icons/fi';
 
 const DashboardHeader = () => {

@@ -17,7 +17,7 @@ import {
 } from 'react-icons/fi';
 
 // Helper component for standard, single-level links
-const NavItem = ({ to, icon: Icon, label }) => (
+const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: string; }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
@@ -96,7 +96,7 @@ const SideBar = () => {
             {/* Sub-menu Items */}
             <div 
               className={`flex flex-col gap-1 overflow-hidden transition-all duration-200 ease-in-out ${
-                isMastersOpen ? "max-h-60 opacity-100 mt-1" : "max-h-0 opacity-0"
+                isMastersOpen ? "max-h-80 opacity-100 mt-1" : "max-h-0 opacity-0"
               }`}
             >
               <div className="ml-6 pl-4 border-l border-border flex flex-col gap-1">
@@ -161,6 +161,18 @@ const SideBar = () => {
                   }
                 >
                   Access Packages
+                </NavLink>
+                <NavLink
+                  to="/master/tax-gst"
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${
+                      isActive
+                        ? 'text-primary font-medium bg-primary/10'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-background'
+                    }`
+                  }
+                >
+                  Tax / GST
                 </NavLink>
               </div>
             </div>

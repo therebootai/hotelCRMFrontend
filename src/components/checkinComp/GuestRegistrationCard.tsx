@@ -1,4 +1,4 @@
-import React, { useRef, forwardRef, useImperativeHandle } from "react";
+import { useRef, forwardRef, useImperativeHandle } from "react";
 import { useReactToPrint } from "react-to-print";
 
 export interface AccompanyingGuest {
@@ -221,12 +221,12 @@ const GuestRegistrationCard = forwardRef<GuestRegistrationCardRef, Props>(
                   2. COMPANY DETAILS (IF APPLICABLE)
                 </h3>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                  <LabelValueRow label="Company Name" value={data.company?.name} />
-                  <LabelValueRow label="GSTIN" value={data.company?.gstin} />
-                  <LabelValueRow label="Contact Person" value={data.company?.contactPerson} />
-                  <LabelValueRow label="Company Address" value={data.company?.address} />
-                  <LabelValueRow label="Contact No" value={data.company?.contactNo} />
-                  <LabelValueRow label="Purpose of Visit" value={data.company?.visitPurpose} />
+                  <LabelValueRow label="Company Name" value={data.company?.name || ""} />
+                  <LabelValueRow label="GSTIN" value={data.company?.gstin || ""} />
+                  <LabelValueRow label="Contact Person" value={data.company?.contactPerson || ""} />
+                  <LabelValueRow label="Company Address" value={data.company?.address || ""} />
+                  <LabelValueRow label="Contact No" value={data.company?.contactNo || ""} />
+                  <LabelValueRow label="Purpose of Visit" value={data.company?.visitPurpose || ""} />
                 </div>
               </div>
             )}

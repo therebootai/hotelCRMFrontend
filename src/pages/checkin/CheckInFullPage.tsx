@@ -1,16 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   FiSearch,
   FiCalendar,
-  FiFilter,
   FiUser,
   FiHome,
-  FiMoreVertical,
   FiEdit2,
-  FiLogOut,
   FiRefreshCw,
-  FiX,
-  FiCoffee,
   FiChevronRight,
 } from "react-icons/fi";
 import DatePicker from "react-datepicker";
@@ -18,6 +13,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
 import api from "../../lib/axios";
 import Pagination from "../../components/layout/Pagination";
+import { useQueryParams } from "../../hooks/useQueryParams";
 import { FaEye } from "react-icons/fa";
 import ExtendStayModal from "../../components/checkinComp/ExtendStayModal";
 import GenerateBillModal from "../../components/checkinComp/GanerateBillModel";
@@ -25,9 +21,17 @@ import ViewCheckin from "../../components/checkinComp/ViewCheckin";
 import CheckinForm from "../../components/checkinComp/CheckinForm";
 
 const CheckInFullPage = () => {
-  const [activeTab, setActiveTab] = useState<"Individual" | "Corporate">(
-    "Individual",
-  );
+  const { getParam, setMultipleParams } = useQueryParams();
+  const isMounted = useRef(false);
+
+  // URL-driven string filters
+  const activeTab = (getParam("tab") as "Individual" | "Corporate") ?? "Individual";
+  const urlSearch = getParam("search") ?? "";
+  const urlStatus = getParam("status") ?? "";
+  const urlRoomType = getParam("roomType") ?? "";
+  const urlDateType = getParam("dateType") ?? "checkIn";
+  const urlPage = Number(getParam("page") ?? "1");
+
   const [loading, setLoading] = useState(false);
   const [checkins, setCheckins] = useState([]);
   const [stats, setStats] = useState({
@@ -36,15 +40,15 @@ const CheckInFullPage = () => {
     expectedCheckouts: 0,
   });
 
-  // Filters State
+  // Filters State — dates stay in local state; string fields initialized from URL
   const [filters, setFilters] = useState({
     startDate: null as Date | null,
     endDate: null as Date | null,
-    search: "",
-    roomType: "",
-    dateType: "checkIn",
-    status: "",
-    page: 1,
+    search: urlSearch,
+    roomType: urlRoomType,
+    dateType: urlDateType,
+    status: urlStatus,
+    page: urlPage,
     limit: 10,
   });
   const [roomTypes, setRoomTypes] = useState([]);
@@ -104,8 +108,23 @@ const handleCheckoutClick = (item: any) => {
     }
   };
 
+  // Sync string filters to URL whenever they change (skip on initial mount)
+  useEffect(() => {
+    if (!isMounted.current) { isMounted.current = true; return; }
+    setMultipleParams({
+      tab: activeTab === "Individual" ? "" : activeTab,
+      search: filters.search,
+      status: filters.status,
+      roomType: filters.roomType,
+      dateType: filters.dateType === "checkIn" ? "" : filters.dateType,
+      page: filters.page === 1 ? "" : String(filters.page),
+    }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, filters.search, filters.status, filters.roomType, filters.dateType, filters.page]);
+
   useEffect(() => {
     fetchCheckins();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeTab,
     filters.page,
@@ -163,13 +182,13 @@ const handleCheckoutClick = (item: any) => {
         {/* 1. Toggle Individual/Corporate */}
         <div className="flex p-1.5 bg-gray-100 rounded-2xl w-fit">
           <button
-            onClick={() => setActiveTab("Individual")}
+            onClick={() => setMultipleParams({ tab: "", page: "" }, { replace: true })}
             className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "Individual" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
           >
             Individual
           </button>
           <button
-            onClick={() => setActiveTab("Corporate")}
+            onClick={() => setMultipleParams({ tab: "Corporate", page: "" }, { replace: true })}
             className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "Corporate" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`}
           >
             Corporate
@@ -207,7 +226,7 @@ const handleCheckoutClick = (item: any) => {
           <FiCalendar className="text-gray-400 mr-2" size={14} />
           <DatePicker
             selected={filters.startDate}
-            onChange={(date) => setFilters({ ...filters, startDate: date })}
+            onChange={(date: Date | null) => setFilters({ ...filters, startDate: date })}
             placeholderText="Start"
             className="bg-transparent outline-none text-[10px] font-black w-20 uppercase"
             isClearable
@@ -215,7 +234,7 @@ const handleCheckoutClick = (item: any) => {
           <FiChevronRight className="text-gray-300 mx-1" size={12} />
           <DatePicker
             selected={filters.endDate}
-            onChange={(date) => setFilters({ ...filters, endDate: date })}
+            onChange={(date: Date | null) => setFilters({ ...filters, endDate: date })}
             placeholderText="End"
             className="bg-transparent outline-none text-[10px] font-black w-20 uppercase"
             isClearable
@@ -318,9 +337,11 @@ const handleCheckoutClick = (item: any) => {
                       <button onClick={() => { setSelectedItem(item); setIsExtendModalOpen(true); }} className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all" title="Extend">
                         <FiCalendar size={12} />
                       </button>
-                      <button onClick={() => handleCheckoutClick(item)} className="px-3 py-1.5 bg-orange-500 text-white rounded-lg font-bold text-[9px] uppercase hover:bg-orange-600 shadow-sm transition-all">
-                        Checkout
-                      </button>
+                      {item.status === "Active" && (
+                        <button onClick={() => handleCheckoutClick(item)} className="px-3 py-1.5 bg-orange-500 text-white rounded-lg font-bold text-[9px] uppercase hover:bg-orange-600 shadow-sm transition-all">
+                          Checkout
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -345,7 +366,6 @@ const handleCheckoutClick = (item: any) => {
     checkIn={selectedItem}
     onClose={() => setIsExtendModalOpen(false)}
     onSuccess={fetchCheckins}
-    roomTypes={roomTypes}
   />
 )}
 

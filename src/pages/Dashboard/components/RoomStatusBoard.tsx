@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
+import type { RoomStatusData } from "../useDashboardData";
 
 // --- STYLING CONFIGURATION ---
 const STATUS_STYLES = {
@@ -81,54 +82,17 @@ const StatusColumn = ({ statusKey, count, rooms }: any) => {
 
 // --- MAIN COMPONENT ---
 
-const RoomStatusBoard = () => {
-  const [boardData, setBoardData] = useState([
-    {
-      id: "1",
-      date: "24-Mar-26 (Tue)",
-      isExpanded: true,
-      availableSummary: 10,
-      statuses: {
-        available: {
-          count: 10,
-          rooms: [
-            { type: "AC Deluxe Room", qty: 5, numbers: "504, 578, 589, 596, 148" },
-            { type: "Banquet Hall", qty: 2, numbers: "666, 485" },
-            { type: "Suit Room", qty: 3, numbers: "785, 589, 158" },
-          ],
-        },
-        confirmed: {
-          count: 10,
-          rooms: [
-            { type: "AC Deluxe Room", qty: 8, numbers: "504, 578, 589, 596, 148, 763, 863, 832" },
-            { type: "Banquet Hall", qty: 2, numbers: "666, 485" },
-          ],
-        },
-        pencil: {
-          count: 2,
-          rooms: [{ type: "Banquet Hall", qty: 2, numbers: "666, 485" }],
-        },
-        booked: {
-          count: 10,
-          rooms: [
-            { type: "AC Deluxe Room", qty: 8, numbers: "504, 578, 589, 596, 148, 763, 863, 832" },
-            { type: "Banquet Hall", qty: 2, numbers: "666, 485" },
-          ],
-        },
-        checkIn: {
-          count: 1,
-          rooms: [{ type: "AC Deluxe Room", qty: 1, numbers: "752" }],
-        },
-      },
-    },
-    { id: "2", date: "25-Mar-26 (Wed)", isExpanded: false, availableSummary: 20 },
-    { id: "3", date: "26-Mar-26 (Thu)", isExpanded: false, availableSummary: 30 },
-    { id: "4", date: "27-Mar-26 (Fri)", isExpanded: false, availableSummary: 50 },
-    { id: "5", date: "28-Mar-26 (Sat)", isExpanded: false, availableSummary: 50 },
-  ]);
+interface RoomStatusBoardProps {
+  boardData: RoomStatusData[];
+}
+
+const RoomStatusBoard = ({ boardData: propBoardData }: RoomStatusBoardProps) => {
+  const [internalBoardData, setInternalBoardData] = useState<RoomStatusData[]>([]);
+  const boardData = propBoardData.length > 0 ? propBoardData : internalBoardData;
 
   const toggleRow = (id: string) => {
-    setBoardData((prev) =>
+    if (propBoardData.length > 0) return; // controlled, don't toggle
+    setInternalBoardData((prev) =>
       prev.map((row) =>
         row.id === id ? { ...row, isExpanded: !row.isExpanded } : row,
       ),

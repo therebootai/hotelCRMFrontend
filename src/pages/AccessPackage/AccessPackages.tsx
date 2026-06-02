@@ -1,6 +1,18 @@
 import { useState, useEffect } from "react";
-import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiLoader, FiCalendar } from "react-icons/fi";
-import AccessPackageModal, { type AccessPackageData } from "../../components/access-package/AccessPackageModal";
+import { useQueryParams } from "../../hooks/useQueryParams";
+import { useDebounce } from "../../hooks/useDebounce";
+import {
+  FiSearch,
+  FiPlus,
+  FiEdit2,
+  FiTrash2,
+  FiChevronDown,
+  FiLoader,
+  FiCalendar,
+} from "react-icons/fi";
+import AccessPackageModal, {
+  type AccessPackageData,
+} from "../../components/access-package/AccessPackageModal";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
@@ -8,25 +20,31 @@ import { AxiosError } from "axios";
 
 export default function AccessPackages() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingData, setEditingData] = useState<AccessPackageData | null>(null);
+  const [editingData, setEditingData] = useState<AccessPackageData | null>(
+    null,
+  );
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<AccessPackageData | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<AccessPackageData | null>(
+    null,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const { getParam, updateFilters } = useQueryParams();
+
+  const search = getParam("search") ?? "";
+  const packageType = getParam("packageType") ?? "all";
+  const statusFilter = getParam("status") ?? "all";
+  const debouncedSearch = useDebounce(search, 300);
 
   const [packages, setPackages] = useState<AccessPackageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Filters state
-  const [search, setSearch] = useState("");
-  const [packageType, setPackageType] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const fetchPackages = async () => {
     try {
       setIsLoading(true);
       const params: Record<string, string> = {};
-      if (search.trim()) params.search = search.trim();
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (packageType !== "all") params.packageType = packageType;
       if (statusFilter !== "all") params.isActive = statusFilter;
 
@@ -47,7 +65,8 @@ export default function AccessPackages() {
 
   useEffect(() => {
     fetchPackages();
-  }, [search, packageType, statusFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, packageType, statusFilter]);
 
   const handleEditClick = (pkg: AccessPackageData) => {
     setEditingData(pkg);
@@ -83,22 +102,28 @@ export default function AccessPackages() {
   // Toggle status handler
   const handleToggleStatus = async (pkg: AccessPackageData) => {
     const updatedStatus = !pkg.isActive;
-    
+
     // Optimistic Update
     setPackages((prev) =>
-      prev.map((p) => (p._id === pkg._id ? { ...p, isActive: updatedStatus } : p))
+      prev.map((p) =>
+        p._id === pkg._id ? { ...p, isActive: updatedStatus } : p,
+      ),
     );
 
     try {
       await api.put(`/access-packages/${pkg._id}`, {
         isActive: updatedStatus,
       });
-      toast.success(`Package status updated to ${updatedStatus ? "Active" : "Inactive"}`);
+      toast.success(
+        `Package status updated to ${updatedStatus ? "Active" : "Inactive"}`,
+      );
     } catch (err) {
       console.error(err);
       // Revert on failure
       setPackages((prev) =>
-        prev.map((p) => (p._id === pkg._id ? { ...p, isActive: pkg.isActive } : p))
+        prev.map((p) =>
+          p._id === pkg._id ? { ...p, isActive: pkg.isActive } : p,
+        ),
       );
       toast.error("Failed to update status");
     }
@@ -114,9 +139,12 @@ export default function AccessPackages() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Day Access Packages</h1>
+          <h1 className="text-2xl font-bold text-text-primary">
+            Day Access Packages
+          </h1>
           <p className="text-sm text-text-secondary mt-1">
-            Configure premium combo or corporate day pass offerings, pricing, inclusions and add-ons.
+            Configure premium combo or corporate day pass offerings, pricing,
+            inclusions and add-ons.
           </p>
         </div>
         <button
@@ -134,11 +162,14 @@ export default function AccessPackages() {
       {/* Filters Bar */}
       <div className="flex items-center gap-4 bg-gray-50/80 p-2 rounded-xl mb-6">
         <div className="flex-1 relative">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <FiSearch
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            size={18}
+          />
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => updateFilters("search", e.target.value, { replace: true })}
             placeholder="Search by package name or ID..."
             className="input-field pl-10 py-2.5"
           />
@@ -147,27 +178,33 @@ export default function AccessPackages() {
         <div className="relative min-w-40">
           <select
             value={packageType}
-            onChange={(e) => setPackageType(e.target.value)}
+            onChange={(e) => updateFilters("packageType", e.target.value === "all" ? "" : e.target.value)}
             className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-text-primary focus:outline-none cursor-pointer"
           >
             <option value="all">All Types</option>
             <option value="Premium Combo">Premium Combo</option>
             <option value="Corporate">Corporate</option>
           </select>
-          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+          <FiChevronDown
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
+            size={16}
+          />
         </div>
 
         <div className="relative min-w-40">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => updateFilters("status", e.target.value === "all" ? "" : e.target.value)}
             className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-text-primary focus:outline-none cursor-pointer"
           >
             <option value="all">All Statuses</option>
             <option value="true">Active Only</option>
             <option value="false">Inactive Only</option>
           </select>
-          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" size={16} />
+          <FiChevronDown
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
+            size={16}
+          />
         </div>
       </div>
 
@@ -197,16 +234,24 @@ export default function AccessPackages() {
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-text-secondary">
+                  <td
+                    colSpan={5}
+                    className="py-12 text-center text-text-secondary"
+                  >
                     <div className="flex justify-center items-center gap-3">
                       <FiLoader className="w-5 h-5 animate-spin text-primary" />
-                      <span className="text-sm font-medium">Loading packages...</span>
+                      <span className="text-sm font-medium">
+                        Loading packages...
+                      </span>
                     </div>
                   </td>
                 </tr>
               ) : packages.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-text-secondary text-sm">
+                  <td
+                    colSpan={5}
+                    className="py-12 text-center text-text-secondary text-sm"
+                  >
                     No access packages registered yet.
                   </td>
                 </tr>
@@ -261,7 +306,8 @@ export default function AccessPackages() {
                         </p>
                         {pkg.duration && (
                           <p className="text-xs text-text-secondary mt-0.5">
-                            Duration: {Math.floor(pkg.duration / 60)}h {pkg.duration % 60}m
+                            Duration: {Math.floor(pkg.duration / 60)}h{" "}
+                            {pkg.duration % 60}m
                           </p>
                         )}
                       </div>

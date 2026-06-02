@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { FiUsers, FiSearch, FiLogOut, FiClock, FiRefreshCw, FiRepeat } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { FiUsers, FiSearch, FiLogOut, FiClock, FiRepeat } from "react-icons/fi";
+import { Link } from "react-router-dom";
 import api from "../../lib/axios";
+import { useQueryParams } from "../../hooks/useQueryParams";
+import { useDebounce } from "../../hooks/useDebounce";
 
 interface ActiveGuest {
   _id: string;
@@ -35,23 +37,29 @@ interface ActiveGuest {
   };
   stayType: string;
   status: string;
+  bookingCategory: string;
+  packageDetails?: {
+    packageName: string;
+  };
 }
 
 const ActiveGuests = () => {
+  const { getParam, updateFilters } = useQueryParams();
+  const searchTerm = getParam("search") ?? "";
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
   const [guests, setGuests] = useState<ActiveGuest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const navigate = useNavigate();
 
   const fetchActiveGuests = async () => {
     setLoading(true);
     try {
-      // Filter for Checked-In status
+      // Filter for Active status (DB enum: "Active" | "Checked-Out" | "Shifted")
       const response = await api.get(
-        `/checkin/list?status=Checked-In&search=${searchTerm}`,
+        `/checkin/list?status=Active&search=${debouncedSearch}`,
       );
       if (response.data?.success) {
-        setGuests(response.data.data.list || []);
+        setGuests(response.data.data || []);
       }
     } catch (error) {
       console.error("Error fetching active guests:", error);
@@ -62,10 +70,11 @@ const ActiveGuests = () => {
 
   useEffect(() => {
     fetchActiveGuests();
-  }, [searchTerm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+    updateFilters("search", e.target.value, { replace: true });
   };
 
   return (
@@ -82,7 +91,7 @@ const ActiveGuests = () => {
           </p>
         </div>
 
-        <div className="relative w-full max-w-md">
+        <div className="relative w-full max-w-[300px]">
           <FiSearch
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
             size={18}
@@ -111,9 +120,9 @@ const ActiveGuests = () => {
             const checkOutDate = new Date(guest.expectedCheckOutTime);
             const totalPaid =
               guest.paymentSummary?.totalPaid || guest.totalAdvanceAmount || 0;
-            const roomsStr = guest.roomDetails
-              .map((rd) => `Room ${rd.roomNumber}`)
-              .join(", ");
+            const displayTag = guest.bookingCategory === "Day Access"
+              ? guest.packageDetails?.packageName || "Day Access"
+              : guest.roomDetails?.map((rd) => `Room ${rd.roomNumber}`).join(", ") || "No Room Assigned";
 
             return (
               <div
@@ -124,7 +133,7 @@ const ActiveGuests = () => {
                   {/* Card Header */}
                   <div className="flex justify-between items-start mb-4">
                     <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-full">
-                      {roomsStr}
+                      {displayTag}
                     </span>
                     <span className="text-xs text-text-secondary font-medium uppercase tracking-wide flex items-center gap-1">
                       <FiClock size={12} />
@@ -203,20 +212,20 @@ const ActiveGuests = () => {
 
                 {/* Card Actions */}
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => navigate(`/billing`)}
+                  <Link
+                    to="/billing"
                     className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-dark transition-colors cursor-pointer"
                   >
                     <FiLogOut size={14} />
                     Checkout Folio
-                  </button>
-                  <button
-                    onClick={() => navigate(`/checkin`)}
+                  </Link>
+                  <Link
+                    to="/checkin"
                     className="p-2.5 border border-border text-text-secondary hover:text-text-primary rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
                     title="Edit checkin"
                   >
                     <FiRepeat size={14} />
-                  </button>
+                  </Link>
                 </div>
               </div>
             );

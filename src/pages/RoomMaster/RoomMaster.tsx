@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FiPlus, FiArrowLeft, FiLoader, FiCalendar } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useQueryParams } from "../../hooks/useQueryParams";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 import { AxiosError } from "axios";
@@ -13,12 +14,28 @@ import ComingSoon from "./components/ComingSoon";
 import AddRoomForm from "./components/AddRoomForm";
 import RoomTypeMaster from "./components/RoomTypeMaster";
 import AmenitiesMaster from "./components/AmenitiesMaster";
-import TaxGstMaster from "./components/TaxGstMaster";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 
+const TABS = [
+  { id: "room-master",       label: "Room Master" },
+  { id: "room-type-master",  label: "Room Type Master" },
+  { id: "amenities-master",  label: "Amenities Master" },
+] as const;
+type TabId = typeof TABS[number]["id"];
+
 export default function RoomMaster() {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("Room Master");
+  const { getParam, updateFilters, setMultipleParams } = useQueryParams();
+
+  const tabId = (getParam("tab") as TabId) ?? "room-master";
+  const activeTab = TABS.find((t) => t.id === tabId)?.label ?? "Room Master";
+  const currentPage = Number(getParam("page") ?? "1");
+  const filters = {
+    roomType: getParam("roomType") ?? "",
+    status: getParam("status") ?? "",
+  };
+
+  const setActiveTabId = (id: TabId) => updateFilters("tab", id);
+
   const [view, setView] = useState<"list" | "add">("list");
 
   // Real Data State
@@ -26,7 +43,6 @@ export default function RoomMaster() {
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
 
   // Backend Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 40;
@@ -40,9 +56,6 @@ export default function RoomMaster() {
   // Settings Modals State
   const [isRoomTypeModalOpen, setIsRoomTypeModalOpen] = useState(false);
   const [isAmenityModalOpen, setIsAmenityModalOpen] = useState(false);
-  const [isTaxModalOpen, setIsTaxModalOpen] = useState(false);
-
-  const [filters, setFilters] = useState({ roomType: '', status: '' });
 
   const fetchRooms = async () => {
     try {
@@ -77,13 +90,14 @@ export default function RoomMaster() {
   };
 
   useEffect(() => {
-    if (activeTab === "Room Master") {
+    if (tabId === "room-master") {
       fetchRooms();
     }
-  }, [activeTab, currentPage, filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabId, currentPage, filters.roomType, filters.status]);
 
   const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
+    updateFilters("page", String(newPage));
   };
 
   const handleEditRoom = (room: Room) => {
@@ -106,7 +120,7 @@ export default function RoomMaster() {
       setRoomToDelete(null);
 
       if (rooms.length === 1 && currentPage > 1) {
-        setCurrentPage((prev) => prev - 1);
+        updateFilters("page", String(currentPage - 1));
       } else {
         fetchRooms();
       }
@@ -153,19 +167,19 @@ export default function RoomMaster() {
             </h1>
           </div>
         ) : (
-          <RoomTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+          <RoomTabs activeTabId={tabId} onTabChange={setActiveTabId} />
         )}
 
         {view === "list" && (
           <div className="flex items-center gap-3 animate-fade-in">
-            {activeTab === "Room Master" && (
+            {tabId === "room-master" && (
               <>
-                <button
-                  onClick={() => navigate('/master/rooms/rates')}
+                <Link
+                  to="/master/rooms/rates"
                   className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors border bg-card border-border text-text-primary hover:bg-background"
                 >
                   <FiCalendar size={16} /> Manage Rates
-                </button>
+                </Link>
                 <button
                   onClick={handleOpenAddForm}
                   className="btn-primary flex items-center gap-2 px-5 py-2.5"
@@ -174,7 +188,7 @@ export default function RoomMaster() {
                 </button>
               </>
             )}
-            {activeTab === "Room Type Master" && (
+            {tabId === "room-type-master" && (
               <button
                 onClick={() => setIsRoomTypeModalOpen(true)}
                 className="btn-primary flex items-center gap-2 px-5 py-2.5"
@@ -182,20 +196,12 @@ export default function RoomMaster() {
                 <FiPlus size={18} /> Add Room Type
               </button>
             )}
-            {activeTab === "Amenities Master" && (
+            {tabId === "amenities-master" && (
               <button
                 onClick={() => setIsAmenityModalOpen(true)}
                 className="btn-primary flex items-center gap-2 px-5 py-2.5"
               >
                 <FiPlus size={18} /> Add Amenities
-              </button>
-            )}
-            {activeTab === "Tax / GST Master" && (
-              <button
-                onClick={() => setIsTaxModalOpen(true)}
-                className="btn-primary flex items-center gap-2 px-5 py-2.5"
-              >
-                <FiPlus size={18} /> Add Tax/GST
               </button>
             )}
           </div>
@@ -208,13 +214,12 @@ export default function RoomMaster() {
           onSuccess={handleFormSuccess}
           initialData={editingRoom}
         />
-      ) : activeTab === "Room Master" ? (
+      ) : tabId === "room-master" ? (
         <>
           <RoomFilters
             filters={filters}
             onFilterChange={(key, value) => {
-              setFilters((prev) => ({ ...prev, [key]: value }));
-              setCurrentPage(1);
+              setMultipleParams({ [key]: value, page: "1" });
             }}
           />
           <div className="mt-4 flex flex-col lg:flex-row items-start gap-6">
@@ -242,20 +247,15 @@ export default function RoomMaster() {
             </div>
           </div>
         </>
-      ) : activeTab === "Room Type Master" ? (
+      ) : tabId === "room-type-master" ? (
         <RoomTypeMaster
           isAddModalOpen={isRoomTypeModalOpen}
           setIsAddModalOpen={setIsRoomTypeModalOpen}
         />
-      ) : activeTab === "Amenities Master" ? (
+      ) : tabId === "amenities-master" ? (
         <AmenitiesMaster
           isAddModalOpen={isAmenityModalOpen}
           setIsAddModalOpen={setIsAmenityModalOpen}
-        />
-      ) : activeTab === "Tax / GST Master" ? (
-        <TaxGstMaster
-          isAddModalOpen={isTaxModalOpen}
-          setIsAddModalOpen={setIsTaxModalOpen}
         />
       ) : (
         <ComingSoon moduleName={activeTab} />

@@ -18,6 +18,7 @@ import FacilityMaster from "./pages/FacilityMaster/FacilityMaster";
 import ExtraServiceMaster from "./pages/ExtraService/ExtraServices";
 import BillingPage from "./pages/billing/BillingPage";
 import AccessPackages from "./pages/AccessPackage/AccessPackages";
+import TaxGstPage from "./pages/TaxGstMaster/TaxGstPage";
 import RoomCalendar from "./pages/RoomCalendar/RoomCalendar";
 import ActiveGuests from "./pages/ActiveGuests/ActiveGuests";
 import CustomerPage from "./pages/Customer/CustomerPage";
@@ -113,6 +114,7 @@ export default function App() {
             <Route path="facilities" element={<FacilityMaster/>}/>
             <Route path="extra-services" element={<ExtraServiceMaster/>}/>
             <Route path="access-packages" element={<AccessPackages/>}/>
+            <Route path="tax-gst" element={<TaxGstPage />} />
           </Route>
 
               <Route path="/bookings" element={<BookingFullPage/>}/>

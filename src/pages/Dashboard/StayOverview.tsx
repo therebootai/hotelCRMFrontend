@@ -134,7 +134,6 @@ const StayOverview = () => {
   });
 
   const [timelineData, setTimelineData] = useState<any[]>([]);
-  const [roomTypes, setRoomTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
 
@@ -170,22 +169,9 @@ const StayOverview = () => {
     }
   };
 
-  const fetchRoomTypes = async () => {
-    try {
-      const res = await api.get("/room-types");
-      setRoomTypes(res.data.data || []);
-    } catch (err) {
-      console.error("Room types fetch failed", err);
-    }
-  };
-
   useEffect(() => {
     fetchOverview();
   }, [viewStart, viewEnd]);
-
-  useEffect(() => {
-    fetchRoomTypes();
-  }, []);
 
   // =====================================================
   // SUMMARY
@@ -226,23 +212,15 @@ const StayOverview = () => {
   // =====================================================
   // DRAG & DROP
   // =====================================================
-  const handleDragStart = (
-    e: React.DragEvent,
-    booking: any,
-    roomId: string,
-  ) => {
-    e.dataTransfer.setData(
-      "booking",
-      JSON.stringify({ booking, sourceRoomId: roomId }),
-    );
+  const handleDragStart = (e: React.DragEvent, booking: any) => {
+    e.dataTransfer.setData("booking", JSON.stringify({ booking }));
   };
 
   // =====================================================
-  // DRAG & DROP — replace your existing handleDrop
+  // DRAG & DROP
   // =====================================================
   const handleDrop = (
     e: React.DragEvent,
-    targetRoom: any,
     colIndex: number,
   ) => {
     e.preventDefault();
@@ -253,23 +231,16 @@ const StayOverview = () => {
 
     const { booking } = JSON.parse(raw);
 
-    // ✅ newCheckout = the column the user dropped on
     const dropDate = new Date(datesArray[colIndex]);
     dropDate.setHours(12, 0, 0, 0);
 
-    // ✅ Don't change if dropped on same date as current end
     const currentEnd = new Date(booking.end);
     if (dropDate <= currentEnd) return;
-
-    const isSameRoom = booking.roomId === targetRoom.id;
 
     setSelectedCheckIn({
       _id: booking.id,
       guests: [{ name: booking.guest, mobileNo: booking.phone }],
-
-      // ✅ ORIGINAL checkout — modal calculates extension FROM this
       expectedCheckOutTime: new Date(booking.end),
-
       roomDetails: [
         {
           roomId: booking.roomId,
@@ -279,13 +250,7 @@ const StayOverview = () => {
         },
       ],
       totalAdvanceAmount: booking.totalAdvanceAmount || 0,
-
-      // ✅ NEW checkout = where user dropped
       _prefillCheckout: dropDate,
-      _prefillRoomId: isSameRoom ? booking.roomId : targetRoom.id,
-      _prefillRoomType: isSameRoom
-        ? booking.roomType || ""
-        : targetRoom.roomType?._id || targetRoom.roomType || "",
     });
 
     setExtendOpen(true);
@@ -337,10 +302,7 @@ const StayOverview = () => {
       setSelectedCheckIn({
         _id: booking.id,
         guests: [{ name: booking.guest }],
-
-        // ✅ ORIGINAL checkout — extension calculated FROM this
         expectedCheckOutTime: originalEnd,
-
         roomDetails: [
           {
             roomId: booking.roomId,
@@ -350,11 +312,7 @@ const StayOverview = () => {
           },
         ],
         totalAdvanceAmount: booking.totalAdvanceAmount || 0,
-
-        // ✅ NEW checkout = where user released mouse
         _prefillCheckout: finalDate,
-        _prefillRoomId: booking.roomId,
-        _prefillRoomType: booking.roomType || "",
       });
 
       setExtendOpen(true);
@@ -402,7 +360,7 @@ const StayOverview = () => {
             <div className="absolute top-full right-0 mt-2 bg-white border rounded-xl shadow-xl z-50 p-4 flex gap-3">
               <DatePicker
                 selected={viewStart}
-                onChange={(date: Date) => setViewStart(date)}
+                onChange={(date: Date | null) => date && setViewStart(date)}
                 selectsStart
                 startDate={viewStart}
                 endDate={viewEnd}
@@ -410,7 +368,7 @@ const StayOverview = () => {
               />
               <DatePicker
                 selected={viewEnd}
-                onChange={(date: Date) => setViewEnd(date)}
+                onChange={(date: Date | null) => date && setViewEnd(date)}
                 selectsEnd
                 startDate={viewStart}
                 endDate={viewEnd}
@@ -513,7 +471,7 @@ const StayOverview = () => {
                           e.preventDefault();
                           e.dataTransfer.dropEffect = "move";
                         }}
-                        onDrop={(e) => handleDrop(e, room, i)}
+                        onDrop={(e) => handleDrop(e, i)}
                       />
                     ))}
 
@@ -561,7 +519,7 @@ const StayOverview = () => {
                           span={visualSpan}
                           actualSpan={actualSpan}
                           onDragStart={(e: React.DragEvent) =>
-                            handleDragStart(e, booking, room.id)
+                            handleDragStart(e, { ...booking, roomId: room.id })
                           }
                           onResizeStart={handleResizeStart}
                         />
@@ -575,7 +533,6 @@ const StayOverview = () => {
         </div>
       </div>
 
-      {/* Extend Modal */}
       {extendOpen && selectedCheckIn && (
         <ExtendStayModal
           checkIn={selectedCheckIn}
@@ -588,11 +545,7 @@ const StayOverview = () => {
             setExtendOpen(false);
             setSelectedCheckIn(null);
           }}
-          roomTypes={roomTypes}
-          prefillRoomId={selectedCheckIn._prefillRoomId}
-          prefillRoomType={selectedCheckIn._prefillRoomType}
           prefillCheckout={selectedCheckIn._prefillCheckout}
-          triggeredFromOverview={true}
         />
       )}
     </div>

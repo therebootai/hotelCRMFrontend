@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   FiBarChart2,
   FiCalendar,
@@ -10,6 +10,7 @@ import {
   FiFileText,
 } from "react-icons/fi";
 import api from "../../lib/axios";
+import { useQueryParams } from "../../hooks/useQueryParams";
 import {
   BarChart,
   Bar,
@@ -88,16 +89,20 @@ const COLORS = [
 ];
 
 const ReportsPage = () => {
-  const [activeTab, setActiveTab] = useState<ReportTab>("occupancy");
-  const [loading, setLoading] = useState(false);
-  const [dateFrom, setDateFrom] = useState(() => {
+  const { getParam, updateFilters } = useQueryParams();
+
+  const activeTab = (getParam("tab") as ReportTab) ?? "occupancy";
+  const setActiveTabId = (id: ReportTab) => updateFilters("tab", id);
+
+  const defaultFrom = (() => {
     const d = new Date();
     d.setMonth(d.getMonth() - 1);
     return d.toISOString().slice(0, 10);
-  });
-  const [dateTo, setDateTo] = useState(() =>
-    new Date().toISOString().slice(0, 10),
-  );
+  })();
+  const dateFrom = getParam("from") ?? defaultFrom;
+  const dateTo = getParam("to") ?? new Date().toISOString().slice(0, 10);
+
+  const [loading, setLoading] = useState(false);
 
   const [occupancy, setOccupancy] = useState<OccupancyData[]>([]);
   const [revenue, setRevenue] = useState<RevenueData | null>(null);
@@ -516,7 +521,7 @@ const ReportsPage = () => {
         return (
           <div>
             <div className="mb-6 flex justify-center">
-              <ResponsiveContainer width={300} height={200}>
+              <ResponsiveContainer width={300} height={250}>
                 <PieChart>
                   <Pie
                     data={agingData}
@@ -594,14 +599,14 @@ const ReportsPage = () => {
             <input
               type="date"
               value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
+              onChange={(e) => updateFilters("from", e.target.value)}
               className="text-xs text-text-primary outline-none bg-transparent"
             />
             <span className="text-text-secondary text-xs">to</span>
             <input
               type="date"
               value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
+              onChange={(e) => updateFilters("to", e.target.value)}
               className="text-xs text-text-primary outline-none bg-transparent"
             />
           </div>
@@ -635,7 +640,7 @@ const ReportsPage = () => {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => setActiveTabId(tab.id)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
               activeTab === tab.id
                 ? "bg-white text-text-primary shadow-sm"

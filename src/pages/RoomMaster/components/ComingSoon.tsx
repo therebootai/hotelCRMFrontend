@@ -1,5 +1,4 @@
-import React from 'react';
-import { FiTool } from 'react-icons/fi';
+import { FiTool } from "react-icons/fi";
 
 export default function ComingSoon({ moduleName }: { moduleName: string }) {
   return (
@@ -8,7 +7,9 @@ export default function ComingSoon({ moduleName }: { moduleName: string }) {
         <FiTool size={32} />
       </div>
       <h2 className="text-xl font-bold text-text-primary mb-2">{moduleName}</h2>
-      <p className="text-text-secondary text-sm">This settings module is currently under development.</p>
+      <p className="text-text-secondary text-sm">
+        This settings module is currently under development.
+      </p>
     </div>
   );
 }

@@ -8,6 +8,7 @@ interface RoomTypeData {
   _id?: string;
   name: string;
   description: string;
+  basePrice: number | string;
 }
 
 interface RoomTypeModalProps {
@@ -22,8 +23,9 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    basePrice: '' as number | string,
   });
-  const [errors, setErrors] = useState<{ name?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; basePrice?: string }>({});
 
   useEffect(() => {
     setErrors({});
@@ -31,16 +33,17 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
       setFormData({
         name: initialData.name,
         description: initialData.description || '',
+        basePrice: initialData.basePrice ?? '',
       });
     } else {
-      setFormData({ name: '', description: '' });
+      setFormData({ name: '', description: '', basePrice: '' });
     }
   }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 
   const validate = () => {
-    const newErrors: { name?: string } = {};
+    const newErrors: { name?: string; basePrice?: string } = {};
     const trimmedName = formData.name.trim();
 
     if (!trimmedName) {
@@ -56,7 +59,7 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
@@ -68,28 +71,39 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
       return;
     }
 
+    if (formData.basePrice === "" || Number(formData.basePrice) < 0) {
+      setErrors((prev) => ({ ...prev, basePrice: "Base price is required and must be 0 or more" }));
+      return;
+    }
+
     try {
       setIsLoading(true);
-      
+
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        basePrice: Number(formData.basePrice),
+      };
+
       if (initialData?._id) {
-        await api.put(`/room-types/${initialData._id}`, formData);
+        await api.put(`/room-types/${initialData._id}`, payload);
         toast.success("Room Type updated successfully!");
       } else {
-        await api.post("/room-types", formData);
+        await api.post("/room-types", payload);
         toast.success("Room Type created successfully!");
       }
-      
+
       onSuccess();
       onClose();
     } catch (error: unknown) {
       let errorMsg = "Failed to save room type";
-      
+
       if (error instanceof AxiosError) {
         errorMsg = error.response?.data?.message || error.response?.data?.error || error.message;
       } else if (error instanceof Error) {
         errorMsg = error.message;
       }
-      
+
       toast.error(errorMsg);
     } finally {
       setIsLoading(false);
@@ -99,9 +113,9 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
   return (
     <div className="fixed inset-0 z-99 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
-        onClick={!isLoading ? onClose : undefined} 
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+        onClick={!isLoading ? onClose : undefined}
       />
 
       {/* Modal Content */}
@@ -111,8 +125,8 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
           <h2 className="text-xl font-bold text-text-primary">
             {initialData ? 'Edit Room Type' : 'Add New Room Type'}
           </h2>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             disabled={isLoading}
             className="p-2 -mr-2 text-text-secondary hover:text-text-primary hover:bg-background rounded-full transition-colors disabled:opacity-50"
           >
@@ -125,19 +139,19 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
           {!initialData && (
             <p className="text-sm text-text-secondary -mt-2 mb-4">Create a new category for your inventory system.</p>
           )}
-          
+
           <div>
             <label className="input-label uppercase tracking-wider text-[10px]">Type Name</label>
-            <input 
-              type="text" 
-              name="name" 
-              placeholder="e.g. Presidential Penthouse" 
-              value={formData.name} 
+            <input
+              type="text"
+              name="name"
+              placeholder="e.g. Presidential Penthouse"
+              value={formData.name}
               onChange={handleChange}
               disabled={isLoading}
               className={`input-field disabled:opacity-70 disabled:cursor-not-allowed ${
                 errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
-              }`} 
+              }`}
             />
             {errors.name && (
               <p className="text-red-500 text-xs mt-1.5 font-medium animate-fade-in">{errors.name}</p>
@@ -146,29 +160,48 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
 
           <div>
             <label className="input-label uppercase tracking-wider text-[10px]">Description</label>
-            <textarea 
-              name="description" 
-              placeholder="Describe the room features, view, and specific amenities..." 
-              value={formData.description} 
+            <textarea
+              name="description"
+              placeholder="Describe the room features, view, and specific amenities..."
+              value={formData.description}
               onChange={handleChange}
               disabled={isLoading}
-              className="input-field min-h-25 resize-none py-3 disabled:opacity-70 disabled:cursor-not-allowed" 
+              className="input-field min-h-25 resize-none py-3 disabled:opacity-70 disabled:cursor-not-allowed"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Base Price (₹) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="basePrice"
+              min="0"
+              step="0.01"
+              value={formData.basePrice}
+              onChange={(e) => setFormData((prev) => ({ ...prev, basePrice: e.target.value }))}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. 2500"
+            />
+            {errors.basePrice && (
+              <p className="text-red-500 text-xs mt-1">{errors.basePrice}</p>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <div className="bg-background p-6 flex items-center gap-3 border-t border-border rounded-b-2xl">
-          <button 
-            onClick={onClose} 
-            disabled={isLoading} 
+          <button
+            onClick={onClose}
+            disabled={isLoading}
             className="btn-secondary flex-1 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
-          <button 
-            onClick={handleSubmit} 
-            disabled={isLoading} 
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
             className="btn-primary flex-1 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "Saving..." : "Save Room Type"}

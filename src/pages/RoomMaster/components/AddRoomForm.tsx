@@ -86,7 +86,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
             maxChildren: initialData.maxChildren?.toString() || "0",
             extraBedAllowed: initialData.extraBedAllowed || false,
             extraBedCharge: initialData.extraBedCharge?.toString() || "0",
-            basePrice: initialData.basePrice?.toString() || "",
+            basePrice: initialData.roomType?.basePrice?.toString() || "",
             discountPercentage: initialData.discountPercentage?.toString() || "0",
             gstId: initialData.gstId?._id || "",
             roomSize: initialData.roomSize?.toString() || "",

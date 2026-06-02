@@ -7,14 +7,13 @@ import { AxiosError } from 'axios';
 export interface Room {
   _id: string;
   roomNumber: string;
-  roomType: { _id: string; name: string };
+  roomType: { _id: string; name: string; basePrice: number };
   building?: string;
   floor?: string;
   maxAdults: number;
   maxChildren: number;
   extraBedAllowed: boolean;
   extraBedCharge?: number;
-  basePrice: number;
   discountPercentage: number;
   gstId?: { _id: string; percentage: number };
   roomSize?: number;
@@ -165,7 +164,7 @@ export default function RoomTable({
                     <td className={`${cellPadding} font-medium text-text-primary ${textScale}`}>{room.roomNumber}</td>
                     <td className={`${cellPadding} text-text-secondary ${textScale}`}>{room.roomType?.name || '---'}</td>
                     <td className={`${cellPadding} text-text-primary font-medium ${textScale}`}>
-                      ₹{room.basePrice.toLocaleString('en-IN')}
+                      ₹{room.roomType.basePrice.toLocaleString('en-IN')}
                     </td>
                     <td className={`${cellPadding} text-text-secondary ${textScale}`}>{room.gstId?.percentage || 0}%</td>
                     <td className={cellPadding}>

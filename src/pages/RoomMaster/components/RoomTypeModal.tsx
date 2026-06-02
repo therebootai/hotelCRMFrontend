@@ -171,7 +171,7 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="input-label uppercase tracking-wider text-[10px]">
               Base Price (₹) <span className="text-red-500">*</span>
             </label>
             <input
@@ -181,11 +181,14 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
               step="0.01"
               value={formData.basePrice}
               onChange={(e) => setFormData((prev) => ({ ...prev, basePrice: e.target.value }))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`input-field disabled:opacity-70 disabled:cursor-not-allowed ${
+                errors.basePrice ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
+              }`}
               placeholder="e.g. 2500"
+              disabled={isLoading}
             />
             {errors.basePrice && (
-              <p className="text-red-500 text-xs mt-1">{errors.basePrice}</p>
+              <p className="text-red-500 text-xs mt-1.5 font-medium animate-fade-in">{errors.basePrice}</p>
             )}
           </div>
         </div>

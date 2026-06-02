@@ -139,7 +139,8 @@ const RoomRow: React.FC<RoomRowProps> = ({ room, columns, dayWidth, totalWidth, 
     return { startColumn, totalNights };
   };
 
-  const isMaintenance = room.status === "maintenance" || room.status === "blocked";
+  const isMaintenance = room.status === "maintenance";
+  const isOccupied = room.status === "blocked";
   const hasBookings = room.bookings.length > 0;
 
   return (
@@ -180,6 +181,10 @@ const RoomRow: React.FC<RoomRowProps> = ({ room, columns, dayWidth, totalWidth, 
         {isMaintenance ? (
           <div className="absolute inset-y-1 left-1 right-1 rounded bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center z-10">
             <span className="text-[8px] font-medium text-gray-400 uppercase tracking-wider">Maintenance</span>
+          </div>
+        ) : isOccupied ? (
+          <div className="absolute inset-y-1 left-1 right-1 rounded bg-orange-50 border border-dashed border-orange-300 flex items-center justify-center z-10">
+            <span className="text-[8px] font-medium text-orange-400 uppercase tracking-wider">Occupied</span>
           </div>
         ) : hasBookings ? (
           <div className="absolute inset-0">
@@ -363,7 +368,11 @@ const BookingTimeline: React.FC<BookingTimelineProps> = ({ data, viewMode, loadi
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-            <span className="text-[10px] font-bold text-gray-600">{data.stats.maintenanceRooms + data.stats.blockedRooms} Maint.</span>
+            <span className="text-[10px] font-bold text-gray-600">{data.stats.maintenanceRooms} Maint.</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-orange-400"></div>
+            <span className="text-[10px] font-bold text-gray-600">{data.stats.blockedRooms} Occupied</span>
           </div>
           <div className="flex items-center gap-1.5">
             <FiUser size={10} className="text-gray-400" />

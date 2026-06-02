@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   FiSearch,
   FiCalendar,
@@ -13,6 +13,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
 import api from "../../lib/axios";
 import Pagination from "../../components/layout/Pagination";
+import { useQueryParams } from "../../hooks/useQueryParams";
 import { FaEye } from "react-icons/fa";
 import ExtendStayModal from "../../components/checkinComp/ExtendStayModal";
 import GenerateBillModal from "../../components/checkinComp/GanerateBillModel";
@@ -20,9 +21,17 @@ import ViewCheckin from "../../components/checkinComp/ViewCheckin";
 import CheckinForm from "../../components/checkinComp/CheckinForm";
 
 const CheckInFullPage = () => {
-  const [activeTab, setActiveTab] = useState<"Individual" | "Corporate">(
-    "Individual",
-  );
+  const { getParam, setMultipleParams } = useQueryParams();
+  const isMounted = useRef(false);
+
+  // URL-driven string filters
+  const activeTab = (getParam("tab") as "Individual" | "Corporate") ?? "Individual";
+  const urlSearch = getParam("search") ?? "";
+  const urlStatus = getParam("status") ?? "";
+  const urlRoomType = getParam("roomType") ?? "";
+  const urlDateType = getParam("dateType") ?? "checkIn";
+  const urlPage = Number(getParam("page") ?? "1");
+
   const [loading, setLoading] = useState(false);
   const [checkins, setCheckins] = useState([]);
   const [stats, setStats] = useState({
@@ -31,15 +40,15 @@ const CheckInFullPage = () => {
     expectedCheckouts: 0,
   });
 
-  // Filters State
+  // Filters State — dates stay in local state; string fields initialized from URL
   const [filters, setFilters] = useState({
     startDate: null as Date | null,
     endDate: null as Date | null,
-    search: "",
-    roomType: "",
-    dateType: "checkIn",
-    status: "",
-    page: 1,
+    search: urlSearch,
+    roomType: urlRoomType,
+    dateType: urlDateType,
+    status: urlStatus,
+    page: urlPage,
     limit: 10,
   });
   const [roomTypes, setRoomTypes] = useState([]);
@@ -99,8 +108,23 @@ const handleCheckoutClick = (item: any) => {
     }
   };
 
+  // Sync string filters to URL whenever they change (skip on initial mount)
+  useEffect(() => {
+    if (!isMounted.current) { isMounted.current = true; return; }
+    setMultipleParams({
+      tab: activeTab === "Individual" ? "" : activeTab,
+      search: filters.search,
+      status: filters.status,
+      roomType: filters.roomType,
+      dateType: filters.dateType === "checkIn" ? "" : filters.dateType,
+      page: filters.page === 1 ? "" : String(filters.page),
+    }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, filters.search, filters.status, filters.roomType, filters.dateType, filters.page]);
+
   useEffect(() => {
     fetchCheckins();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeTab,
     filters.page,
@@ -158,13 +182,13 @@ const handleCheckoutClick = (item: any) => {
         {/* 1. Toggle Individual/Corporate */}
         <div className="flex p-1.5 bg-gray-100 rounded-2xl w-fit">
           <button
-            onClick={() => setActiveTab("Individual")}
+            onClick={() => setMultipleParams({ tab: "", page: "" }, { replace: true })}
             className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "Individual" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
           >
             Individual
           </button>
           <button
-            onClick={() => setActiveTab("Corporate")}
+            onClick={() => setMultipleParams({ tab: "Corporate", page: "" }, { replace: true })}
             className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "Corporate" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`}
           >
             Corporate

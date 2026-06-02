@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { FaPlus } from "react-icons/fa";
 import api from "../../lib/axios";
+import { useQueryParams } from "../../hooks/useQueryParams";
 import CreateBooking from "../../components/bookingComp/CreateBooking";
 import ManageBooking from "../../components/bookingComp/ManageBooking";
 import BookingOverview from "../../components/bookingComp/BookingOverview";
@@ -9,12 +10,14 @@ import EditBookingModal from "../../components/bookingComp/EditBookingModal";
 import CancelBookingModal from "../../components/bookingComp/CancelBookingModal";
 
 const BookingFullPage = () => {
+  const { getParam, setMultipleParams } = useQueryParams();
+  const isMounted = useRef(false);
+
   const [showPopup, setShowPopup] = useState(false);
   const [bookingKey, setBookingKey] = useState(0);
 
   // Data States
   const [bookings, setBookings] = useState([]);
-  // const [overviewData, setOverviewData] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [showCheckIn, setShowCheckIn] = useState(false);
@@ -24,17 +27,17 @@ const BookingFullPage = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
-  // Pagination & Filters
+  // Pagination & Filters — string fields initialized from URL
   const [pagination, setPagination] = useState({
-    currentPage: 1,
+    currentPage: Number(getParam("page") ?? "1"),
     totalPages: 1,
     limit: 10,
   });
   const [filters, setFilters] = useState({
-    search: "",
-    status: "",
-    bookingType: "",
-    source: "",
+    search: getParam("search") ?? "",
+    status: getParam("status") ?? "",
+    bookingType: getParam("bookingType") ?? "",
+    source: getParam("source") ?? "",
     startDate: null as Date | null,
     endDate: null as Date | null,
     month: new Date().getMonth() + 1,
@@ -56,6 +59,19 @@ const BookingFullPage = () => {
   setSelectedBooking(booking);
   setShowCheckIn(true);
 };
+  // Sync string filters + page to URL whenever they change
+  useEffect(() => {
+    if (!isMounted.current) { isMounted.current = true; return; }
+    setMultipleParams({
+      search: filters.search,
+      status: filters.status,
+      bookingType: filters.bookingType,
+      source: filters.source,
+      page: pagination.currentPage === 1 ? "" : String(pagination.currentPage),
+    }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.search, filters.status, filters.bookingType, filters.source, pagination.currentPage]);
+
   // --- API FETCH LOGIC ---
 
   // 1. Fetch List Data

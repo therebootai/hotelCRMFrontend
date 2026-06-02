@@ -1,12 +1,15 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useDebounce } from "../../hooks/useDebounce";
+import { useQueryParams } from "../../hooks/useQueryParams";
 import type { StaffMember } from "./types";
 
 export function useStaffFilters(staffList: StaffMember[]) {
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [searchInput, setSearchInput] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all"); // "all" | "active" | "disabled"
-  const [sortOrder, setSortOrder] = useState("newest"); // "newest" | "oldest"
+  const { getParam, updateFilters } = useQueryParams();
+
+  const searchInput = getParam("search") ?? "";
+  const roleFilter = getParam("role") ?? "all";
+  const statusFilter = getParam("staffStatus") ?? "all";
+  const sortOrder = getParam("sort") ?? "newest";
 
   const debouncedSearch = useDebounce(searchInput, 300);
 
@@ -36,6 +39,11 @@ export function useStaffFilters(staffList: StaffMember[]) {
         return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
       });
   }, [staffList, roleFilter, statusFilter, sortOrder, debouncedSearch]);
+
+  const setSearchInput = (v: string) => updateFilters("search", v, { replace: true });
+  const setRoleFilter = (v: string) => updateFilters("role", v === "all" ? "" : v);
+  const setStatusFilter = (v: string) => updateFilters("staffStatus", v === "all" ? "" : v);
+  const setSortOrder = (v: string) => updateFilters("sort", v === "newest" ? "" : v);
 
   return {
     roleFilter,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FiPlus, FiArrowLeft, FiLoader, FiCalendar } from "react-icons/fi";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useQueryParams } from "../../hooks/useQueryParams";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 import { AxiosError } from "axios";
@@ -23,17 +24,17 @@ const TABS = [
 type TabId = typeof TABS[number]["id"];
 
 export default function RoomMaster() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tabId = (searchParams.get("tab") as TabId) || "room-master";
-  const activeTab = TABS.find((t) => t.id === tabId)?.label ?? "Room Master";
+  const { getParam, updateFilters, setMultipleParams } = useQueryParams();
 
-  const setActiveTabId = (id: TabId) => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.set("tab", id);
-      return next;
-    });
+  const tabId = (getParam("tab") as TabId) ?? "room-master";
+  const activeTab = TABS.find((t) => t.id === tabId)?.label ?? "Room Master";
+  const currentPage = Number(getParam("page") ?? "1");
+  const filters = {
+    roomType: getParam("roomType") ?? "",
+    status: getParam("status") ?? "",
   };
+
+  const setActiveTabId = (id: TabId) => updateFilters("tab", id);
 
   const [view, setView] = useState<"list" | "add">("list");
 
@@ -42,7 +43,6 @@ export default function RoomMaster() {
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
 
   // Backend Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 40;
@@ -56,8 +56,6 @@ export default function RoomMaster() {
   // Settings Modals State
   const [isRoomTypeModalOpen, setIsRoomTypeModalOpen] = useState(false);
   const [isAmenityModalOpen, setIsAmenityModalOpen] = useState(false);
-
-  const [filters, setFilters] = useState({ roomType: '', status: '' });
 
   const fetchRooms = async () => {
     try {
@@ -95,10 +93,11 @@ export default function RoomMaster() {
     if (tabId === "room-master") {
       fetchRooms();
     }
-  }, [tabId, currentPage, filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabId, currentPage, filters.roomType, filters.status]);
 
   const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
+    updateFilters("page", String(newPage));
   };
 
   const handleEditRoom = (room: Room) => {
@@ -121,7 +120,7 @@ export default function RoomMaster() {
       setRoomToDelete(null);
 
       if (rooms.length === 1 && currentPage > 1) {
-        setCurrentPage((prev) => prev - 1);
+        updateFilters("page", String(currentPage - 1));
       } else {
         fetchRooms();
       }
@@ -220,8 +219,7 @@ export default function RoomMaster() {
           <RoomFilters
             filters={filters}
             onFilterChange={(key, value) => {
-              setFilters((prev) => ({ ...prev, [key]: value }));
-              setCurrentPage(1);
+              setMultipleParams({ [key]: value, page: "1" });
             }}
           />
           <div className="mt-4 flex flex-col lg:flex-row items-start gap-6">

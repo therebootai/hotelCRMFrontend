@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQueryParams } from "../../hooks/useQueryParams";
+import { useDebounce } from "../../hooks/useDebounce";
 import {
   FiSearch,
   FiPlus,
@@ -28,19 +30,21 @@ export default function AccessPackages() {
   );
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const { getParam, updateFilters } = useQueryParams();
+
+  const search = getParam("search") ?? "";
+  const packageType = getParam("packageType") ?? "all";
+  const statusFilter = getParam("status") ?? "all";
+  const debouncedSearch = useDebounce(search, 300);
+
   const [packages, setPackages] = useState<AccessPackageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Filters state
-  const [search, setSearch] = useState("");
-  const [packageType, setPackageType] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const fetchPackages = async () => {
     try {
       setIsLoading(true);
       const params: Record<string, string> = {};
-      if (search.trim()) params.search = search.trim();
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (packageType !== "all") params.packageType = packageType;
       if (statusFilter !== "all") params.isActive = statusFilter;
 
@@ -61,7 +65,8 @@ export default function AccessPackages() {
 
   useEffect(() => {
     fetchPackages();
-  }, [search, packageType, statusFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, packageType, statusFilter]);
 
   const handleEditClick = (pkg: AccessPackageData) => {
     setEditingData(pkg);
@@ -164,7 +169,7 @@ export default function AccessPackages() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => updateFilters("search", e.target.value, { replace: true })}
             placeholder="Search by package name or ID..."
             className="input-field pl-10 py-2.5"
           />
@@ -173,7 +178,7 @@ export default function AccessPackages() {
         <div className="relative min-w-40">
           <select
             value={packageType}
-            onChange={(e) => setPackageType(e.target.value)}
+            onChange={(e) => updateFilters("packageType", e.target.value === "all" ? "" : e.target.value)}
             className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-text-primary focus:outline-none cursor-pointer"
           >
             <option value="all">All Types</option>
@@ -189,7 +194,7 @@ export default function AccessPackages() {
         <div className="relative min-w-40">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => updateFilters("status", e.target.value === "all" ? "" : e.target.value)}
             className="w-full appearance-none bg-gray-100 border-none rounded-lg px-4 py-2.5 text-sm font-medium text-text-primary focus:outline-none cursor-pointer"
           >
             <option value="all">All Statuses</option>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { FiLoader, FiInfo } from "react-icons/fi";
 import toast from "react-hot-toast";
 import api from "../../../lib/axios";
@@ -37,7 +37,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingDeps, setIsFetchingDeps] = useState(true);
 
-  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+  const [roomTypes, setRoomTypes] = useState<{ _id: string; name: string; basePrice: number }[]>([]);
   const [taxes, setTaxes] = useState<TaxGst[]>([]);
   const [amenitiesList, setAmenitiesList] = useState<Amenity[]>([]);
 
@@ -50,7 +50,6 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
     maxChildren: "0",
     extraBedAllowed: false,
     extraBedCharge: "0",
-    basePrice: "",
     discountPercentage: "0",
     gstId: "",
     roomSize: "",
@@ -86,7 +85,6 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
             maxChildren: initialData.maxChildren?.toString() || "0",
             extraBedAllowed: initialData.extraBedAllowed || false,
             extraBedCharge: initialData.extraBedCharge?.toString() || "0",
-            basePrice: initialData.basePrice?.toString() || "",
             discountPercentage: initialData.discountPercentage?.toString() || "0",
             gstId: initialData.gstId?._id || "",
             roomSize: initialData.roomSize?.toString() || "",
@@ -137,13 +135,6 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
     if (!formData.roomNumber.trim()) newErrors.roomNumber = "Room Number is required";
     if (!formData.roomType) newErrors.roomType = "Room Type is required";
 
-    const basePriceNum = Number(formData.basePrice);
-    if (formData.basePrice === "" || isNaN(basePriceNum)) {
-      newErrors.basePrice = "Base Price is required";
-    } else if (basePriceNum < 0) {
-      newErrors.basePrice = "Cannot be negative";
-    }
-
     const discountNum = Number(formData.discountPercentage);
     if (discountNum < 0 || discountNum > 100) {
       newErrors.discountPercentage = "Must be between 0 and 100";
@@ -191,7 +182,6 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
         maxAdults: Number(formData.maxAdults),
         maxChildren: Number(formData.maxChildren),
         extraBedCharge: Number(formData.extraBedCharge) || 0,
-        basePrice: Number(formData.basePrice),
         discountPercentage: Number(formData.discountPercentage) || 0,
         roomSize: formData.roomSize ? Number(formData.roomSize) : undefined,
       };
@@ -222,6 +212,11 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
     }
   };
 
+  const selectedRoomTypePrice = useMemo(() => {
+    const found = roomTypes.find((rt) => rt._id === formData.roomType);
+    return found ? found.basePrice : null;
+  }, [roomTypes, formData.roomType]);
+
   if (isFetchingDeps) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-text-secondary">
@@ -231,10 +226,11 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
     );
   }
 
-  const numericBasePrice = Number(formData.basePrice) || 0;
+  const basePrice = selectedRoomTypePrice ?? 0;
+  const numericBasePrice = basePrice;
   const numericDiscount = Number(formData.discountPercentage) || 0;
-  const discountAmount = (numericBasePrice * numericDiscount) / 100;
-  const discountedPrice = numericBasePrice - discountAmount;
+  const discountAmount = (basePrice * numericDiscount) / 100;
+  const discountedPrice = basePrice - discountAmount;
 
   const selectedTax = taxes.find((t) => t._id === formData.gstId);
   const taxPercentage = selectedTax?.percentage || 0;
@@ -374,19 +370,18 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="input-label">Base Price *</label>
-                  <input
-                    type="number"
-                    name="basePrice"
-                    value={formData.basePrice}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    className={`input-field ${errors.basePrice ? "border-danger focus:ring-danger/20" : ""}`}
-                  />
-                  {errors.basePrice && (
-                    <p className="text-xs text-danger mt-1 font-medium">
-                      {errors.basePrice}
-                    </p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Base Price (₹)
+                  </label>
+                  {selectedRoomTypePrice !== null ? (
+                    <div className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-800">
+                      ₹{selectedRoomTypePrice.toLocaleString()}
+                      <span className="text-xs text-gray-500 ml-2">(set by room type)</span>
+                    </div>
+                  ) : (
+                    <div className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-400">
+                      Select a room type to see price
+                    </div>
                   )}
                 </div>
                 <div>

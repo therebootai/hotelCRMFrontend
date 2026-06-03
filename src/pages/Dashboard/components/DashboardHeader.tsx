@@ -1,6 +1,10 @@
 import { FiChevronLeft, FiChevronRight, FiPlus } from 'react-icons/fi';
 
-const DashboardHeader = () => {
+interface Props {
+  onNewBooking: () => void;
+}
+
+const DashboardHeader = ({ onNewBooking }: Props) => {
   return (
     <div className="flex items-center justify-between w-full">
       
@@ -20,7 +24,7 @@ const DashboardHeader = () => {
       </div>
 
       {/* Primary Action */}
-      <button className="btn-primary flex items-center gap-2 shadow-md shadow-primary/20">
+      <button onClick={onNewBooking} className="btn-primary flex items-center gap-2 shadow-md shadow-primary/20">
         <FiPlus size={18} />
         <span>New Booking</span>
       </button>

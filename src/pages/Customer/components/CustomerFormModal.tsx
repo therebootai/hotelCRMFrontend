@@ -57,10 +57,21 @@ const CustomerFormModal = ({ editing, onClose, onSubmit }: CustomerFormModalProp
   const [formData, setFormData] = useState<CustomerFormState>(() =>
     buildInitialForm(editing),
   );
+  const [phoneError, setPhoneError] = useState("");
   const modalRef = useClickOutside<HTMLDivElement>(onClose, true);
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+    setFormData((prev) => ({ ...prev, phone: digits }));
+    setPhoneError(digits.length > 0 && digits.length < 10 ? "Mobile number must be exactly 10 digits" : "");
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (formData.phone.length !== 10) {
+      setPhoneError("Mobile number must be exactly 10 digits");
+      return;
+    }
     onSubmit({
       name: formData.name,
       phone: formData.phone,
@@ -108,14 +119,16 @@ const CustomerFormModal = ({ editing, onClose, onSubmit }: CustomerFormModalProp
                 Mobile Phone *
               </label>
               <input
-                type="text"
+                type="tel"
                 required
+                maxLength={10}
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                }
-                className="border border-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                onChange={handlePhoneChange}
+                className={`border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary ${phoneError ? "border-red-400" : "border-border"}`}
               />
+              {phoneError && (
+                <span className="text-[10px] text-red-500">{phoneError}</span>
+              )}
             </div>
           </div>
 

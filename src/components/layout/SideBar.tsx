@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import CreateBooking from '../bookingComp/CreateBooking';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   FiLayout,
   FiCalendar,
@@ -35,10 +36,13 @@ const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: stri
 
 const SideBar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   
   const isMasterActive = location.pathname.includes('/master');
   
   const [isMastersOpen, setIsMastersOpen] = useState(isMasterActive);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingKey, setBookingKey] = useState(0);
 
   useEffect(() => {
     if (isMasterActive) {
@@ -185,11 +189,21 @@ const SideBar = () => {
       {/* Bottom Floating Action */}
       <div className="p-6 border-t border-border bg-card">
         {/* Replaced manual styling with your global .btn-primary class */}
-        <button className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-base">
+        <button
+          className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-base"
+          onClick={() => { setBookingKey(k => k + 1); setShowBookingModal(true); }}
+        >
           <FiPlusCircle size={18} />
           <span>New Booking</span>
         </button>
       </div>
+      {showBookingModal && (
+        <CreateBooking
+          key={bookingKey}
+          onClose={() => setShowBookingModal(false)}
+          refreshBookings={() => navigate('/bookings')}
+        />
+      )}
     </aside>
   );
 };

@@ -137,6 +137,8 @@ const EditBookingModal = ({
       children: 0,
     },
   ]);
+  const [availableCounts, setAvailableCounts] = useState<Record<string, number>>({});
+  const [countLoading, setCountLoading] = useState<Record<string, boolean>>({});
 
   // Customer Details
   const [customerForm, setCustomerForm] = useState({
@@ -301,6 +303,34 @@ const EditBookingModal = ({
       }
     }
   }, [booking]);
+
+  const fetchAvailableCount = useCallback(async (rowId: string, rtId: string, ci: Date, co: Date) => {
+    setCountLoading(prev => ({ ...prev, [rowId]: true }));
+    try {
+      const res = await api.get("/bookings/room-type-count", {
+        params: { roomTypeId: rtId, checkIn: ci.toISOString(), checkOut: co.toISOString() },
+      });
+      const count: number = res.data.data?.availableCount ?? 0;
+      setAvailableCounts(prev => ({ ...prev, [rowId]: count }));
+      setSelectedRoomTypes(prev =>
+        prev.map(r => r.id === rowId && count > 0 && r.count > count ? { ...r, count } : r)
+      );
+    } catch {
+      // silently ignore; backend validation will catch on submit
+    } finally {
+      setCountLoading(prev => ({ ...prev, [rowId]: false }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!checkInDate || !checkOutDate) return;
+    selectedRoomTypes.forEach(entry => {
+      if (entry.roomTypeId) {
+        fetchAvailableCount(entry.id, entry.roomTypeId, checkInDate, checkOutDate);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkInDate, checkOutDate, fetchAvailableCount]);
 
   // Load room types and access packages
   useEffect(() => {
@@ -1131,10 +1161,14 @@ const EditBookingModal = ({
                                         roomTypeId: e.target.value,
                                         roomTypeName: t?.name || "",
                                         basePrice: t?.basePrice || 0,
+                                        count: 1,
                                       }
                                     : r,
                                 ),
                               );
+                              if (e.target.value && checkInDate && checkOutDate) {
+                                fetchAvailableCount(entry.id, e.target.value, checkInDate, checkOutDate);
+                              }
                             }}
                             className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none font-bold"
                           >
@@ -1154,28 +1188,30 @@ const EditBookingModal = ({
                               Rooms
                             </label>
                           )}
-                          <input
-                            type="number"
-                            min={1}
-                            max={20}
+                          <select
                             value={entry.count}
+                            disabled={!entry.roomTypeId || !checkInDate || !checkOutDate || !!countLoading[entry.id]}
                             onChange={(e) =>
                               setSelectedRoomTypes(
                                 selectedRoomTypes.map((r) =>
-                                  r.id === entry.id
-                                    ? {
-                                        ...r,
-                                        count: Math.max(
-                                          1,
-                                          Number(e.target.value),
-                                        ),
-                                      }
-                                    : r,
-                                ),
+                                  r.id === entry.id ? { ...r, count: Number(e.target.value) } : r
+                                )
                               )
                             }
-                            className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none text-center font-bold"
-                          />
+                            className="w-full border border-border rounded-lg p-2 text-xs bg-white outline-none text-center font-bold disabled:opacity-50"
+                          >
+                            {countLoading[entry.id] ? (
+                              <option>Loading...</option>
+                            ) : !entry.roomTypeId || availableCounts[entry.id] === undefined ? (
+                              <option value={1}>1</option>
+                            ) : availableCounts[entry.id] === 0 ? (
+                              <option value={0}>No rooms available</option>
+                            ) : (
+                              Array.from({ length: availableCounts[entry.id] }, (_, i) => (
+                                <option key={i + 1} value={i + 1}>{i + 1}</option>
+                              ))
+                            )}
+                          </select>
                         </div>
 
                         {/* Adults */}

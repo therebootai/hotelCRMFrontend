@@ -214,7 +214,7 @@ interface BookingTagBadgeProps {
 
 const BookingTagBadge: React.FC<BookingTagBadgeProps> = ({ tag }) => (
   <span
-    className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${tag.bgColor} ${tag.textColor}`}
+    className={`px-1.5 py-0.5 rounded text-[13px] font-bold ${tag.bgColor} ${tag.textColor}`}
   >
     {tag.code}
   </span>
@@ -263,7 +263,7 @@ const BookingBar: React.FC<BookingBarProps> = ({
     >
       {/* Avatar */}
       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-        <span className="text-white text-[10px] font-bold">
+        <span className="text-white text-[14px] font-bold">
           {booking.guest.name.charAt(0)}
         </span>
       </div>
@@ -276,7 +276,7 @@ const BookingBar: React.FC<BookingBarProps> = ({
           </p>
           <BookingTagBadge tag={booking.tag} />
         </div>
-        <p className="text-[9px] text-gray-500 flex items-center gap-1">
+        <p className="text-[13px] text-gray-500 flex items-center gap-1">
           <FiPhone size={8} />
           {booking.guest.phone}
         </p>
@@ -302,7 +302,7 @@ const AvailabilityBar: React.FC<AvailabilityBarProps> = ({
       width: `${width * dayWidth - 8}px`,
     }}
   >
-    <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">
+    <span className="text-[14px] font-bold text-green-600 uppercase tracking-wider">
       Available
     </span>
   </div>
@@ -322,7 +322,7 @@ const MaintenanceBar: React.FC<MaintenanceBarProps> = ({ width, dayWidth }) => (
       width: `${width * dayWidth - 8}px`,
     }}
   >
-    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+    <span className="text-[14px] font-bold text-gray-500 uppercase tracking-wider">
       Maintenance Blocked
     </span>
   </div>
@@ -360,7 +360,7 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({
           <button className="p-1 hover:bg-gray-100 rounded transition-colors">
             <FiChevronLeft size={16} className="text-gray-500" />
           </button>
-          <button className="px-3 py-1 text-[10px] font-bold text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50">
+          <button className="px-3 py-1 text-[14px] font-bold text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50">
             Today
           </button>
           <button className="p-1 hover:bg-gray-100 rounded transition-colors">
@@ -388,7 +388,7 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({
             style={{ width: `${dayWidth}px` }}
           >
             <span
-              className={`text-[10px] font-medium ${col.isToday ? "text-red-600" : "text-gray-500"}`}
+              className={`text-[14px] font-medium ${col.isToday ? "text-red-600" : "text-gray-500"}`}
             >
               {col.dayName}
             </span>
@@ -398,7 +398,7 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({
               {col.dayNumber}
             </span>
             {col.isToday && (
-              <span className="text-[8px] font-bold text-red-500 uppercase mt-0.5">
+              <span className="text-[16px] font-bold text-red-500 uppercase mt-0.5">
                 Today
               </span>
             )}
@@ -457,7 +457,7 @@ const RoomRow: React.FC<RoomRowProps> = ({
             <p className="text-sm font-black text-gray-800">
               Room {room.number}
             </p>
-            <p className="text-[10px] text-gray-500">{room.type}</p>
+            <p className="text-[14px] text-gray-500">{room.type}</p>
           </div>
         </div>
       </div>
@@ -580,26 +580,26 @@ const BookingTimeline: React.FC = () => {
       <div className="bg-white border-b border-gray-100 px-4 py-2 flex items-center gap-4 overflow-x-auto scrollbar-hide">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500"></div>
-          <span className="text-[10px] font-bold text-gray-600">
+          <span className="text-[14px] font-bold text-gray-600">
             {stats.availableRooms} Available
           </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-          <span className="text-[10px] font-bold text-gray-600">
+          <span className="text-[14px] font-bold text-gray-600">
             {stats.occupiedRooms} Occupied
           </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-          <span className="text-[10px] font-bold text-gray-600">
+          <span className="text-[14px] font-bold text-gray-600">
             {stats.maintenanceRooms} Maintenance
           </span>
         </div>
         <div className="h-4 w-px bg-gray-200"></div>
         <div className="flex items-center gap-2">
           <FiUser size={12} className="text-gray-400" />
-          <span className="text-[10px] font-bold text-gray-600">
+          <span className="text-[14px] font-bold text-gray-600">
             {stats.activeBookings} Active Bookings
           </span>
         </div>
@@ -624,7 +624,7 @@ const BookingTimeline: React.FC = () => {
       {/* Legend */}
       <div className="bg-white border-t border-gray-100 px-4 py-3">
         <div className="flex items-center gap-4 flex-wrap">
-          <span className="text-[10px] font-bold text-gray-500 uppercase">
+          <span className="text-[14px] font-bold text-gray-500 uppercase">
             Legend:
           </span>
           {BOOKING_TAGS.map((tag) => (
@@ -632,16 +632,16 @@ const BookingTimeline: React.FC = () => {
               <div
                 className={`w-3 h-3 rounded ${tag.bgColor} border-l-2 ${tag.textColor.replace("text-", "border-l-")}`}
               ></div>
-              <span className="text-[10px] text-gray-600">{tag.code}</span>
+              <span className="text-[14px] text-gray-600">{tag.code}</span>
             </div>
           ))}
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-green-50 border border-green-100"></div>
-            <span className="text-[10px] text-gray-600">Available</span>
+            <span className="text-[14px] text-gray-600">Available</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-gray-100 border-2 border-dashed border-gray-300"></div>
-            <span className="text-[10px] text-gray-600">Maintenance</span>
+            <span className="text-[14px] text-gray-600">Maintenance</span>
           </div>
         </div>
       </div>

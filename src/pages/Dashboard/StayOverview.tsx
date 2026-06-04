@@ -48,7 +48,7 @@ const SummaryCard = ({
     </span>
     <div className="flex items-baseline gap-1">
       <span className="text-[24px] font-bold text-text-primary">{value}</span>
-      <span className="text-[16px] font-bold text-text-secondary">
+      <span className="text-[8px] font-bold text-text-secondary">
         /{total}
       </span>
     </div>
@@ -77,7 +77,7 @@ const BookingBlock = ({
         style={{ gridColumn: `${startCol} / span ${span}` }}
       >
         <BiWrench size={14} className="text-text-secondary shrink-0" />
-        <span className="text-[12px] font-bold text-text-secondary truncate">
+        <span className="text-[8px] font-bold text-text-secondary truncate">
           BLOCKED
         </span>
       </div>
@@ -94,7 +94,7 @@ const BookingBlock = ({
       <div className="flex justify-between items-start gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <BiUser size={12} className="text-primary shrink-0" />
-          <span className="text-[13px] font-bold text-text-primary truncate">
+          <span className="text-[9px] font-bold text-text-primary truncate">
             {booking.guest}
           </span>
         </div>
@@ -340,7 +340,7 @@ const StayOverview = () => {
             </button>
             <button
               onClick={() => setShowPicker(!showPicker)}
-              className="flex items-center gap-2 text-[13px] font-bold px-3 py-1 hover:bg-gray-50 rounded-md"
+              className="flex items-center gap-2 text-[9px] font-bold px-3 py-1 hover:bg-gray-50 rounded-md"
             >
               <FiCalendar size={16} className="text-primary" />
               <span>
@@ -422,7 +422,7 @@ const StayOverview = () => {
                   <span className="text-[10px] font-bold uppercase">
                     {d.toLocaleDateString("en-US", { weekday: "short" })}
                   </span>
-                  <span className="text-[14px] font-bold">{d.getDate()}</span>
+                  <span className="text-[10px] font-bold">{d.getDate()}</span>
                 </div>
               );
             })}
@@ -436,7 +436,7 @@ const StayOverview = () => {
           ) : (
             timelineData.map((category: any, cIdx: number) => (
               <div key={cIdx}>
-                <div className="bg-gray-50 px-4 py-2 border-b text-[12px] font-bold">
+                <div className="bg-gray-50 px-4 py-2 border-b text-[8px] font-bold">
                   {category.category}
                 </div>
                 {category.rooms.map((room: any) => (
@@ -448,7 +448,7 @@ const StayOverview = () => {
                     {/* Room Cell */}
                     <div className="p-3 border-r bg-white z-20 flex flex-col justify-center">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[14px] font-bold">
+                        <span className="text-[10px] font-bold">
                           {room.roomNumber}
                         </span>
                         <FaSnowflake

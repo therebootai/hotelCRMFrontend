@@ -1,10 +1,17 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardHeader from "./components/DashboardHeader";
 import RoomStatusBoard from "./components/RoomStatusBoard";
 import OperationsOverview from "./components/OperationsOverview";
 import KpiMetrics from "./components/KpiMetrics";
 import { useDashboardData } from "./useDashboardData";
+import CreateBooking from "../../components/bookingComp/CreateBooking";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingKey, setBookingKey] = useState(0);
+
   const {
     arrivals,
     departures,
@@ -30,7 +37,7 @@ const Dashboard = () => {
       )}
 
       <section className="w-full">
-        <DashboardHeader />
+        <DashboardHeader onNewBooking={() => { setBookingKey(k => k + 1); setShowBookingModal(true); }} />
       </section>
 
       <section className="w-full">
@@ -53,6 +60,14 @@ const Dashboard = () => {
       <section className="w-full mt-14">
         <KpiMetrics metrics={kpis} loading={loading} />
       </section>
+
+      {showBookingModal && (
+        <CreateBooking
+          key={bookingKey}
+          onClose={() => setShowBookingModal(false)}
+          refreshBookings={() => navigate('/bookings')}
+        />
+      )}
     </div>
   );
 };

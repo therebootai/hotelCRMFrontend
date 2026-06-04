@@ -221,11 +221,25 @@ interface BookingTimelineProps {
   loading: boolean;
 }
 
+const SIDEBAR_WIDTH = 110;
+const MIN_DAY_WIDTH: Record<ViewMode, number> = { daily: 100, weekly: 50, monthly: 35 };
+
 const BookingTimeline: React.FC<BookingTimelineProps> = ({ data, viewMode, loading }) => {
-  const dayWidth = viewMode === "daily" ? 100 : viewMode === "weekly" ? 50 : 35;
   const today = startOfDay(new Date());
+  const containerRef = useRef<HTMLDivElement>(null);
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const measure = () => {
+      if (containerRef.current) setContainerWidth(containerRef.current.clientWidth);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   // Sync scroll between header and body
   const handleBodyScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -265,6 +279,13 @@ const BookingTimeline: React.FC<BookingTimelineProps> = ({ data, viewMode, loadi
       isWeekend: date.getDay() === 0 || date.getDay() === 6,
     }));
   }, [data, today]);
+
+  const dayWidth = useMemo(() => {
+    const min = MIN_DAY_WIDTH[viewMode];
+    if (!containerWidth || columns.length === 0) return min;
+    const available = containerWidth - SIDEBAR_WIDTH;
+    return Math.max(min, Math.floor(available / columns.length));
+  }, [containerWidth, columns.length, viewMode]);
 
   const totalWidth = columns.length * dayWidth;
   const rooms = data?.rooms || [];
@@ -315,7 +336,7 @@ const BookingTimeline: React.FC<BookingTimelineProps> = ({ data, viewMode, loadi
   const timelineStartDate = columns[0]?.date || new Date();
 
   return (
-    <div className="flex flex-col h-full bg-gray-50/30 overflow-hidden">
+    <div ref={containerRef} className="flex flex-col h-full bg-gray-50/30 overflow-hidden">
       {/* Date Header - inside scroll container for sync */}
       <div
         ref={headerScrollRef}

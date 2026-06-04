@@ -357,20 +357,10 @@ const EditBookingModal = ({
     setTotalNights(nights > 0 ? nights : 1);
   }, [checkInDate, checkOutDate]);
 
-  // Validate check-out time is after check-in time for same-day bookings
+  // When check-in changes, ensure check-out remains after check-in
   useEffect(() => {
-    if (checkInDate && checkOutDate) {
-      const checkInTime = checkInDate.getTime();
-      const checkOutTime = checkOutDate.getTime();
-
-      // If same day and check-out time is before or equal to check-in time
-      if (
-        checkInTime >= checkOutTime &&
-        checkInDate.toDateString() === checkOutDate.toDateString()
-      ) {
-        // Set check-out to check-in date + 1 day at same time
-        setCheckOutDate(addDays(checkInDate, 1));
-      }
+    if (checkInDate && checkOutDate && checkInDate.getTime() >= checkOutDate.getTime()) {
+      setCheckOutDate(addDays(checkInDate, 1));
     }
   }, [checkInDate]);
 
@@ -417,6 +407,7 @@ const EditBookingModal = ({
   const calculateTotals = useCallback(() => {
     const selectedTax = taxOptions.find((t) => t._id === selectedTaxId);
     const taxRate = selectedTax ? selectedTax.percentage / 100 : 0;
+    const addonTotal = selectedAddons.reduce((s, a) => s + a.total, 0);
 
     if (bookingCategory === "Day Access") {
       const pkg = accessPackages.find((p) => p._id === selectedPackageId);
@@ -426,12 +417,13 @@ const EditBookingModal = ({
       const extraBedTotal = 0;
       const subtotal = roomTotal;
       const taxAmount = Math.round(subtotal * taxRate);
-      const grandTotal = subtotal + taxAmount;
+      const grandTotal = subtotal + taxAmount + addonTotal;
       const paidAmount = paymentForm.advanceAmount || 0;
       const dueAmount = grandTotal - paidAmount;
       return {
         roomTotal,
         extraBedTotal,
+        addonTotal,
         subtotal,
         taxAmount,
         grandTotal,
@@ -448,13 +440,14 @@ const EditBookingModal = ({
     const extraBedTotal = 0;
     const subtotal = roomTotal + extraBedTotal;
     const taxAmount = Math.round(subtotal * taxRate);
-    const grandTotal = subtotal + taxAmount;
+    const grandTotal = subtotal + taxAmount + addonTotal;
     const paidAmount = paymentForm.advanceAmount || 0;
     const dueAmount = grandTotal - paidAmount;
 
     return {
       roomTotal,
       extraBedTotal,
+      addonTotal,
       subtotal,
       taxAmount,
       grandTotal,
@@ -464,6 +457,7 @@ const EditBookingModal = ({
   }, [
     selectedRoomTypes,
     totalNights,
+    selectedAddons,
     paymentForm.advanceAmount,
     bookingCategory,
     selectedPackageId,
@@ -477,6 +471,7 @@ const EditBookingModal = ({
   const {
     roomTotal,
     extraBedTotal,
+    addonTotal,
     taxAmount,
     grandTotal,
     paidAmount,
@@ -507,6 +502,10 @@ const EditBookingModal = ({
   const submitBooking = async () => {
     if (!customerForm.name || !customerForm.phone) {
       toast.error("Please fill guest name and phone");
+      return;
+    }
+    if (bookingCategory === "Room Stay" && checkInDate.getTime() >= checkOutDate.getTime()) {
+      toast.error("Check-out date must be after check-in date");
       return;
     }
     const validRooms = selectedRoomTypes.filter((e) => e.roomTypeId);
@@ -606,13 +605,13 @@ const EditBookingModal = ({
         payload.selectedTaxId = selectedTaxId;
       }
 
-      const res = await api.post("/bookings/create", payload);
-      toast.success(res.data.message || "Booking created successfully");
+      const res = await api.put(`/bookings/${booking._id}`, payload);
+      toast.success(res.data.message || "Booking updated successfully");
 
       if (refreshBookings) refreshBookings();
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to create booking");
+      toast.error(err.response?.data?.message || "Failed to update booking");
     } finally {
       setLoading(false);
     }
@@ -1662,6 +1661,14 @@ const EditBookingModal = ({
                       </span>
                     </div>
                   )}
+                  {addonTotal > 0 && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-text-secondary">Add-on Services</span>
+                      <span className="font-bold">
+                        ₹{addonTotal.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                   {taxAmount > 0 && (
                     <div className="flex justify-between text-xs">
                       <span className="text-text-secondary">
@@ -1730,7 +1737,7 @@ const EditBookingModal = ({
             ) : (
               <FiCheckCircle size={16} />
             )}
-            {loading ? "Creating..." : "Confirm Booking"}
+            {loading ? "Saving..." : "Update Booking"}
           </button>
         </div>
       </div>

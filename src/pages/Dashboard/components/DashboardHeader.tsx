@@ -14,7 +14,7 @@ const DashboardHeader = ({ onNewBooking }: Props) => {
           <FiChevronLeft size={18} strokeWidth={2.5} />
         </button>
         
-        <h4 className="text-[13px] font-bold text-white">
+        <h4 className="text-sm font-bold text-white">
           Date Filter
         </h4>
         
@@ -24,7 +24,7 @@ const DashboardHeader = ({ onNewBooking }: Props) => {
       </div>
 
       {/* Primary Action */}
-      <button onClick={onNewBooking} className="btn-primary flex items-center gap-2 shadow-md shadow-primary/20">
+      <button onClick={onNewBooking} className="btn-primary flex items-center gap-2 shadow-md shadow-primary/20 text-sm">
         <FiPlus size={18} />
         <span>New Booking</span>
       </button>

@@ -231,7 +231,7 @@ const RoomChangeModal: React.FC<RoomChangeModalProps> = ({
           {/* Error */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-[12px] font-bold text-red-500">{error}</p>
+              <p className="text-[8px] font-bold text-red-500">{error}</p>
             </div>
           )}
         </div>

@@ -54,7 +54,7 @@ const StatusColumn = ({ statusKey, count, rooms }: any) => {
       
       {/* 1. Header Block */}
       <div className={`p-3 border-t-4 ${style.headerBorder} ${style.cardBg}`}>
-        <h4 className={`text-[13px] font-bold ${style.headerText} flex gap-1 justify-center`}>
+        <h4 className={`text-xs font-bold ${style.headerText} flex gap-1 justify-center`}>
           {style.label} <span className="opacity-80">({count})</span>
         </h4>
       </div>
@@ -67,11 +67,11 @@ const StatusColumn = ({ statusKey, count, rooms }: any) => {
             className={`p-3 border-x border-b border-t-0 mt-[8px] ${style.cardBg} ${style.headerBorder} ${idx !== rooms.length - 1 ? '' : 'rounded-b-xl'}`}
           >
             <div className="flex justify-between items-start mb-1.5 gap-2">
-              <span className="text-[12px] font-semibold text-text-primary leading-tight wrap-break-word">{room.type}</span>
-              <span className="text-[12px] font-semibold text-text-primary shrink-0">{room.qty}</span>
+              <span className="text-xs font-semibold text-text-primary leading-tight wrap-break-word">{room.type}</span>
+              <span className="text-xs font-semibold text-text-primary shrink-0">{room.qty}</span>
             </div>
             {/* CHANGED: Added break-words so long number strings wrap instead of breaking the layout */}
-            <p className="text-[11px] text-text-secondary leading-relaxed wrap-break-word">{room.numbers}</p>
+            <p className="text-xs text-text-secondary leading-relaxed wrap-break-word">{room.numbers}</p>
           </div>
         ))}
       </div>
@@ -109,7 +109,7 @@ const RoomStatusBoard = ({ boardData: propBoardData }: RoomStatusBoardProps) => 
           {/* Left Side: Date Toggle Button */}
           <button
             onClick={() => toggleRow(row.id)}
-            className="w-[180px] shrink-0 flex items-center justify-between py-2.5 px-4 bg-[#F1F5F9] hover:bg-[#E2E8F0] rounded-lg transition-colors text-[13px] font-semibold text-text-primary"
+            className="w-[180px] shrink-0 flex items-center justify-between py-2.5 px-4 bg-[#F1F5F9] hover:bg-[#E2E8F0] rounded-lg transition-colors text-xs font-semibold text-text-primary"
           >
             {row.date}
             {row.isExpanded ? (
@@ -139,7 +139,7 @@ const RoomStatusBoard = ({ boardData: propBoardData }: RoomStatusBoardProps) => 
                 className="w-full h-[42px] flex items-center justify-center bg-[#37A108]/10 border-t-2 border-t-[#37A108] rounded-sm cursor-pointer hover:bg-[#37A108]/20 transition-colors"
                 onClick={() => toggleRow(row.id)}
               >
-                <span className="text-[13px] font-bold text-[#37A108] tracking-wide">
+                <span className="text-xs font-bold text-[#37A108] tracking-wide">
                   Available ({row.availableSummary})
                 </span>
               </div>

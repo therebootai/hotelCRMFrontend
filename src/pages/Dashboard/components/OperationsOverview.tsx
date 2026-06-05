@@ -21,13 +21,13 @@ const ExpectedArrivalsCard = ({
   arrivalsCount: number;
   loading?: boolean;
 }) => (
-  <div className="flex flex-col h-full">
+  <div className="card flex flex-col h-full">
     {/* Header */}
     <div className="flex justify-between items-center mb-4">
-      <h3 className="text-[16px] font-semibold text-text-primary">
+      <h3 className="text-sm font-semibold text-text-primary">
         Expected Arrivals
       </h3>
-      <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md tracking-wide">
+      <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md tracking-wide">
         {arrivalsCount} Today
       </span>
     </div>
@@ -48,7 +48,7 @@ const ExpectedArrivalsCard = ({
             </div>
             {/* Details */}
             <div className="flex flex-col">
-              <span className="text-[14px] font-semibold text-text-primary leading-tight mb-0.5">
+              <span className="text-[10px] font-semibold text-text-primary leading-tight mb-0.5">
                 {guest.name}
               </span>
               <span className="text-[11px] text-text-secondary">
@@ -59,7 +59,7 @@ const ExpectedArrivalsCard = ({
 
           {/* Status */}
           {guest.statusType === "text" ? (
-            <span className="text-[12px] font-bold text-primary">
+            <span className="text-[8px] font-bold text-primary">
               {guest.status}
             </span>
           ) : (
@@ -80,13 +80,13 @@ const OccupiedRoomsCard = ({
   floorOccupancy: FloorOccupancy[];
   loading?: boolean;
 }) => (
-  <div className="flex flex-col h-full">
+  <div className="card flex flex-col h-full">
     {/* Header */}
     <div className="flex justify-between items-center mb-4">
-      <h3 className="text-[16px] font-semibold text-text-primary">
+      <h3 className="text-sm font-semibold text-text-primary">
         Occupied Rooms
       </h3>
-      <span className="text-[12px] font-semibold text-text-secondary">
+      <span className="text-xs font-semibold text-text-secondary">
         {floorOccupancy.length > 0
           ? Math.round(
               floorOccupancy.reduce((sum, f) => sum + f.percentage, 0) /
@@ -105,7 +105,7 @@ const OccupiedRoomsCard = ({
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
               {floor.label}
             </span>
-            <span className="text-[12px] font-bold text-text-primary">
+            <span className="text-[8px] font-bold text-text-primary">
               {floor.occupied} / {floor.total}
             </span>
           </div>
@@ -131,13 +131,13 @@ const ExpectedDeparturesCard = ({
   departuresCount: number;
   loading?: boolean;
 }) => (
-  <div className="flex flex-col h-full">
+  <div className="card flex flex-col h-full">
     {/* Header */}
     <div className="flex justify-between items-center mb-4">
-      <h3 className="text-[16px] font-semibold text-text-primary">
+      <h3 className="text-sm font-semibold text-text-primary">
         Expected Departures
       </h3>
-      <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md tracking-wide">
+      <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md tracking-wide">
         {departuresCount} Today
       </span>
     </div>
@@ -156,7 +156,7 @@ const ExpectedDeparturesCard = ({
 
           {/* Name & Time */}
           <div className={`flex flex-col ${guest.isUrgent ? "pl-2" : ""}`}>
-            <span className="text-[14px] font-semibold text-text-primary leading-tight mb-0.5">
+            <span className="text-[10px] font-semibold text-text-primary leading-tight mb-0.5">
               {guest.name}
             </span>
             <span

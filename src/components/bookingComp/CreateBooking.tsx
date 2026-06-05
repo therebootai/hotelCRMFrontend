@@ -747,7 +747,7 @@ const CreateBooking = ({
           .new-booking-modal-container .p-6 { padding: 2rem !important; }
           .new-booking-modal-container .gap-3 { gap: 1rem !important; }
           .new-booking-modal-container .gap-4 { gap: 1.25rem !important; }
-          .new-booking-modal-container .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 2rem !important; }
+          .new-booking-modal-container .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem !important; }
           .new-booking-modal-container .relative > svg { left: 0.75rem !important; }
           .new-booking-modal-container .relative > svg + input { padding-left: 2.5rem !important; }
         }
@@ -757,12 +757,12 @@ const CreateBooking = ({
           .new-booking-modal-container .new-booking-modal-card {
             max-width: 1760px !important;
           }
-          .new-booking-modal-container .text-[9px] { font-size: 0.95rem !important; }
-          .new-booking-modal-container .text-[10px] { font-size: 1.05rem !important; }
-          .new-booking-modal-container .text-xs { font-size: 1.2rem !important; }
-          .new-booking-modal-container .text-sm { font-size: 1.35rem !important; }
-          .new-booking-modal-container .text-base { font-size: 1.5rem !important; }
-          .new-booking-modal-container .text-lg { font-size: 1.75rem !important; }
+          .new-booking-modal-container .text-[9px] { font-size: 0.75rem !important; }
+          .new-booking-modal-container .text-[10px] { font-size: 0.85rem !important; }
+          .new-booking-modal-container .text-xs { font-size: 0.95rem !important; }
+          .new-booking-modal-container .text-sm { font-size: 1.1rem !important; }
+          .new-booking-modal-container .text-base { font-size: 1.25rem !important; }
+          .new-booking-modal-container .text-lg { font-size: 1.45rem !important; }
           .new-booking-modal-container .p-2 { padding: 0.85rem !important; }
           .new-booking-modal-container .p-3 { padding: 1.05rem !important; }
           .new-booking-modal-container .p-4 { padding: 1.55rem !important; }
@@ -770,17 +770,17 @@ const CreateBooking = ({
           .new-booking-modal-container .p-6 { padding: 2.65rem !important; }
           .new-booking-modal-container .gap-3 { gap: 1.35rem !important; }
           .new-booking-modal-container .gap-4 { gap: 1.65rem !important; }
-          .new-booking-modal-container .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 2.65rem !important; }
+          .new-booking-modal-container .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.25rem !important; }
           .new-booking-modal-container input, 
           .new-booking-modal-container select, 
           .new-booking-modal-container textarea {
-            font-size: 1.2rem !important;
+            font-size: 1rem !important;
             padding: 0.8rem 1.05rem !important;
           }
           .new-booking-modal-container .relative > svg { left: 0.95rem !important; }
           .new-booking-modal-container .relative > svg + input { padding-left: 3.15rem !important; }
           .new-booking-modal-container button {
-            font-size: 1.2rem !important;
+            font-size: 1rem !important;
           }
           .new-booking-modal-container .h-9 {
             height: 2.85rem !important;
@@ -799,12 +799,12 @@ const CreateBooking = ({
             max-width: 2450px !important;
             height: 90vh !important;
           }
-          .new-booking-modal-container .text-[9px] { font-size: 1.25rem !important; }
-          .new-booking-modal-container .text-[10px] { font-size: 1.35rem !important; }
-          .new-booking-modal-container .text-xs { font-size: 1.55rem !important; }
-          .new-booking-modal-container .text-sm { font-size: 1.75rem !important; }
-          .new-booking-modal-container .text-base { font-size: 2rem !important; }
-          .new-booking-modal-container .text-lg { font-size: 2.4rem !important; }
+          .new-booking-modal-container .text-[9px] { font-size: 0.9rem !important; }
+          .new-booking-modal-container .text-[10px] { font-size: 1rem !important; }
+          .new-booking-modal-container .text-xs { font-size: 1.15rem !important; }
+          .new-booking-modal-container .text-sm { font-size: 1.3rem !important; }
+          .new-booking-modal-container .text-base { font-size: 1.45rem !important; }
+          .new-booking-modal-container .text-lg { font-size: 1.7rem !important; }
           .new-booking-modal-container .p-2 { padding: 1.15rem !important; }
           .new-booking-modal-container .p-3 { padding: 1.45rem !important; }
           .new-booking-modal-container .p-4 { padding: 2.25rem !important; }
@@ -812,17 +812,17 @@ const CreateBooking = ({
           .new-booking-modal-container .p-6 { padding: 3.75rem !important; }
           .new-booking-modal-container .gap-3 { gap: 1.85rem !important; }
           .new-booking-modal-container .gap-4 { gap: 2.35rem !important; }
-          .new-booking-modal-container .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 3.75rem !important; }
+          .new-booking-modal-container .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.5rem !important; }
           .new-booking-modal-container input, 
           .new-booking-modal-container select, 
           .new-booking-modal-container textarea {
-            font-size: 1.55rem !important;
+            font-size: 1.25rem !important;
             padding: 1.1rem 1.5rem !important;
           }
           .new-booking-modal-container .relative > svg { left: 1.25rem !important; }
           .new-booking-modal-container .relative > svg + input { padding-left: 4.15rem !important; }
           .new-booking-modal-container button {
-            font-size: 1.55rem !important;
+            font-size: 1.25rem !important;
           }
           .new-booking-modal-container .h-9 {
             height: 3.5rem !important;
@@ -854,7 +854,7 @@ const CreateBooking = ({
           .new-booking-modal-container .p-6 { padding: 4.25rem !important; }
           .new-booking-modal-container .gap-3 { gap: 2.15rem !important; }
           .new-booking-modal-container .gap-4 { gap: 2.65rem !important; }
-          .new-booking-modal-container .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 4.25rem !important; }
+          .new-booking-modal-container .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.75rem !important; }
           .new-booking-modal-container input, 
           .new-booking-modal-container select, 
           .new-booking-modal-container textarea {
@@ -951,7 +951,7 @@ const CreateBooking = ({
         {/* 2-Column Main Layout Grid */}
         <div className="flex-1 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-3">
           {/* LEFT COLUMN (Scrollable Booking Details Form) */}
-          <div className="lg:col-span-2 overflow-y-visible lg:overflow-y-auto custom-sidebar-scroll p-6 space-y-6">
+          <div className="lg:col-span-2 overflow-y-visible lg:overflow-y-auto custom-sidebar-scroll p-6 space-y-4">
             {/* Booking Source Select Tabs */}
             <div>
               <span className="block text-[10px] font-bold text-text-secondary uppercase mb-2">
@@ -1137,7 +1137,7 @@ const CreateBooking = ({
             </div>
 
             {/* SECTION A: STAY DETAILS */}
-            <div className="bg-white border border-border rounded-2xl p-5 shadow-sm">
+            <div className="bg-white border border-border rounded-xl p-5">
               <div className="flex items-center gap-3 mb-4">
                 <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
                   A
@@ -1274,7 +1274,7 @@ const CreateBooking = ({
 
             {/* SECTION B: ROOM AVAILABILITY (only for Room Stay) */}
             {bookingCategory === "Room Stay" && (
-              <div className="bg-white border border-border rounded-2xl p-5 shadow-sm">
+              <div className="bg-white border border-border rounded-xl p-5">
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center gap-3">
                     <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
@@ -1439,7 +1439,7 @@ const CreateBooking = ({
             )}
 
             {/* SECTION C: GUEST DETAILS (PRIMARY CONTACT) */}
-            <div className="bg-white border border-border rounded-2xl p-5 shadow-sm">
+            <div className="bg-white border border-border rounded-xl p-5">
               <div className="flex items-center gap-3 mb-4">
                 <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
                   C
@@ -1554,7 +1554,7 @@ const CreateBooking = ({
             </div>
 
             {/* SECTION D: ADD-ON SERVICES */}
-            <div className="bg-white border border-border rounded-2xl p-5 shadow-sm">
+            <div className="bg-white border border-border rounded-xl p-5">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-3">
                   <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
@@ -1690,11 +1690,10 @@ const CreateBooking = ({
             </div>
           </div>
 
-          {/* RIGHT COLUMN (Rate Summary, Status, & Advance - Fixed/Scrollable) */}
           <div className="lg:col-span-1 bg-slate-50/50 p-6 border-t lg:border-t-0 lg:border-l border-border flex flex-col justify-between overflow-y-visible lg:overflow-y-auto custom-sidebar-scroll">
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* SECTION E: RATE SUMMARY (ESTIMATED) */}
-              <div className="bg-white border border-border rounded-2xl p-5 shadow-sm">
+              <div className="bg-white border border-border rounded-xl p-5">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
                     E
@@ -1771,7 +1770,7 @@ const CreateBooking = ({
               </div>
 
               {/* SECTION F: BOOKING STATUS */}
-              <div className="bg-white border border-border rounded-2xl p-5 shadow-sm">
+              <div className="bg-white border border-border rounded-xl p-5">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
                     F
@@ -1835,7 +1834,7 @@ const CreateBooking = ({
               </div>
 
               {/* SECTION G: ADVANCE PAYMENT */}
-              <div className="bg-white border border-border rounded-2xl p-5 shadow-sm">
+              <div className="bg-white border border-border rounded-xl p-5">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
                     G

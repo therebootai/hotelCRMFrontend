@@ -6,7 +6,6 @@ import CreateBooking from "../../components/bookingComp/CreateBooking";
 import ManageBooking from "../../components/bookingComp/ManageBooking";
 import BookingOverview from "../../components/bookingComp/BookingOverview";
 import CheckInForm from "../../components/checkinComp/CheckinForm";
-import EditBookingModal from "../../components/bookingComp/EditBookingModal";
 import CancelBookingModal from "../../components/bookingComp/CancelBookingModal";
 
 const BookingFullPage = () => {
@@ -183,7 +182,7 @@ const BookingFullPage = () => {
 )}
 
       {showEditModal && selectedBooking && (
-        <EditBookingModal
+        <CreateBooking
           booking={selectedBooking}
           onClose={() => {
             setShowEditModal(false);

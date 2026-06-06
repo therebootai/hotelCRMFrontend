@@ -12,7 +12,7 @@ export default function Layout() {
         <TopBar />
 
         {/* The Outlet renders the child route components here */}
-        <main className="flex-1 overflow-y-auto bg-white relative">
+        <main className="flex-1 overflow-y-auto bg-white">
           <Outlet />
         </main>
       </div>

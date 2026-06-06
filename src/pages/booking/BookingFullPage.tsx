@@ -6,7 +6,6 @@ import CreateBooking from "../../components/bookingComp/CreateBooking";
 import ManageBooking from "../../components/bookingComp/ManageBooking";
 import BookingOverview from "../../components/bookingComp/BookingOverview";
 import CheckInForm from "../../components/checkinComp/CheckinForm";
-import EditBookingModal from "../../components/bookingComp/EditBookingModal";
 import CancelBookingModal from "../../components/bookingComp/CancelBookingModal";
 
 const BookingFullPage = () => {
@@ -117,14 +116,14 @@ const BookingFullPage = () => {
   }, [fetchBookingList, fetchOverview]);
 
   return (
-    <div className="flex flex-col gap-4 p-8 min-h-screen bg-[#F8F9FA] scroll-smooth">
+    <div className="w-full flex flex-col gap-4 p-8 min-h-screen bg-[#F8F9FA] scroll-smooth 3xl:p-12 3xl:gap-6 4xl:p-16 4xl:gap-8 5xl:p-20 5xl:gap-10">
       {/* Header (Sticky thakle bhalo hoy) */}
-      <div className="sticky top-0 z-50 bg-[#F8F9FA]/80 backdrop-blur-md py-4 flex flex-row justify-between items-center border-b border-gray-100">
+      <div className="sticky top-0 z-10 bg-[#F8F9FA]/80 backdrop-blur-md py-4 flex flex-row justify-between items-center border-b border-gray-100 3xl:py-6 4xl:py-8 5xl:py-10">
         <div className="flex flex-col">
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase">
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase 3xl:text-3xl 4xl:text-4xl 5xl:text-5xl">
             Hotel Reservations
           </h1>
-          <p className="text-xs text-gray-500 font-bold">
+          <p className="text-xs text-gray-500 font-bold 3xl:text-sm 4xl:text-base 5xl:text-lg">
             Overview & Booking Management
           </p>
         </div>
@@ -133,17 +132,17 @@ const BookingFullPage = () => {
             setBookingKey(prev => prev + 1);
             setShowPopup(true);
           }}
-          className="h-[2.8rem] px-6 flex justify-center items-center bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 transition-all rounded-xl text-white font-bold gap-2 shadow-lg shadow-orange-100 active:scale-95"
+          className="h-[2.8rem] px-6 flex justify-center items-center bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 transition-all rounded-xl text-white font-bold gap-2 shadow-lg shadow-orange-100 active:scale-95 3xl:h-[3.8rem] 3xl:px-8 3xl:text-base 3xl:rounded-2xl 4xl:h-[4.4rem] 4xl:px-10 4xl:text-lg 5xl:h-[5.2rem] 5xl:px-12 5xl:text-xl 5xl:rounded-[20px] 3xl:gap-3 4xl:gap-4 5xl:gap-5"
         >
-          <FaPlus /> New Booking
+          <FaPlus className="3xl:scale-125 4xl:scale-150 5xl:scale-175" /> New Booking
         </button>
       </div>
 
-      <section className="flex flex-col gap-4">
+      <section className="w-full flex flex-col gap-4 3xl:gap-6 4xl:gap-8 5xl:gap-10">
         <BookingOverview />
       </section>
 
-      <section className="flex flex-col gap-4">
+      <section className="w-full flex flex-col gap-4">
         <ManageBooking
           data={bookings}
           loading={loading}
@@ -183,7 +182,7 @@ const BookingFullPage = () => {
 )}
 
       {showEditModal && selectedBooking && (
-        <EditBookingModal
+        <CreateBooking
           booking={selectedBooking}
           onClose={() => {
             setShowEditModal(false);

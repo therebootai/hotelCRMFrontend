@@ -2,47 +2,40 @@
 @import "tailwindcss";
 
 
-/* ========================================
-  1. THEME DEFINITION
-  ======================================== */
 @theme inline {
-  /* Typography */
+  /* Screen Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+  --breakpoint-3xl: 1920px;
+  --breakpoint-4xl: 2560px;
+  --breakpoint-5xl: 3440px;
+
+
   --font-sans: "Inter", sans-serif;
-
-  /* Brand Colors */
   --color-primary: #FF5A3C;
-  --color-primary-hover: #E5492E; /* Slightly darker for subtle hover */
+  --color-primary-hover: #E5492E; 
   --color-light-orange:#FE8F79;
-
-  /* Background & UI Colors */
-  --color-background: #F9FAFB; /* Very subtle light grey */
+  --color-background: #F9FAFB; 
   --color-card: #FFFFFF;
-  --color-border: #E5E7EB; /* Light grey border */
-  
-  /* Text Colors */
-  --color-text-primary: #111827; /* Dark grey/black */
-  --color-text-secondary: #6B7280; /* Medium grey */
-
-  /* Status Colors (Soft tones) */
+  --color-border: #E5E7EB; 
+  --color-text-primary: #111827; 
+  --color-text-secondary: #6B7280; 
   --color-success: #10B981; 
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
-
-  /* Room Specific Status Colors */
   --color-room-available: #37A108;
   --color-room-confirm: #FF5A3C;
   --color-room-pencil: #8D6700;
   --color-room-book: #006875;
   --color-room-checkin: #0081FA;
-
-  /* Spacing Scale (Matching your internal scale) */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-
-  /* Subtle Shadows for Cards & Modals */
+  --spacing-xs: 6px;
+  --spacing-sm: 10px;
+  --spacing-md: 18px;
+  --spacing-lg: 26px;
+  --spacing-xl: 34px;
   --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
   --shadow-modal: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);--shadow-modal: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 
@@ -66,18 +59,15 @@
 
 
 @layer utilities {
-  /* Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
 
-  /* Firefox, IE and Edge */
   .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;  
+    scrollbar-width: none;  
   }
 
-  /* Hide scrollbar but keep functionality */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -87,30 +77,46 @@
   }
 }
 
-/* ========================================
-  2. BASE STYLES
-  ======================================== */
-body {
-  background: var(--color-background);
-  color: var(--color-text-primary);
-  font-family: var(--font-sans);
-  letter-spacing: -1px; /* Global letter spacing rule */
-  -webkit-font-smoothing: antialiased;
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-/* Typography Hierarchy Setup */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+body {
+  background: var(--color-background);
+}
+
 h1, h2, h3 {
-  font-weight: 600; /* Slightly bold */
+  font-weight: 600; 
   color: var(--color-text-primary);
 }
 h4, h5, h6, .section-title {
-  font-weight: 500; /* Medium weight */
+  font-weight: 500; 
 }
 p, span, div {
-  font-weight: 400; /* Regular */
+  font-weight: 400; 
 }
 small, .text-small {
-  font-weight: 300; /* Light and subtle */
+  font-weight: 300;
   color: var(--color-text-secondary);
 }
 
@@ -120,21 +126,15 @@ button {
 
 
 
-/* ========================================
-  3. COMPONENT CLASSES (Reusable SaaS-grade)
-  ======================================== */
 @layer components {
-  /* Page Layout */
   .page-container {
-    @apply px-[32px] w-full mx-auto; /* Fixed 32px left/right spacing */
+    @apply px-[32px] w-full mx-auto; 
   }
 
-  /* Cards */
   .card {
     @apply bg-card border border-border rounded-xl p-[24px] shadow-card transition-all duration-200;
   }
 
-  /* Buttons */
   .btn-primary {
     @apply bg-primary text-white font-medium rounded-lg px-[16px] py-[8px] 
            transition-all duration-200 ease-in-out
@@ -149,7 +149,6 @@ button {
            active:translate-y-0;
   }
 
-  /* Form Inputs */
   .input-field {
     @apply w-full border border-border rounded-lg px-[16px] py-[10px] text-text-primary bg-white
            transition-all duration-200 ease-in-out placeholder:text-text-secondary
@@ -160,7 +159,6 @@ button {
     @apply block text-[13px] font-medium text-text-secondary mb-[4px];
   }
 
-  /* Table */
   .table-container {
     @apply w-full border-collapse text-left;
   }
@@ -171,10 +169,9 @@ button {
     @apply px-[16px] py-[16px] border-b border-border transition-colors duration-200;
   }
   .table-container tbody tr:hover td {
-    @apply bg-gray-50; /* Light background highlight on row hover */
+    @apply bg-gray-50; 
   }
 
-  /* Modal Animations */
   .modal-overlay {
     @apply fixed inset-0 bg-black/40 backdrop-blur-sm z-40 
            animate-fade-in flex items-center justify-center;
@@ -185,11 +182,7 @@ button {
   }
 }
 
-/* ========================================
-  4. UTILITIES & ANIMATIONS
-  ======================================== */
 @layer utilities {
-  /* Scrollbar Utilities */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

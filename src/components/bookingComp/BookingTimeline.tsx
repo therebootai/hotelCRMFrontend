@@ -347,7 +347,7 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+    <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
       {/* Month/Year Header */}
       <div className="flex items-center justify-between px-4 py-2 bg-gray-50/50 border-b border-gray-100">
         <div className="flex items-center gap-2">

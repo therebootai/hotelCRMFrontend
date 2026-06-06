@@ -118,7 +118,7 @@ const BookingFullPage = () => {
   return (
     <div className="w-full flex flex-col gap-4 p-8 min-h-screen bg-[#F8F9FA] scroll-smooth 3xl:p-12 3xl:gap-6 4xl:p-16 4xl:gap-8 5xl:p-20 5xl:gap-10">
       {/* Header (Sticky thakle bhalo hoy) */}
-      <div className="sticky top-0 z-50 bg-[#F8F9FA]/80 backdrop-blur-md py-4 flex flex-row justify-between items-center border-b border-gray-100 3xl:py-6 4xl:py-8 5xl:py-10">
+      <div className="sticky top-0 z-10 bg-[#F8F9FA]/80 backdrop-blur-md py-4 flex flex-row justify-between items-center border-b border-gray-100 3xl:py-6 4xl:py-8 5xl:py-10">
         <div className="flex flex-col">
           <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase 3xl:text-3xl 4xl:text-4xl 5xl:text-5xl">
             Hotel Reservations

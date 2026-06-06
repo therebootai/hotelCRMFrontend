@@ -32,7 +32,7 @@ const TopBar = () => {
     }`;
 
   return (
-    <header className="h-17.5 3xl:h-24 4xl:h-38 5xl:h-60 bg-white border-b border-border flex items-center justify-between px-[32px] 3xl:px-10 4xl:px-16 5xl:px-24 shrink-0 relative z-20">
+    <header className="h-17.5 3xl:h-24 4xl:h-38 5xl:h-60 bg-white border-b border-border flex items-center justify-between px-[32px] 3xl:px-10 4xl:px-16 5xl:px-24 shrink-0 relative">
       {/* Left: Property Name & Search */}
       <div className="flex items-center gap-8 flex-1">
         <h2 className="text-lg 3xl:text-3xl 4xl:text-5xl 5xl:text-7xl font-semibold text-text-primary whitespace-nowrap">
@@ -95,7 +95,7 @@ const TopBar = () => {
 
           {/* Dropdown Menu Modal */}
           {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-card rounded-xl shadow-modal border border-border overflow-hidden animate-fade-in origin-top-right 3xl:w-72 3xl:mt-4 3xl:rounded-2xl 4xl:w-[360px] 4xl:mt-6 4xl:rounded-[24px] 5xl:w-[550px] 5xl:mt-10 5xl:rounded-[36px]">
+            <div className="absolute right-0 mt-3 w-56 bg-card rounded-xl shadow-modal border border-border overflow-hidden animate-fade-in origin-top-right z-30 3xl:w-72 3xl:mt-4 3xl:rounded-2xl 4xl:w-[360px] 4xl:mt-6 4xl:rounded-[24px] 5xl:w-[550px] 5xl:mt-10 5xl:rounded-[36px]">
               <div className="p-2 flex flex-col gap-1 3xl:p-3.5 3xl:gap-2 4xl:p-5 4xl:gap-3.5 5xl:p-8 5xl:gap-6">
                 {/* Future Profile Link */}
                 <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded-lg transition-colors 3xl:gap-4 3xl:px-4 3xl:py-3.5 3xl:text-base 3xl:rounded-xl 4xl:gap-6 4xl:px-6 4xl:py-5.5 4xl:text-xl 4xl:rounded-2xl 5xl:gap-10 5xl:px-10 5xl:py-9 5xl:text-4xl 5xl:rounded-[20px]">

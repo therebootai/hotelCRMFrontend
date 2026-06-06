@@ -2,13 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   FiX,
   FiUser,
-  FiCalendar,
-  FiHome,
   FiCreditCard,
   FiCheckCircle,
   FiChevronRight,
   FiChevronLeft,
-  FiFileText,
   FiDollarSign,
   FiPhone,
   FiPrinter,
@@ -17,9 +14,7 @@ import {
   FiLoader,
   FiTrendingUp,
   FiBriefcase,
-  FiUserCheck,
   FiPlus,
-  FiClock,
 } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -957,6 +952,8 @@ const CheckInForm = ({
         return !!(
           primary?.name?.trim() &&
           primary?.mobileNo?.trim() &&
+          primary?.age?.trim() &&
+          primary?.gender &&
           primary?.idNumber?.trim()
         );
       case 3:
@@ -971,6 +968,8 @@ const CheckInForm = ({
     const primary = getPrimaryGuest();
     if (!primary?.name?.trim()) return "Primary guest name is required";
     if (!primary?.mobileNo?.trim()) return "Primary guest mobile is required";
+    if (!primary?.age?.trim()) return "Primary guest age is required";
+    if (!primary?.gender) return "Primary guest gender is required";
     if (!primary?.idNumber?.trim())
       return "Primary guest ID number is required";
     return "";
@@ -1089,8 +1088,8 @@ const CheckInForm = ({
       setLoading(true);
 
       const primary = getPrimaryGuest();
-      if (!primary?.name || !primary?.mobileNo || !primary?.idNumber) {
-        alert("Primary guest name, mobile, and ID number are required!");
+      if (!primary?.name || !primary?.mobileNo || !primary?.age || !primary?.gender || !primary?.idNumber) {
+        alert("Primary guest name, mobile, age, gender, and ID number are required!");
         setLoading(false);
         return;
       }
@@ -2278,8 +2277,8 @@ const CheckInForm = ({
                       <span className="px-2 py-0.5 bg-orange-100 text-orange-600 border border-orange-200 rounded font-black text-[8px] uppercase">Liability Holder</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3">
+                      <div className="md:col-span-2">
                         <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Full Name *</label>
                         <input
                           type="text"
@@ -2291,19 +2290,48 @@ const CheckInForm = ({
                       </div>
                       <div>
                         <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Mobile Number *</label>
-                        <div className="flex">
-                          <select className="p-2 bg-gray-100 border border-border border-r-0 rounded-l-lg text-xs font-bold outline-none">
-                            <option>+91</option>
-                          </select>
+                        <div className="flex items-center rounded-lg border border-border bg-gray-50 overflow-hidden focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500">
+                       
                           <input
                             type="tel"
                             value={getPrimaryGuest()?.mobileNo || ""}
                             onChange={(e) => updateGuest(getPrimaryGuest()?.id, "mobileNo", e.target.value)}
                             placeholder="98765 43210"
-                            className="flex-1 p-2 bg-gray-50 border border-border rounded-r-lg text-xs font-bold outline-none"
+                            className="flex-1 p-2 bg-transparent text-xs font-bold outline-none border-none"
                           />
                         </div>
                       </div>
+                      <div>
+                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Age *</label>
+                        <input
+                          type="text"
+                          value={getPrimaryGuest()?.age || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (/^\d*$/.test(val)) {
+                              updateGuest(getPrimaryGuest()?.id, "age", val);
+                            }
+                          }}
+                          placeholder="32"
+                          className="w-full p-2 bg-gray-50 border border-border rounded-lg text-xs font-bold outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Gender *</label>
+                        <select
+                          value={getPrimaryGuest()?.gender || ""}
+                          onChange={(e) => updateGuest(getPrimaryGuest()?.id, "gender", e.target.value)}
+                          className="w-full p-2 bg-gray-50 border border-border rounded-lg text-xs font-bold outline-none"
+                        >
+                          <option value="">Select</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
                       <div>
                         <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Email (Optional)</label>
                         <input
@@ -2314,9 +2342,6 @@ const CheckInForm = ({
                           className="w-full p-2 bg-gray-50 border border-border rounded-lg text-xs font-bold outline-none"
                         />
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                       <div className="md:col-span-2">
                         <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Address *</label>
                         <input

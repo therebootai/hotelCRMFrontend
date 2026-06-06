@@ -201,8 +201,8 @@ const CreateBooking = ({
   const [holdTillDate, setHoldTillDate] = useState<Date | null>(null);
   const [remarks, setRemarks] = useState("");
 
-  const [specialRequests, setSpecialRequests] = useState("");
-  const [internalNotes, setInternalNotes] = useState("");
+  const [specialRequests] = useState("");
+  const [internalNotes] = useState("");
 
   // Vehicles
   const [vehicles, setVehicles] = useState<
@@ -1338,10 +1338,10 @@ const CreateBooking = ({
                                 className="w-12 h-8 rounded-lg object-cover bg-slate-100 shrink-0 border border-border"
                               />
                               <div>
-                                <span className="font-bold text-text-primary text-xs block">
+                                <span className="font-bold text-text-primary text-xs min-[2000px]:text-lg block">
                                   {rt.name}
                                 </span>
-                                <span className="text-[10px] text-text-secondary">
+                                <span className="text-[12px]  min-[2000px]:text-base text-text-secondary">
                                   {meta.size} • {meta.beds}
                                 </span>
                               </div>
@@ -1760,7 +1760,7 @@ const CreateBooking = ({
                   </div>
                 </div>
 
-                <div className="mt-4 p-3 bg-blue-50/50 border border-blue-200/50 rounded-xl text-[10px] text-blue-700 leading-normal flex items-start gap-2">
+                <div className="mt-4 p-3 bg-blue-50/50 border border-blue-200/50 rounded-xl text-[10px] min-[2000px]:text-lg text-blue-700 leading-normal flex items-start gap-2">
                   <span>ℹ️</span>
                   <p>
                     Actual amount may change based on final room assignment,

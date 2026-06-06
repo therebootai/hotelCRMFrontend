@@ -25,25 +25,25 @@ const TopBar = () => {
   }, []);
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `uppercase tracking-wide text-xs pb-1 transition-colors ${
+    `uppercase tracking-wide text-xs pb-1 transition-colors 3xl:text-2xl 3xl:pb-4 4xl:text-3xl 4xl:pb-6 5xl:text-4xl 5xl:pb-8 ${
       isActive
-        ? "text-primary border-b-2 border-primary"
+        ? "text-primary border-b-2 3xl:border-b-4 4xl:border-b-[6px] 5xl:border-b-[8px] border-primary"
         : "text-text-secondary hover:text-text-primary"
     }`;
 
   return (
-    <header className="h-17.5 bg-white border-b border-border flex items-center justify-between px-[32px] shrink-0 relative z-20">
+    <header className="h-17.5 3xl:h-36 4xl:h-48 5xl:h-60 bg-white border-b border-border flex items-center justify-between px-[32px] 3xl:px-16 4xl:px-20 5xl:px-24 shrink-0 relative z-20">
       {/* Left: Property Name & Search */}
       <div className="flex items-center gap-8 flex-1">
-        <h2 className="text-lg font-semibold text-text-primary whitespace-nowrap">
+        <h2 className="text-lg 3xl:text-5xl 4xl:text-6xl 5xl:text-7xl font-semibold text-text-primary whitespace-nowrap">
           Siddharaj Hotel
         </h2>
       </div>
 
       {/* Center/Right: Toggles & Profile */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 3xl:gap-12 4xl:gap-16 5xl:gap-20">
         {/* View Toggles */}
-        <div className="hidden md:flex items-center gap-4 text-sm font-medium">
+        <div className="hidden md:flex items-center gap-4 text-sm font-medium 3xl:gap-10 3xl:text-2xl 4xl:gap-14 4xl:text-3xl 5xl:gap-18 5xl:text-4xl">
           <NavLink to="/dashboard" end className={navLinkClass}>
             Calendar
           </NavLink>
@@ -53,13 +53,13 @@ const TopBar = () => {
         </div>
 
         {/* Divider */}
-        <div className="h-8 w-px bg-border hidden md:block"></div>
+        <div className="h-8 w-px bg-border hidden md:block 3xl:h-16 4xl:h-20 5xl:h-24"></div>
 
         {/* Icons */}
-        <div className="flex items-center gap-4 text-text-secondary">
+        <div className="flex items-center gap-4 text-text-secondary 3xl:gap-10 4xl:gap-14 5xl:gap-18">
           <NotificationBell />
           <button className="hover:text-text-primary transition-colors">
-            <FiHelpCircle size={20} />
+            <FiHelpCircle size={20} className="3xl:scale-[1.8] 4xl:scale-[2.4] 5xl:scale-[3]" />
           </button>
         </div>
 
@@ -67,22 +67,22 @@ const TopBar = () => {
         <div className="relative" ref={dropdownRef}>
           {/* Profile Trigger */}
           <div
-            className="flex items-center gap-3 pl-2 cursor-pointer select-none"
+            className="flex items-center gap-3 pl-2 cursor-pointer select-none 3xl:gap-6 3xl:pl-5 4xl:gap-8 4xl:pl-6 5xl:gap-10 5xl:pl-8"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
             <div className="text-right hidden sm:block">
               {/* Display dynamic user name, fallback to "Staff" */}
-              <p className="text-sm font-semibold text-text-primary leading-tight">
+              <p className="text-sm font-semibold text-text-primary leading-tight 3xl:text-2xl 4xl:text-3xl 5xl:text-4xl">
                 {user?.fullName}
               </p>
               {/* Display dynamic user role */}
-              <p className="text-[10px] text-text-secondary uppercase tracking-wider">
+              <p className="text-[10px] text-text-secondary uppercase tracking-wider 3xl:text-lg 4xl:text-xl 5xl:text-2xl">
                 {user?.role}
               </p>
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-border">
+              <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-border 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28 5xl:w-36 5xl:h-36">
                 {/* Dynamically generate avatar based on user's name */}
                 <img
                   src={`https://api.dicebear.com/7.x/notionists/svg?seed=${user?.fullName || "Staff"}&backgroundColor=e2e8f0`}
@@ -90,27 +90,26 @@ const TopBar = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-              {/* <ChevronDown size={14} className={`text-text-secondary transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} /> */}
             </div>
           </div>
 
           {/* Dropdown Menu Modal */}
           {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-card rounded-xl shadow-modal border border-border overflow-hidden animate-fade-in origin-top-right">
-              <div className="p-2 flex flex-col gap-1">
+            <div className="absolute right-0 mt-3 w-56 bg-card rounded-xl shadow-modal border border-border overflow-hidden animate-fade-in origin-top-right 3xl:w-96 3xl:mt-6 3xl:rounded-[24px] 4xl:w-[450px] 4xl:mt-8 4xl:rounded-[30px] 5xl:w-[550px] 5xl:mt-10 5xl:rounded-[36px]">
+              <div className="p-2 flex flex-col gap-1 3xl:p-5 3xl:gap-3 4xl:p-6.5 4xl:gap-4.5 5xl:p-8 5xl:gap-6">
                 {/* Future Profile Link */}
-                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded-lg transition-colors">
-                  <FiUser size={16} />
+                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded-lg transition-colors 3xl:gap-6 3xl:px-6 3xl:py-5 3xl:text-2xl 3xl:rounded-2xl 4xl:gap-8 4xl:px-8 4xl:py-7 4xl:text-3xl 4xl:rounded-3xl 5xl:gap-10 5xl:px-10 5xl:py-9 5xl:text-4xl 5xl:rounded-[20px]">
+                  <FiUser size={16} className="3xl:scale-[1.8] 4xl:scale-[2.4] 5xl:scale-[3]" />
                   <span>My Profile</span>
                 </button>
 
                 {/* Future Change Password Link */}
-                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded-lg transition-colors">
-                  <FiKey size={16} />
+                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-gray-50 rounded-lg transition-colors 3xl:gap-6 3xl:px-6 3xl:py-5 3xl:text-2xl 3xl:rounded-2xl 4xl:gap-8 4xl:px-8 4xl:py-7 4xl:text-3xl 4xl:rounded-3xl 5xl:gap-10 5xl:px-10 5xl:py-9 5xl:text-4xl 5xl:rounded-[20px]">
+                  <FiKey size={16} className="3xl:scale-[1.8] 4xl:scale-[2.4] 5xl:scale-[3]" />
                   <span>Change Password</span>
                 </button>
 
-                <div className="h-px w-full bg-border my-1"></div>
+                <div className="h-px w-full bg-border my-1 3xl:my-3 4xl:my-4 5xl:my-5"></div>
 
                 {/* Actual Logout Button */}
                 <button
@@ -118,9 +117,9 @@ const TopBar = () => {
                     setIsProfileOpen(false);
                     logout();
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-danger hover:bg-red-50 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-danger hover:bg-red-50 rounded-lg transition-colors 3xl:gap-6 3xl:px-6 3xl:py-5 3xl:text-2xl 3xl:rounded-2xl 4xl:gap-8 4xl:px-8 4xl:py-7 4xl:text-3xl 4xl:rounded-3xl 5xl:gap-10 5xl:px-10 5xl:py-9 5xl:text-4xl 5xl:rounded-[20px]"
                 >
-                  <FiLogOut size={16} />
+                  <FiLogOut size={16} className="3xl:scale-[1.8] 4xl:scale-[2.4] 5xl:scale-[3]" />
                   <span>Sign Out</span>
                 </button>
               </div>

@@ -508,6 +508,9 @@ const CheckInForm = ({
   // Room type filter for the room grid (controlled)
   const [roomTypeFilterId, setRoomTypeFilterId] = useState<string>("");
 
+  // Set of roomIds that are currently occupied by an active check-in
+  const [occupiedRoomIds, setOccupiedRoomIds] = useState<Set<string>>(new Set());
+
   // Preferred room type from booking (when no specific room was assigned at booking time)
   const preferredRoomType = (() => {
     const r = bookingData?.rooms?.[0];
@@ -575,10 +578,25 @@ const CheckInForm = ({
     const fetchAllRooms = async () => {
       try {
         const res = await api.get("/rooms?status=Active");
-        const allRooms = res.data.data?.rooms || [];
-        setAvailableRooms(allRooms);
+        setAvailableRooms(res.data.data?.rooms || []);
       } catch (err) {
         console.error("Error fetching rooms:", err);
+      }
+    };
+    const fetchOccupiedRooms = async () => {
+      try {
+        const res = await api.get("/checkin/list", { params: { status: "Active", limit: 500 } });
+        const activeCheckIns: any[] = res.data.data || [];
+        const ids = new Set<string>();
+        for (const ci of activeCheckIns) {
+          for (const rd of ci.roomDetails || []) {
+            const id = rd.roomId?._id || rd.roomId;
+            if (id) ids.add(id.toString());
+          }
+        }
+        setOccupiedRoomIds(ids);
+      } catch (err) {
+        console.error("Error fetching occupied rooms:", err);
       }
     };
     const fetchExtraServices = async () => {
@@ -599,6 +617,7 @@ const CheckInForm = ({
     };
     fetchRoomTypes();
     fetchAllRooms();
+    fetchOccupiedRooms();
     fetchExtraServices();
   }, []);
 
@@ -611,8 +630,7 @@ const CheckInForm = ({
       } else {
         res = await api.get("/rooms?status=Active");
       }
-      const allRooms = res.data.data?.rooms || [];
-      setAvailableRooms(allRooms);
+      setAvailableRooms(res.data.data?.rooms || []);
     } catch (err) {
       console.error("Error fetching rooms:", err);
     }
@@ -2158,21 +2176,27 @@ const CheckInForm = ({
                                   return true;
                                 })
                                 .map((room: any) => {
+                                  const isOccupied = occupiedRoomIds.has(room._id?.toString());
                                   const isSelected = selectedRooms.some((r) => r.roomId === room._id);
                                   const roomTypeName = room.roomType?.name || "";
                                   return (
                                     <tr
                                       key={room._id}
-                                      className={`border-b border-border transition-all cursor-pointer ${
-                                        isSelected ? "bg-orange-50/50" : "hover:bg-gray-50/50"
+                                      className={`border-b border-border transition-all ${
+                                        isOccupied
+                                          ? "opacity-50 cursor-not-allowed bg-red-50/30"
+                                          : isSelected
+                                          ? "bg-orange-50/50 cursor-pointer"
+                                          : "hover:bg-gray-50/50 cursor-pointer"
                                       }`}
-                                      onClick={() => toggleRoom(room)}
+                                      onClick={() => !isOccupied && toggleRoom(room)}
                                     >
                                       <td className="p-2">
                                         <input
                                           type="checkbox"
                                           checked={isSelected}
-                                          onChange={() => {}} // toggled by row click
+                                          disabled={isOccupied}
+                                          onChange={() => {}}
                                           className="accent-orange-500"
                                         />
                                       </td>
@@ -2180,9 +2204,15 @@ const CheckInForm = ({
                                       <td className="p-2 text-gray-600 truncate max-w-[80px]">{roomTypeName}</td>
                                       <td className="p-2 font-bold text-gray-700">₹{(Number(room.basePrice) || 0).toLocaleString()}</td>
                                       <td className="p-2">
-                                        <span className="px-1 py-0.5 bg-green-100 text-green-600 rounded font-bold text-[8px] uppercase">
-                                          Available
-                                        </span>
+                                        {isOccupied ? (
+                                          <span className="px-1 py-0.5 bg-red-100 text-red-600 rounded font-bold text-[8px] uppercase">
+                                            Occupied
+                                          </span>
+                                        ) : (
+                                          <span className="px-1 py-0.5 bg-green-100 text-green-600 rounded font-bold text-[8px] uppercase">
+                                            Available
+                                          </span>
+                                        )}
                                       </td>
                                     </tr>
                                   );

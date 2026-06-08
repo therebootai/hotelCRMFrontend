@@ -48,7 +48,7 @@ const SummaryCard = ({
     </span>
     <div className="flex items-baseline gap-1">
       <span className="text-[24px] font-bold text-text-primary">{value}</span>
-      <span className="text-[8px] font-bold text-text-secondary">
+      <span className="text-[12px] font-bold text-text-secondary">
         /{total}
       </span>
     </div>
@@ -219,10 +219,7 @@ const StayOverview = () => {
   // =====================================================
   // DRAG & DROP
   // =====================================================
-  const handleDrop = (
-    e: React.DragEvent,
-    colIndex: number,
-  ) => {
+  const handleDrop = (e: React.DragEvent, colIndex: number) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -343,7 +340,7 @@ const StayOverview = () => {
               className="flex items-center gap-2 text-[9px] font-bold px-3 py-1 hover:bg-gray-50 rounded-md"
             >
               <FiCalendar size={16} className="text-primary" />
-              <span>
+              <span className="text-[12px]">
                 {viewStart.toLocaleDateString()} -{" "}
                 {viewEnd.toLocaleDateString()}
               </span>
@@ -436,7 +433,7 @@ const StayOverview = () => {
           ) : (
             timelineData.map((category: any, cIdx: number) => (
               <div key={cIdx}>
-                <div className="bg-gray-50 px-4 py-2 border-b text-[8px] font-bold">
+                <div className="bg-gray-50 px-4 py-2 border-b text-[12px] font-bold">
                   {category.category}
                 </div>
                 {category.rooms.map((room: any) => (

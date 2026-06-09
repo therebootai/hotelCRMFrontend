@@ -77,6 +77,22 @@ const ManageBooking = ({
 
   return (
     <div className="flex flex-col gap-4 animate-in fade-in duration-500 w-full">
+      {/* --- KPI CARDS SECTION --- */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 3xl:gap-4 4xl:gap-6 5xl:gap-8">
+        {[
+          { label: "Today Arrivals", value: 12, color: "text-blue-600" },
+          { label: "Pending Advance", value: 18, color: "text-orange-600" },
+          { label: "Tentative", value: 7, color: "text-yellow-600" },
+          { label: "OTA Reservations", value: 11, color: "text-purple-600" },
+          { label: "Corporate Bookings", value: 6, color: "text-emerald-600" },
+        ].map((kpi, idx) => (
+          <div key={idx} className="bg-white border border-gray-100 shadow-sm rounded-xl p-3 flex items-center justify-between gap-3 hover:shadow-md transition-all 3xl:p-4 3xl:rounded-2xl 4xl:p-5 5xl:p-6">
+             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-tight 3xl:text-xs 4xl:text-sm 5xl:text-base">{kpi.label}</span>
+             <span className={`text-xl font-black 3xl:text-2xl 4xl:text-3xl 5xl:text-4xl ${kpi.color}`}>{kpi.value}</span>
+          </div>
+        ))}
+      </div>
+
       {/* --- TOP FILTERS SECTION --- */}
       <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm 3xl:p-6 3xl:rounded-2xl 4xl:p-8 5xl:p-10 5xl:rounded-[20px]">
         <div className="flex items-center gap-3 w-full 3xl:gap-5 4xl:gap-8 5xl:gap-10">

@@ -89,10 +89,11 @@ interface GRCData {
 
 interface CheckInProps {
  bookingData?: any;
- onClose: () => void;
+ onClose?: () => void;
  editMode?: boolean;
  existingCheckIn?: any;
  onSuccess?: () => void;
+ inline?: boolean;
 }
 
 // Document validation
@@ -142,6 +143,7 @@ const CheckInForm = ({
  editMode = false,
  existingCheckIn,
  onSuccess,
+ inline = false,
 }: CheckInProps) => {
  const [currentStep, setCurrentStep] = useState(1);
  const [loading, setLoading] = useState(false);
@@ -1303,7 +1305,7 @@ const CheckInForm = ({
  }
 
  return (
- <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto checkin-modal-container">
+ <div className={inline ? "w-full flex flex-col checkin-modal-container relative" : "fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto checkin-modal-container"}>
  <style>{`
  /* Scoped styles for the check-in modal to scale for larger screens */
  .checkin-modal-container .custom-scroll::-webkit-scrollbar {
@@ -1456,9 +1458,9 @@ const CheckInForm = ({
  }
  }
  `}</style>
- <div className="bg-[var(--color-background)] w-full max-w-6xl rounded-2xl border border-border flex flex-col max-h-[95vh]">
+ <div className={`bg-[var(--color-background)] w-full flex flex-col ${inline ? "h-full bg-transparent" : "max-w-6xl rounded-2xl border border-border max-h-[95vh]"}`}>
  {/* Header */}
- <div className="px-4 sm:px-6 py-3 bg-white flex justify-between items-center rounded-t-2xl border-b border-border">
+ <div className={`px-4 sm:px-6 py-3 bg-white flex justify-between items-center border-b border-border ${inline ? "rounded-t-2xl" : "rounded-t-2xl"}`}>
  <div className="flex flex-col">
  <h2 className="text-base sm:text-base font-black text-[var(--color-text-primary)] tracking-tight uppercase">
  {editMode ? "Edit Check-in" : (isDayAccess ? "New Day Access Booking" : "New Check-in")}

@@ -12,6 +12,7 @@ import RoomMaster from "./pages/RoomMaster/RoomMaster";
 import BookingFullPage from "./pages/booking/BookingFullPage";
 
 import CheckInFullPage from "./pages/checkin/CheckInFullPage";
+import DirectCheckInPage from "./pages/checkin/DirectCheckInPage";
 
 import RoomRates from "./pages/RoomMaster/RoomRates";
 import FacilityMaster from "./pages/FacilityMaster/FacilityMaster";
@@ -118,7 +119,8 @@ export default function App() {
  </Route>
 
  <Route path="/bookings" element={<BookingFullPage/>}/>
- <Route path="/checkin" element={<CheckInFullPage/>}/>
+ <Route path="/checkin" element={<DirectCheckInPage/>}/>
+ <Route path="/checkout" element={<CheckInFullPage/>}/>
  <Route path="/billing" element={<BillingPage/>}/>
  <Route path="/room-calendar" element={<RoomCalendar/>}/>
  <Route path="/active-guests" element={<ActiveGuests/>}/>

@@ -83,9 +83,10 @@ const SideBar = () => {
  <NavItem to="/room-calendar" icon={FiCalendar} label="Room Calendar" isCollapsed={isCollapsed} />
  <NavItem to="/bookings" icon={FiBookOpen} label="Bookings" isCollapsed={isCollapsed} />
  <NavItem to="/checkin" icon={FiLogIn} label="Check-in" isCollapsed={isCollapsed} />
+ <NavItem to="/checkout" icon={FiLogOut} label="Check-out" isCollapsed={isCollapsed} />
  <NavItem to="/active-guests" icon={FiUsers} label="Active Guests" isCollapsed={isCollapsed} />
  <NavItem to="/customers" icon={FiPhone} label="Customer Directory" isCollapsed={isCollapsed} />
- <NavItem to="/billing" icon={FiLogOut} label="Billing & Checkout" isCollapsed={isCollapsed} />
+ <NavItem to="/billing" icon={FiDatabase} label="Billing" isCollapsed={isCollapsed} />
 
  {/* Admin Section */}
  <div className={`mt-6 mb-2 ${isCollapsed ? 'text-center' : 'px-4 '}`}>

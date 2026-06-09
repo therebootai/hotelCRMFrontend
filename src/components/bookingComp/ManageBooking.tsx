@@ -152,14 +152,16 @@ const ManageBooking = ({
       {/* --- DATA TABLE --- */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto w-full 3xl:rounded-2xl 5xl:rounded-[20px]">
         {/* Table Header */}
-        <div className="flex items-center bg-gray-50/70 border-b border-gray-100 px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest min-w-[950px] lg:min-w-0 3xl:px-8 3xl:py-6 3xl:text-xs 3xl:tracking-wider 4xl:px-12 4xl:py-10 4xl:text-base 4xl:tracking-wide 5xl:px-16 5xl:py-14 5xl:text-lg">
-          <div className="flex-[0.7]">Booking ID</div>
-          <div className="flex-1 text-left">Guest / Company</div>
-          <div className="flex-1 text-center">Rooms</div>
-          <div className="flex-1 text-center">Dates</div>
-          <div className="flex-1 text-center">Status</div>
-          <div className="flex-1 text-center">Payment</div>
-          <div className="flex-[0.8] text-center">Total</div>
+        <div className="flex items-center bg-gray-50/70 border-b border-gray-100 px-4 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest min-w-[1050px] lg:min-w-0 3xl:px-8 3xl:py-6 3xl:text-xs 3xl:tracking-wider 4xl:px-12 4xl:py-10 4xl:text-base 4xl:tracking-wide 5xl:px-16 5xl:py-14 5xl:text-lg">
+          <div className="flex-[0.8]">Booking ID</div>
+          <div className="flex-1 text-left leading-tight">Guest Name <br/> <span className="opacity-70">Mobile No.</span></div>
+          <div className="flex-1 text-center leading-tight">Check-In <br/> <span className="opacity-70">Check-Out</span></div>
+          <div className="flex-[0.5] text-center">Nights</div>
+          <div className="flex-1 text-center leading-tight">Room Type <br/> <span className="opacity-70">Rooms</span></div>
+          <div className="flex-[0.6] text-center">Source</div>
+          <div className="flex-[0.8] text-center leading-tight">Adv. Paid <br/> <span className="opacity-70">Total Amount</span></div>
+          <div className="flex-[0.8] text-center">Status</div>
+          <div className="flex-[0.6] text-center">Held Till</div>
           <div className="text-center flex-1 3xl:w-44 4xl:w-72 5xl:w-[360px]">Actions</div>
         </div>
 
@@ -187,17 +189,16 @@ const ManageBooking = ({
               return (
                 <div
                   key={item._id}
-                  className="flex items-center px-4 py-3 hover:bg-gray-50/50 transition-all min-w-[950px] lg:min-w-0 3xl:px-8 3xl:py-6 4xl:px-12 4xl:py-10 5xl:px-16 5xl:py-14"
+                  className="flex items-center px-4 py-3 hover:bg-gray-50/50 transition-all min-w-[1050px] lg:min-w-0 3xl:px-8 3xl:py-6 4xl:px-12 4xl:py-10 5xl:px-16 5xl:py-14"
                 >
                   {/* Booking ID */}
-                  <div className="flex-[0.7]">
+                  <div className="flex-[0.8]">
                     <span className={`font-bold text-xs 3xl:text-base 4xl:text-xl 5xl:text-2xl ${viewType === "Corporate" ? "text-blue-600" : "text-orange-500"}`}>
                       {item.bookingId}
                     </span>
-                    <p className="text-[9px] text-gray-400 font-medium 3xl:text-xs 4xl:text-base 5xl:text-lg">{item.source}</p>
                   </div>
 
-                  {/* Guest / Company */}
+                  {/* Guest Name / Mobile No. */}
                   <div className="flex-1">
                     <span className="text-sm font-bold text-gray-800 3xl:text-lg 4xl:text-2xl 5xl:text-3xl">{guestName}</span>
                     <div className="flex items-center gap-1 text-[10px] text-gray-500 3xl:text-sm 3xl:gap-2 4xl:text-lg 4xl:gap-3 5xl:text-xl 5xl:gap-4">
@@ -209,63 +210,58 @@ const ManageBooking = ({
                     )}
                   </div>
 
-                  {/* Rooms */}
-                  <div className="flex-1 text-center">
-                    <div className="flex flex-wrap justify-center gap-1 3xl:gap-2 4xl:gap-3 5xl:gap-4">
-                      {item.rooms?.slice(0, 3).map((room: any, idx: number) => (
-                        <span key={idx} className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded text-[10px] font-bold 3xl:text-sm 3xl:px-4 3xl:py-1.5 3xl:rounded-lg 4xl:text-lg 4xl:px-6 4xl:py-2.5 4xl:rounded-xl 5xl:text-xl 5xl:px-8 5xl:py-3.5 5xl:rounded-[14px]">
-                          {room.roomId?.roomNumber || room.roomType?.name || room.roomType || "TBD"}
-                        </span>
-                      ))}
-                      {item.rooms?.length > 3 && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-bold 3xl:text-sm 3xl:px-4 3xl:py-1.5 3xl:rounded-lg 4xl:text-lg 4xl:px-6 4xl:py-2.5 4xl:rounded-xl 5xl:text-xl 5xl:px-8 5xl:py-3.5 5xl:rounded-[14px]">
-                          +{item.rooms.length - 3}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[9px] text-gray-400 mt-0.5 3xl:text-xs 3xl:mt-1.5 4xl:text-base 5xl:text-lg 5xl:mt-2">
-                      {item.totalRooms || item.rooms?.length || 0} room(s) • {item.totalGuests || 0} guest(s)
+                  {/* Check-In / Check-Out */}
+                  <div className="flex-1 text-center flex flex-col items-center">
+                    <p className="text-xs font-bold text-gray-700 3xl:text-base 4xl:text-xl 5xl:text-2xl">
+                      {item.overallCheckInDate || item.rooms?.[0]?.checkInDate ? format(new Date(item.overallCheckInDate || item.rooms?.[0]?.checkInDate), "dd MMM yyyy") : "TBD"}
+                    </p>
+                    <p className="text-[10px] font-bold text-gray-400 3xl:text-xs 4xl:text-sm 5xl:text-base">
+                      {item.overallCheckOutDate || item.rooms?.[0]?.checkOutDate ? format(new Date(item.overallCheckOutDate || item.rooms?.[0]?.checkOutDate), "dd MMM yyyy") : "TBD"}
                     </p>
                   </div>
 
-                  {/* Dates */}
-                  <div className="flex-1 text-center">
-                    <p className="text-xs font-bold text-gray-700 3xl:text-base 4xl:text-xl 5xl:text-2xl">
-                      {format(new Date(item.overallCheckInDate || item.rooms?.[0]?.checkInDate), "dd MMM")}
-                      {" - "}
-                      {format(new Date(item.overallCheckOutDate || item.rooms?.[0]?.checkOutDate), "dd MMM")}
-                    </p>
-                    <p className="text-[9px] text-gray-400 3xl:text-xs 4xl:text-sm 5xl:text-lg">
-                      {item.totalNights || 1} night(s)
-                    </p>
+                  {/* Nights */}
+                  <div className="flex-[0.5] text-center">
+                    <p className="text-sm font-bold text-gray-700 3xl:text-lg 4xl:text-2xl 5xl:text-3xl">{item.totalNights || 1}</p>
+                  </div>
+
+                  {/* Room Type / Rooms */}
+                  <div className="flex-1 text-center flex flex-col items-center">
+                    <span className="text-[11px] font-bold text-gray-800 3xl:text-sm 4xl:text-lg 5xl:text-xl truncate w-full px-2">
+                      {item.rooms?.[0]?.roomType?.name || item.bookingCategory || "Room"}
+                    </span>
+                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-bold mt-0.5 3xl:text-xs 3xl:mt-1 4xl:text-sm 5xl:text-base">
+                      {item.totalRooms || item.rooms?.length || 0} Room(s)
+                    </span>
+                  </div>
+
+                  {/* Source */}
+                  <div className="flex-[0.6] text-center">
+                    <span className="px-2 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold 3xl:text-sm 4xl:text-lg 5xl:text-xl">
+                      {item.source || "Walk-In"}
+                    </span>
+                  </div>
+
+                  {/* Advance Paid / Total Amount */}
+                  <div className="flex-[0.8] text-center flex flex-col items-center">
+                    <span className="text-xs font-bold text-green-600 3xl:text-base 4xl:text-xl 5xl:text-2xl">
+                      ₹{(item.advanceAmount || item.pricingSummary?.paidAmount || 0).toLocaleString()}
+                    </span>
+                    <span className="text-[9px] font-bold text-gray-400 3xl:text-xs 4xl:text-sm 5xl:text-base border-t border-gray-100 mt-0.5 pt-0.5 w-16 text-center">
+                      ₹{(grandTotal).toLocaleString()}
+                    </span>
                   </div>
 
                   {/* Status */}
-                  <div className="flex-1 text-center">
-                    <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-black uppercase 3xl:text-base  3xl:px-5 3xl:py-2 4xl:text-lg 4xl:px-8 4xl:py-3.5 5xl:text-xl 5xl:px-10 5xl:py-4.5 ${statusBadge.bg} ${statusBadge.text}`}>
+                  <div className="flex-[0.8] text-center">
+                    <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase 3xl:text-sm 3xl:px-4 3xl:py-1.5 4xl:text-base 4xl:px-6 4xl:py-2 5xl:text-lg 5xl:px-8 5xl:py-3 ${statusBadge.bg} ${statusBadge.text}`}>
                       {item.status}
                     </span>
                   </div>
 
-                  {/* Payment Status */}
-                  <div className="flex-1 text-center">
-                    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-bold 3xl:text-xs 3xl:px-4 3xl:py-2 3xl:gap-2 4xl:text-base 4xl:px-7 4xl:py-3 4xl:gap-3 5xl:text-lg 5xl:px-9 5xl:py-4 5xl:gap-4 ${paymentBadge.bg} ${paymentBadge.text}`}>
-                      <PaymentIcon size={10} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" />
-                      {item.paymentStatus || "Pending"}
-                    </div>
-                    <p className="text-[9px] text-gray-400 mt-0.5 3xl:text-xs 3xl:mt-1.5 4xl:text-sm 5xl:text-base 5xl:mt-2">
-                      ₹{paidAmount.toLocaleString()} paid
-                    </p>
-                  </div>
-
-                  {/* Total */}
-                  <div className="flex-[0.8] text-center">
-                    <span className="font-black text-gray-800 text-sm 3xl:text-lg 4xl:text-2xl 5xl:text-3xl">₹{grandTotal.toLocaleString()}</span>
-                    {paidAmount > 0 && paidAmount < grandTotal && (
-                      <p className="text-[9px] text-red-500 font-bold 3xl:text-xs 4xl:text-sm 5xl:text-base">
-                        Due: ₹{(grandTotal - paidAmount).toLocaleString()}
-                      </p>
-                    )}
+                  {/* Held Till */}
+                  <div className="flex-[0.6] text-center">
+                    <span className="text-sm font-bold text-gray-400 3xl:text-lg 4xl:text-xl 5xl:text-2xl">—</span>
                   </div>
 
                   {/* Actions */}

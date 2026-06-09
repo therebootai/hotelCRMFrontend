@@ -138,9 +138,9 @@ const BookingFullPage = () => {
         </button>
       </div>
 
-      <section className="w-full flex flex-col gap-4 3xl:gap-6 4xl:gap-8 5xl:gap-10">
+      {/* <section className="w-full flex flex-col gap-4 3xl:gap-6 4xl:gap-8 5xl:gap-10">
         <BookingOverview />
-      </section>
+      </section> */}
 
       <section className="w-full flex flex-col gap-4">
         <ManageBooking

@@ -13,7 +13,11 @@ import {
   FiClock,
   FiEdit2,
   FiX,
+  FiPrinter,
+  FiEye,
+  FiMoreVertical
 } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 import Pagination from "../layout/Pagination";
 import { format } from "date-fns";
 
@@ -31,6 +35,7 @@ const ManageBooking = ({
   const [viewType, setViewType] = useState<"Individual" | "Corporate">(
     "Individual",
   );
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   // Status badge helper
   const getStatusBadge = (status: string) => {
@@ -265,38 +270,65 @@ const ManageBooking = ({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex-1 flex items-center justify-center gap-1 3xl:w-44 3xl:gap-2 4xl:w-72 4xl:gap-3.5 5xl:w-[360px] 5xl:gap-4.5">
-                    {item.status === "Confirmed" || item.status === "Pending" ? (
-                      <>
-                        <button
-                          onClick={() => onEdit(item)}
-                          title="Edit Booking"
-                          className="p-1.5 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-all 3xl:p-3 3xl:rounded-xl 4xl:p-5 5xl:p-6.5"
-                        >
-                          <FiEdit2 size={12} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" />
-                        </button>
-                        <button
-                          onClick={() => onCancel(item)}
-                          title="Cancel Booking"
-                          className="p-1.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg transition-all 3xl:p-3 3xl:rounded-xl 4xl:p-5 5xl:p-6.5"
-                        >
-                          <FiX size={12} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" />
-                        </button>
-                        <button
-                          onClick={() => onCheckIn(item)}
-                          className="flex items-center gap-1 px-2 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all text-[9px] font-bold 3xl:px-4 3xl:py-2.5 3xl:text-sm 3xl:rounded-xl 3xl:gap-2 4xl:px-7 4xl:py-4.5 4xl:text-lg 4xl:gap-3 5xl:px-9 5xl:py-5.5 5xl:text-xl 5xl:gap-4 5xl:rounded-2xl"
-                        >
-                          <FiLogIn size={10} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" />
-                          Check-in
-                        </button>
-                      </>
-                    ) : item.status === "Checked-In" ? (
-                      <span className="px-2.5 py-1.5 bg-blue-100 text-blue-600 rounded-lg text-[9px] font-bold 3xl:px-4.5 3xl:py-2.5 3xl:text-sm 3xl:rounded-xl 4xl:px-7.5 4xl:py-4.5 4xl:text-lg 5xl:px-10 5xl:py-5.5 5xl:text-xl 5xl:rounded-2xl">
-                        In House
-                      </span>
-                    ) : (
-                      <span className="text-[9px] text-gray-400 font-bold 3xl:text-sm 4xl:text-lg 5xl:text-xl">{item.status}</span>
-                    )}
+                  <div className="flex-1 flex items-center justify-center gap-1.5 3xl:w-44 3xl:gap-2.5 4xl:w-72 4xl:gap-4 5xl:w-[360px] 5xl:gap-5">
+                    <button
+                      onClick={() => onCheckIn(item)}
+                      title="Check-in"
+                      className="p-1.5 bg-orange-50 text-orange-600 hover:bg-orange-100 rounded-lg transition-all 3xl:p-2.5 3xl:rounded-xl 4xl:p-4 5xl:p-5"
+                    >
+                      <FiLogIn size={12} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" />
+                    </button>
+                    
+                    <button
+                      title="Print"
+                      className="p-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg transition-all 3xl:p-2.5 3xl:rounded-xl 4xl:p-4 5xl:p-5"
+                    >
+                      <FiPrinter size={12} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" />
+                    </button>
+
+                    <button
+                      title="WhatsApp"
+                      className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-all 3xl:p-2.5 3xl:rounded-xl 4xl:p-4 5xl:p-5"
+                    >
+                      <FaWhatsapp size={12} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" />
+                    </button>
+
+                    <button
+                      title="View"
+                      className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-all 3xl:p-2.5 3xl:rounded-xl 4xl:p-4 5xl:p-5"
+                    >
+                      <FiEye size={12} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" />
+                    </button>
+
+                    <div className="relative">
+                      <button
+                        title="More Options"
+                        onClick={(e) => {
+                           e.stopPropagation();
+                           setActiveDropdown(activeDropdown === item._id ? null : item._id);
+                        }}
+                        className="p-1.5 bg-gray-50 text-gray-600 hover:bg-gray-200 rounded-lg transition-all 3xl:p-2.5 3xl:rounded-xl 4xl:p-4 5xl:p-5"
+                      >
+                        <FiMoreVertical size={12} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" />
+                      </button>
+
+                      {activeDropdown === item._id && (
+                        <div className="absolute right-0 top-full mt-1 w-28 bg-white border border-gray-100 shadow-lg rounded-xl z-50 overflow-hidden flex flex-col 3xl:w-36 3xl:mt-2 4xl:w-48 4xl:mt-3 5xl:w-60 5xl:mt-4">
+                          <button
+                            onClick={() => { setActiveDropdown(null); onEdit(item); }}
+                            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors w-full text-left 3xl:px-4 3xl:py-3 3xl:text-sm 4xl:px-5 4xl:py-4 4xl:text-lg 4xl:gap-3 5xl:px-6 5xl:py-5 5xl:text-xl 5xl:gap-4"
+                          >
+                            <FiEdit2 size={10} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" /> Edit
+                          </button>
+                          <button
+                            onClick={() => { setActiveDropdown(null); onCancel(item); }}
+                            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors w-full text-left 3xl:px-4 3xl:py-3 3xl:text-sm 4xl:px-5 4xl:py-4 4xl:text-lg 4xl:gap-3 5xl:px-6 5xl:py-5 5xl:text-xl 5xl:gap-4 border-t border-gray-50"
+                          >
+                            <FiX size={10} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" /> Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

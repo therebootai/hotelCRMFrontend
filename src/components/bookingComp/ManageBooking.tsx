@@ -15,7 +15,9 @@ import {
   FiX,
   FiPrinter,
   FiEye,
-  FiMoreVertical
+  FiMoreVertical,
+  FiFilter,
+  FiPlus
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import Pagination from "../layout/Pagination";
@@ -31,11 +33,13 @@ const ManageBooking = ({
   onCheckIn,
   onEdit,
   onCancel,
+  onNewBooking,
 }: any) => {
   const [viewType, setViewType] = useState<"Individual" | "Corporate">(
     "Individual",
   );
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Status badge helper
   const getStatusBadge = (status: string) => {
@@ -75,15 +79,16 @@ const ManageBooking = ({
     <div className="flex flex-col gap-4 animate-in fade-in duration-500 w-full">
       {/* --- TOP FILTERS SECTION --- */}
       <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm 3xl:p-6 3xl:rounded-2xl 4xl:p-8 5xl:p-10 5xl:rounded-[20px]">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 3xl:gap-8 4xl:gap-12 5xl:gap-16">
+        <div className="flex items-center gap-3 w-full 3xl:gap-5 4xl:gap-8 5xl:gap-10">
+          
           {/* Toggle Buttons */}
-          <div className="flex p-1 bg-gray-100 rounded-lg w-full lg:w-fit 3xl:p-1.5 3xl:rounded-xl 4xl:p-2.5 5xl:p-3 5xl:rounded-[14px]">
+          <div className="flex p-1 bg-gray-100 rounded-lg w-fit 3xl:p-1.5 3xl:rounded-xl 4xl:p-2.5 5xl:p-3 5xl:rounded-[14px] shrink-0">
             <button
               onClick={() => {
                 setViewType("Individual");
                 setFilters({ ...filters, bookingType: "Individual" });
               }}
-              className={`flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 lg:flex-initial 3xl:px-6 3xl:py-2.5 3xl:text-sm 3xl:rounded-xl 4xl:px-10 4xl:py-4.5 4xl:text-lg 5xl:px-12 5xl:py-5.5 5xl:text-xl 5xl:rounded-[10px] ${viewType === "Individual" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
+              className={`flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all 3xl:px-6 3xl:py-2.5 3xl:text-sm 3xl:rounded-xl 4xl:px-10 4xl:py-4.5 4xl:text-lg 5xl:px-12 5xl:py-5.5 5xl:text-xl 5xl:rounded-[10px] ${viewType === "Individual" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
             >
               <FiUser size={12} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" /> Individual
             </button>
@@ -92,14 +97,14 @@ const ManageBooking = ({
                 setViewType("Corporate");
                 setFilters({ ...filters, bookingType: "Corporate" });
               }}
-              className={`flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 lg:flex-initial 3xl:px-6 3xl:py-2.5 3xl:text-sm 3xl:rounded-xl 4xl:px-10 4xl:py-4.5 4xl:text-lg 5xl:px-12 5xl:py-5.5 5xl:text-xl 5xl:rounded-[10px] ${viewType === "Corporate" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`}
+              className={`flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all 3xl:px-6 3xl:py-2.5 3xl:text-sm 3xl:rounded-xl 4xl:px-10 4xl:py-4.5 4xl:text-lg 5xl:px-12 5xl:py-5.5 5xl:text-xl 5xl:rounded-[10px] ${viewType === "Corporate" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`}
             >
               <FiBriefcase size={12} className="3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" /> Corporate
             </button>
           </div>
 
           {/* Search Bar */}
-          <div className="relative w-full lg:flex-1 lg:min-w-[200px] 3xl:min-w-[300px] 4xl:min-w-[400px] 5xl:min-w-[500px]">
+          <div className="relative flex-1">
             <FiSearch
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 3xl:left-5 3xl:scale-125 4xl:scale-[2.2] 4xl:left-8 5xl:scale-[2.8] 5xl:left-10"
               size={14}
@@ -107,50 +112,81 @@ const ManageBooking = ({
             <input
               type="text"
               placeholder={`Search by name, phone, booking ID...`}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-xl outline-none transition-all text-xs 3xl:pl-14 3xl:pr-6 3xl:py-3.5 3xl:text-sm 3xl:rounded-2xl 4xl:pl-20 4xl:pr-10 4xl:py-5.5 4xl:text-lg 4xl:rounded-2xl 5xl:pl-24 5xl:pr-12 5xl:py-7 5xl:text-xl 5xl:rounded-[20px]"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent focus:border-orange-200 focus:bg-white rounded-xl outline-none transition-all text-xs font-medium text-gray-700 3xl:pl-14 3xl:pr-6 3xl:py-3.5 3xl:text-sm 3xl:rounded-2xl 4xl:pl-20 4xl:pr-10 4xl:py-5 4xl:text-lg 4xl:rounded-2xl 5xl:pl-24 5xl:pr-12 5xl:py-6 5xl:text-xl 5xl:rounded-[20px]"
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             />
           </div>
 
-          {/* Date Range */}
-          <div className="flex items-center justify-between lg:justify-start gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-100 w-full lg:w-auto 3xl:p-2.5 3xl:rounded-2xl 3xl:gap-4 4xl:p-4.5 4xl:gap-6 4xl:rounded-2xl 5xl:p-6 5xl:gap-8 5xl:rounded-[20px]">
-            <div className="flex items-center px-2 gap-1 border-r border-gray-200 3xl:px-4 3xl:gap-2 4xl:px-6 4xl:gap-4 5xl:px-8 5xl:gap-5">
-              <FiCalendar size={12} className="text-orange-500 3xl:scale-150 4xl:scale-[2.2] 5xl:scale-[2.8]" />
-              <DatePicker
-                selected={filters.startDate}
-                onChange={(date: any) => setFilters({ ...filters, startDate: date })}
-                placeholderText="From"
-                isClearable
-                className="bg-transparent outline-none text-[10px] font-bold w-20 3xl:text-xs 3xl:w-28 4xl:text-base 4xl:w-44 5xl:text-lg 5xl:w-56"
-                dateFormat="dd/MM/yyyy"
-              />
-            </div>
-            <div className="flex items-center px-2 gap-1 3xl:px-4 3xl:gap-2 4xl:px-6 4xl:gap-4 5xl:px-8 5xl:gap-5">
-              <DatePicker
-                selected={filters.endDate}
-                onChange={(date: any) => setFilters({ ...filters, endDate: date })}
-                placeholderText="To"
-                isClearable
-                className="bg-transparent outline-none text-[10px] font-bold w-20 3xl:text-xs 3xl:w-28 4xl:text-base 4xl:w-44 5xl:text-lg 5xl:w-56"
-                dateFormat="dd/MM/yyyy"
-              />
-            </div>
+          {/* Filter Button */}
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-2.5 rounded-xl border transition-all flex items-center justify-center gap-2 3xl:p-3.5 3xl:rounded-2xl 4xl:p-5 4xl:rounded-2xl 5xl:p-6 5xl:rounded-[20px] ${
+                showFilters || filters.status || filters.startDate || filters.endDate
+                  ? "bg-orange-50 border-orange-200 text-orange-600"
+                  : "bg-gray-50 border-gray-100 text-gray-500 hover:bg-gray-100"
+              }`}
+            >
+              <FiFilter size={16} className="3xl:scale-125 4xl:scale-[1.8] 5xl:scale-[2.2]" />
+            </button>
+            
+            {/* Filter Dropdown */}
+            {showFilters && (
+              <div className="absolute right-0 top-full mt-2 w-[300px] bg-white border border-gray-100 shadow-xl rounded-2xl z-50 p-4 flex flex-col gap-4 3xl:w-[380px] 3xl:p-6 3xl:rounded-3xl 4xl:w-[480px] 4xl:p-8 4xl:gap-6 5xl:w-[600px] 5xl:p-10">
+                <div className="flex flex-col gap-1.5 3xl:gap-2 4xl:gap-3 5xl:gap-4">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider 3xl:text-xs 4xl:text-sm 5xl:text-base">Date Range</span>
+                  <div className="flex items-center justify-between gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100 3xl:p-3 3xl:rounded-2xl 4xl:p-4 5xl:p-5">
+                    <div className="flex items-center px-2 gap-1 3xl:gap-2 4xl:gap-3 border-r border-gray-200 flex-1">
+                      <FiCalendar size={12} className="text-orange-500 3xl:scale-125 4xl:scale-[1.5] 5xl:scale-[2]" />
+                      <DatePicker
+                        selected={filters.startDate}
+                        onChange={(date: any) => setFilters({ ...filters, startDate: date })}
+                        placeholderText="From"
+                        isClearable
+                        className="bg-transparent outline-none text-[10px] font-bold w-full 3xl:text-xs 4xl:text-base 5xl:text-lg"
+                        dateFormat="dd/MM/yyyy"
+                      />
+                    </div>
+                    <div className="flex items-center px-2 gap-1 3xl:gap-2 4xl:gap-3 flex-1">
+                      <DatePicker
+                        selected={filters.endDate}
+                        onChange={(date: any) => setFilters({ ...filters, endDate: date })}
+                        placeholderText="To"
+                        isClearable
+                        className="bg-transparent outline-none text-[10px] font-bold w-full 3xl:text-xs 4xl:text-base 5xl:text-lg"
+                        dateFormat="dd/MM/yyyy"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-1.5 3xl:gap-2 4xl:gap-3 5xl:gap-4">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider 3xl:text-xs 4xl:text-sm 5xl:text-base">Status</span>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-xs text-gray-700 3xl:px-4 3xl:py-3.5 3xl:text-sm 3xl:rounded-2xl 4xl:px-6 4xl:py-5 4xl:text-lg 5xl:px-8 5xl:py-6 5xl:text-xl"
+                  >
+                    <option value="">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="Checked-In">Checked-In</option>
+                    <option value="Checked-Out">Checked-Out</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Status Filter */}
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="px-3 py-2 bg-gray-50 border border-transparent rounded-xl outline-none font-bold text-[10px] uppercase tracking-widest text-gray-500 w-full lg:w-auto 3xl:px-5 3xl:py-3.5 3xl:text-xs 3xl:rounded-2xl 4xl:px-8 4xl:py-5.5 4xl:text-base 4xl:rounded-2xl 5xl:px-10 5xl:py-7 5xl:text-lg 5xl:rounded-[20px]"
+          {/* New Booking Button */}
+          <button
+            onClick={onNewBooking}
+            className="shrink-0 h-[2.5rem] px-5 flex justify-center items-center bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 transition-all rounded-xl text-white font-bold gap-2 shadow-lg shadow-orange-100 active:scale-95 3xl:h-[3.5rem] 3xl:px-8 3xl:text-base 3xl:rounded-2xl 4xl:h-[4.4rem] 4xl:px-10 4xl:text-lg 5xl:h-[5.2rem] 5xl:px-12 5xl:text-xl 5xl:rounded-[20px]"
           >
-            <option value="">All Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="Checked-In">Checked-In</option>
-            <option value="Checked-Out">Checked-Out</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+            <FiPlus className="3xl:scale-125 4xl:scale-[1.5] 5xl:scale-[2]" /> <span className="hidden md:inline">New Booking</span>
+          </button>
         </div>
       </div>
 

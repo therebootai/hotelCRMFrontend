@@ -135,6 +135,8 @@ interface RoomEntry {
  roomTypeName?: string;
  slotIndex?: number; // which booking.rooms[] entry this belongs to
  requiredRoomTypeId?: string; // expected room type for this slot (for filtering)
+ maxAdults?: number;
+ maxChildren?: number;
 }
 
 const CheckInForm = ({
@@ -546,8 +548,10 @@ const CheckInForm = ({
  roomType: roomTypeObj,
  roomTypeName: roomTypeObj?.name || r.roomTypeName || "",
  hasExtraBed: false,
- extraBedCharge: 0,
- extraBedAllowed: false,
+ extraBedCharge: Number(roomIdObj?.extraBedCharge || r.extraBedCharge) || 0,
+ extraBedAllowed: !!(roomIdObj?.extraBedAllowed || r.extraBedAllowed),
+ maxAdults: Number(roomIdObj?.maxAdults || r.maxAdults) || 2,
+ maxChildren: Number(roomIdObj?.maxChildren || r.maxChildren) || 0,
  slotIndex: idx,
  requiredRoomTypeId,
  };
@@ -751,9 +755,11 @@ const CheckInForm = ({
  basePrice: Number(room.basePrice) || 0,
  roomType: roomTypeObj,
  roomTypeName: roomTypeObj?.name || "",
- hasExtraBed: extraBedAllowed,
+ hasExtraBed: false,
  extraBedCharge: Number(room.extraBedCharge) || 0,
  extraBedAllowed,
+ maxAdults: Number(room.maxAdults) || 2,
+ maxChildren: Number(room.maxChildren) || 0,
  };
  setSelectedRooms(updated);
  } else {
@@ -766,9 +772,11 @@ const CheckInForm = ({
  basePrice: Number(room.basePrice) || 0,
  roomType: roomTypeObj,
  roomTypeName: roomTypeObj?.name || "",
- hasExtraBed: extraBedAllowed,
+ hasExtraBed: false,
  extraBedCharge: Number(room.extraBedCharge) || 0,
  extraBedAllowed,
+ maxAdults: Number(room.maxAdults) || 2,
+ maxChildren: Number(room.maxChildren) || 0,
  },
  ]);
  }
@@ -2279,10 +2287,19 @@ const CheckInForm = ({
  </div>
 
  {/* Occupancy Validation */}
- <div className="mt-3 p-2.5 bg-green-50 border border-green-200 rounded-xl text-green-800 text-[10px] font-bold flex items-center justify-between">
- <span>💚 Occupancy Validation: Valid (Guests: {guests.length} / Capacity: {selectedRooms.length * 2})</span>
- <span className="px-1.5 py-0.5 bg-green-200 text-green-700 rounded text-[8px] uppercase font-black">Valid</span>
- </div>
+ {(() => {
+   const totalCapacity = selectedRooms.reduce((sum, r) => sum + (r.roomId ? ((Number(r.maxAdults) || 2) + (Number(r.maxChildren) || 0) + (r.hasExtraBed ? 1 : 0)) : 0), 0);
+   const isValid = totalCapacity === 0 || guests.length <= totalCapacity;
+
+   return (
+     <div className={`mt-3 p-2.5 border rounded-xl text-[10px] font-bold flex items-center justify-between ${isValid ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+       <span>{isValid ? '💚' : '⚠️'} Occupancy Validation: {isValid ? 'Valid' : 'Exceeds Capacity'} (Guests: {guests.length} / Capacity: {totalCapacity})</span>
+       <span className={`px-1.5 py-0.5 rounded text-[8px] uppercase font-black ${isValid ? 'bg-green-200 text-green-700' : 'bg-red-200 text-red-700'}`}>
+         {isValid ? 'Valid' : 'Over Limit'}
+       </span>
+     </div>
+   );
+ })()}
  </div>
  </>
  )}

@@ -786,19 +786,6 @@ const CheckInForm = ({
  );
  };
 
- // Remove room
- const removeRoom = (roomId: string) => {
- if (selectedRooms.length > 1) {
- // Remove room and clear guest assignments for that room
- setSelectedRooms(selectedRooms.filter((r) => r.roomId !== roomId));
- setGuests(
- guests.map((g) =>
- g.assignedRoomId === roomId ? { ...g, assignedRoomId: null } : g,
- ),
- );
- }
- };
-
  // Guest management
  const addGuest = () => {
  setGuests([
@@ -2127,20 +2114,37 @@ const CheckInForm = ({
 
  {/* Selected room tags */}
  {selectedRooms.length > 0 && (
- <div className="flex flex-wrap gap-1.5 p-2 bg-orange-50/50 border border-orange-100 rounded-lg mb-3">
- {selectedRooms.map((room) => (
- <span
- key={room.roomId || `tbd-${room.slotIndex}`}
- className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-orange-200 text-orange-600 rounded text-[9px] font-black"
- >
- {room.roomNumber || "TBD"}
- {room.roomId && (
- <button onClick={() => removeRoom(room.roomId)} className="hover:text-red-500 font-bold">
- ×
- </button>
- )}
- </span>
- ))}
+ <div className="flex flex-wrap gap-2 p-2 bg-orange-50/50 border border-orange-100 rounded-xl mb-3">
+ {selectedRooms.map((room) => {
+   const isUnassigned = !room.roomId;
+   let typeName = room.roomTypeName || "Any Room Type";
+   if (isUnassigned && room.requiredRoomTypeId) {
+     const origType = roomTypes.find((t: any) => t._id === room.requiredRoomTypeId);
+     if (origType) typeName = origType.name;
+   }
+
+   return (
+     <div
+     key={room.roomId || `tbd-${room.slotIndex}`}
+     onClick={() => {
+       if (isUnassigned && room.requiredRoomTypeId) {
+         setRoomTypeFilterId(room.requiredRoomTypeId);
+         fetchRoomsByType(room.requiredRoomTypeId);
+       }
+     }}
+     className={`inline-flex items-center gap-1 px-2.5 py-1.5 bg-white border ${isUnassigned ? 'border-orange-300 border-dashed' : 'border-orange-200'} text-orange-600 rounded-lg text-[11px] font-black shadow-sm ${isUnassigned && room.requiredRoomTypeId ? 'cursor-pointer hover:bg-orange-50 hover:border-orange-400 transition-all' : ''}`}
+     title={isUnassigned && room.requiredRoomTypeId ? "Click to filter table by this category" : ""}
+     >
+     <span className="text-gray-500 uppercase tracking-widest text-[9px] mr-1 border-r border-orange-200 pr-1.5">{typeName}</span>
+     <span className={isUnassigned ? "text-orange-400" : "text-gray-800"}>{room.roomNumber || "Select Room"}</span>
+     {!isUnassigned && (
+     <button onClick={(e) => { e.stopPropagation(); toggleRoom({ _id: room.roomId }); }} className="hover:text-red-500 font-bold ml-1.5 text-base leading-none transition-colors">
+     ×
+     </button>
+     )}
+     </div>
+   );
+ })}
  </div>
  )}
 

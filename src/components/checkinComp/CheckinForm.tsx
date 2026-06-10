@@ -1938,17 +1938,29 @@ const CheckInForm = ({
  </div>
  <div>
  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Extra Bed Required?</label>
- <select
- value={selectedRooms.some(r => r.hasExtraBed) ? "Yes" : "No"}
- onChange={(e) => {
- const needsExtra = e.target.value === "Yes";
- setSelectedRooms(selectedRooms.map(r => r.extraBedAllowed ? { ...r, hasExtraBed: needsExtra } : r));
- }}
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none"
- >
- <option value="No">No Extra Bed</option>
- <option value="Yes">Yes, 1 Extra Bed</option>
- </select>
+ <div className="w-full h-[36px] bg-gray-50 border border-border rounded-lg overflow-y-auto custom-scroll p-1">
+ {selectedRooms.filter((r: any) => r.extraBedAllowed).length === 0 ? (
+ <div className="text-[9px] text-gray-400 text-center py-1 font-bold">Not Allowed</div>
+ ) : (
+ <div className="flex flex-col gap-1 px-1">
+ {selectedRooms.filter((r: any) => r.extraBedAllowed).map((r: any) => (
+ <label key={r.roomId || r.slotIndex} className={`flex items-center justify-between gap-1.5 text-[9px] font-bold ${!r.roomId ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 cursor-pointer'} py-0.5 border-b border-gray-100 last:border-0`}>
+ <div className="flex items-center gap-1.5 truncate">
+ <input 
+ type="checkbox" 
+ checked={r.hasExtraBed} 
+ disabled={!r.roomId}
+ onChange={() => toggleExtraBed(r.roomId)}
+ className="accent-orange-500 w-3 h-3 flex-shrink-0"
+ />
+ <span className="truncate">{r.roomId ? `Room ${r.roomNumber}` : 'Assign room first'}</span>
+ </div>
+ {r.roomId && r.extraBedCharge > 0 && <span className="text-gray-400 flex-shrink-0">₹{r.extraBedCharge}</span>}
+ </label>
+ ))}
+ </div>
+ )}
+ </div>
  </div>
  </div>
 

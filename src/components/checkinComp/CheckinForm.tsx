@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
  FiX,
  FiUser,
@@ -154,6 +155,7 @@ const CheckInForm = ({
  const [expandedRooms, setExpandedRooms] = useState<Record<string, boolean>>({});
  const [loadingStep, setLoadingStep] = useState<string>("");
  const [showSuccessActions, setShowSuccessActions] = useState(false);
+  const navigate = useNavigate();
  const [roomTypes, setRoomTypes] = useState<any[]>([]);
  const [availableRooms, setAvailableRooms] = useState<any[]>([]);
  const grcCardRef = useRef<any>(null);
@@ -1086,7 +1088,33 @@ const CheckInForm = ({
  };
 
  // Open GRC Modal
- const handleOpenGRC = () => {
+     const handleResetForm = () => {
+    setShowSuccessActions(false);
+    setCurrentStep(1);
+    setRoomSearchQuery("");
+    setSelectedRooms([]);
+    setGuests([{
+      id: `g-${Date.now()}`,
+      name: "",
+      mobileNo: "",
+      idType: "Aadhar Card",
+      idNumber: "",
+      gender: "",
+      age: "",
+      nationality: "Indian",
+      isPrimary: true,
+      assignedRoomId: null,
+      idDocument: null,
+      pendingDocFile: null,
+      pendingDocPreview: null,
+    }]);
+    setVehicles([{ vehicleNumber: "", vehicleType: "", driverName: "", driverContact: "" }]);
+    setPaymentData({ paymentMode: "Cash", checkInAdvance: 0, transactionId: "", paymentNote: "" });
+    setSignedGRCFile(null);
+    setSignedGRCPreview(null);
+  };
+
+  const handleOpenGRC = () => {
  const data = generateGRCData();
  setGrcData(data);
  setShowGRCModal(true);
@@ -3283,14 +3311,24 @@ const CheckInForm = ({
  <div className="space-y-3">
  
  <button
- onClick={() => {
- setShowSuccessActions(false);
- if (onClose) onClose();
- }}
- className="w-full px-6 py-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-gray-50 transition-all"
- >
- Close
- </button>
+                          onClick={() => {
+                            handleResetForm();
+                            if (onClose) onClose();
+                          }}
+                          className="w-full px-6 py-3 bg-orange-500 text-white rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-orange-600 transition-all mb-3"
+                        >
+                          New Check-in
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowSuccessActions(false);
+                            if (onClose) onClose();
+                            navigate('/active-guests');
+                          }}
+                          className="w-full px-6 py-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-gray-50 transition-all"
+                        >
+                          View Active Guests
+                        </button>
  </div>
  </div>
  </div>

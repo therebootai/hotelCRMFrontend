@@ -33,10 +33,8 @@ const DirectCheckInPage = () => {
   }
 
   return (
-    <div className="p-4 sm:p-8 bg-[#F8F9FA] min-h-screen">
-      <div className="max-w-6xl mx-auto">
-        <CheckInForm key={bookingData?._id || 'new'} inline={true} bookingData={bookingData} />
-      </div>
+    <div className="bg-[#F8F9FA] min-h-screen w-full">
+      <CheckInForm key={bookingData?._id || 'new'} inline={true} bookingData={bookingData} />
     </div>
   );
 };

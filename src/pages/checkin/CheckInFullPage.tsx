@@ -153,19 +153,17 @@ const handleCheckoutClick = (item: any) => {
    if (!bookingData) {
      return <div className="p-8 text-center text-gray-500">Loading booking data...</div>;
    }
-   return (
-     <div className="p-4 sm:p-8 bg-[#F8F9FA] min-h-screen">
-       <div className="max-w-6xl mx-auto">
-         <CheckinForm 
-           key={bookingData._id} 
-           inline={true} 
-           bookingData={bookingData} 
-           onClose={() => { setSearchParams({}); }} 
-           onSuccess={() => { setSearchParams({}); fetchCheckins(); }} 
-         />
-       </div>
-     </div>
-   );
+    return (
+      <div className="bg-[#F8F9FA] min-h-screen w-full">
+        <CheckinForm 
+          key={bookingData._id} 
+          inline={true} 
+          bookingData={bookingData} 
+          onClose={() => { setSearchParams({}); }} 
+          onSuccess={() => { setSearchParams({}); fetchCheckins(); }} 
+        />
+      </div>
+    );
  }
 
  return (

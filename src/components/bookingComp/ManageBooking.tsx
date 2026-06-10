@@ -8,9 +8,6 @@ import {
  FiUser,
  FiLogIn,
  FiBriefcase,
- FiXCircle,
- FiCheckCircle,
- FiClock,
  FiEdit2,
  FiX,
  FiPrinter,
@@ -60,20 +57,7 @@ const ManageBooking = ({
  };
 
  // Payment status badge
- const getPaymentStatusBadge = (paymentStatus: string) => {
- switch (paymentStatus) {
- case "Paid":
- return { bg: "bg-green-100", text: "text-green-700", icon: FiCheckCircle };
- case "Partial":
- return { bg: "bg-yellow-100", text: "text-yellow-700", icon: FiClock };
- case "Pending":
- return { bg: "bg-gray-100", text: "text-gray-500", icon: FiClock };
- case "Refunded":
- return { bg: "bg-blue-100", text: "text-blue-700", icon: FiXCircle };
- default:
- return { bg: "bg-gray-100", text: "text-gray-500", icon: FiClock };
- }
- };
+
 
  return (
  <div className="flex flex-col gap-4 animate-in fade-in duration-500 w-full">
@@ -236,12 +220,9 @@ const ManageBooking = ({
  ) : (
  data.map((item: any) => {
  const statusBadge = getStatusBadge(item.status);
- const paymentBadge = getPaymentStatusBadge(item.paymentStatus || "Pending");
- const PaymentIcon = paymentBadge.icon;
  const guestName = item.bookingContact?.name || item.customerId?.name || "Guest";
  const guestPhone = item.bookingContact?.mobile || item.customerId?.phone || "";
  const grandTotal = item.pricingSummary?.grandTotal || 0;
- const paidAmount = item.pricingSummary?.paidAmount || 0;
 
  return (
  <div

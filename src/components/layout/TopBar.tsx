@@ -7,6 +7,7 @@ import CheckinSearchBar from "../../components/checkinComp/CheckinSearchBar";
 
 const TopBar = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

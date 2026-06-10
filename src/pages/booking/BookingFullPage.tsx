@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { FaPlus } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import api from "../../lib/axios";
 import { useQueryParams } from "../../hooks/useQueryParams";
 import CreateBooking from "../../components/bookingComp/CreateBooking";
 import ManageBooking from "../../components/bookingComp/ManageBooking";
-import BookingOverview from "../../components/bookingComp/BookingOverview";
-import CheckInForm from "../../components/checkinComp/CheckinForm";
 import CancelBookingModal from "../../components/bookingComp/CancelBookingModal";
 
 const BookingFullPage = () => {
@@ -19,8 +17,7 @@ const BookingFullPage = () => {
  const [bookings, setBookings] = useState([]);
  const [loading, setLoading] = useState(false);
 
- const [showCheckIn, setShowCheckIn] = useState(false);
- const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
 
  // Edit & Cancel State
  const [showEditModal, setShowEditModal] = useState(false);
@@ -54,10 +51,11 @@ const BookingFullPage = () => {
  setShowCancelModal(true);
  };
 
+ const navigate = useNavigate();
+
  const handleOpenCheckIn = (booking: any) => {
- setSelectedBooking(booking);
- setShowCheckIn(true);
-};
+  navigate(`/checkin?bookingId=${booking._id || booking.id}`);
+ };
  // Sync string filters + page to URL whenever they change
  useEffect(() => {
  if (!isMounted.current) { isMounted.current = true; return; }
@@ -149,16 +147,6 @@ const BookingFullPage = () => {
  refreshBookings={fetchBookingList}
  />
  )}
-
- {showCheckIn && (
- <CheckInForm
- bookingData={selectedBooking}
- onClose={() => {
- setShowCheckIn(false);
- fetchBookingList();
- }}
- />
-)}
 
  {showEditModal && selectedBooking && (
  <CreateBooking

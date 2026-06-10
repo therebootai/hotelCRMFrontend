@@ -440,8 +440,8 @@ const CheckInForm = ({
  const [guests, setGuests] = useState<GuestEntry[]>([
  {
  id: `g-${Date.now()}`,
- name: bookingData?.customerId?.name || "",
- mobileNo: bookingData?.customerId?.phone || "",
+ name: bookingData?.bookingContact?.name || bookingData?.customerId?.name || "",
+ mobileNo: bookingData?.bookingContact?.mobile || bookingData?.customerId?.phone || "",
  idType: "Aadhar Card",
  idNumber: "",
  gender: "",
@@ -3073,7 +3073,7 @@ const CheckInForm = ({
  <button
  onClick={() => {
  setShowSuccessActions(false);
- onClose();
+ if (onClose) onClose();
  }}
  className="w-full px-6 py-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-gray-50 transition-all"
  >

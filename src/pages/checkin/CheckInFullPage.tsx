@@ -15,6 +15,7 @@ import api from "../../lib/axios";
 import Pagination from "../../components/layout/Pagination";
 import { useQueryParams } from "../../hooks/useQueryParams";
 import { FaEye } from "react-icons/fa";
+import { useSearchParams } from "react-router-dom";
 import ExtendStayModal from "../../components/checkinComp/ExtendStayModal";
 import GenerateBillModal from "../../components/checkinComp/GanerateBillModel";
 import ViewCheckin from "../../components/checkinComp/ViewCheckin";
@@ -22,6 +23,10 @@ import CheckinForm from "../../components/checkinComp/CheckinForm";
 
 const CheckInFullPage = () => {
  const { getParam, setMultipleParams } = useQueryParams();
+ const [searchParams, setSearchParams] = useSearchParams();
+ const bookingId = searchParams.get("bookingId");
+ const [bookingData, setBookingData] = useState<any>(null);
+
  const isMounted = useRef(false);
 
  // URL-driven string filters
@@ -133,6 +138,35 @@ const handleCheckoutClick = (item: any) => {
  filters.roomType,
  filters.status,
  ]);
+
+ useEffect(() => {
+  if (bookingId) {
+    api.get(`/bookings/${bookingId}`)
+      .then(res => setBookingData(res.data.data.booking || res.data.data))
+      .catch(err => console.error("Error fetching booking", err));
+  } else {
+    setBookingData(null);
+  }
+ }, [bookingId]);
+
+ if (bookingId) {
+   if (!bookingData) {
+     return <div className="p-8 text-center text-gray-500">Loading booking data...</div>;
+   }
+   return (
+     <div className="p-4 sm:p-8 bg-[#F8F9FA] min-h-screen">
+       <div className="max-w-6xl mx-auto">
+         <CheckinForm 
+           key={bookingData._id} 
+           inline={true} 
+           bookingData={bookingData} 
+           onClose={() => { setSearchParams({}); }} 
+           onSuccess={() => { setSearchParams({}); fetchCheckins(); }} 
+         />
+       </div>
+     </div>
+   );
+ }
 
  return (
  <div className="p-8 bg-[#F8F9FA] min-h-screen ">

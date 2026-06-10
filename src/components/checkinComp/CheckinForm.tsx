@@ -171,86 +171,25 @@ const CheckInForm = ({
  const [selectedServices, setSelectedServices] = useState<string[]>([]);
  const [roomSearchQuery, setRoomSearchQuery] = useState("");
 
- // Guest Modal State
- const [showGuestModal, setShowGuestModal] = useState(false);
- const [activeGuest, setActiveGuest] = useState<GuestEntry | null>(null);
- const [isEditingGuest, setIsEditingGuest] = useState(false);
+  const handleAddCoGuest = (roomId: string) => {
+    const newGuest = {
+      id: `g-${Date.now()}`,
+      name: "",
+      mobileNo: "",
+      idType: "Not Required",
+      idNumber: "",
+      gender: "",
+      age: "",
+      nationality: "Indian",
+      isPrimary: false,
+      assignedRoomId: roomId,
+      idDocument: null,
+      pendingDocFile: null,
+      pendingDocPreview: null,
+    };
+    setGuests(prev => [...prev, newGuest as any]);
+  };
 
- const openAddGuestModal = (roomId?: string) => {
- setActiveGuest({
- id: `g-${Date.now()}`,
- name: "",
- mobileNo: "",
- idType: "Not Required",
- idNumber: "",
- gender: "",
- age: "",
- nationality: "Indian",
- isPrimary: false,
- assignedRoomId: roomId || (selectedRooms.length > 0 ? selectedRooms[0].roomId : null),
- idDocument: null,
- pendingDocFile: null,
- pendingDocPreview: null,
- });
- setIsEditingGuest(false);
- setShowGuestModal(true);
- };
-
- const openEditGuestModal = (guest: GuestEntry) => {
- setActiveGuest({ ...guest });
- setIsEditingGuest(true);
- setShowGuestModal(true);
- };
-
- const saveGuestModal = () => {
- if (!activeGuest) return;
- if (!activeGuest.name.trim()) {
- alert("Name is required");
- return;
- }
- if (!activeGuest.age.trim()) {
- alert("Age is required");
- return;
- }
- if (!activeGuest.gender) {
- alert("Gender is required");
- return;
- }
-
- if (isEditingGuest) {
- setGuests(guests.map((g) => (g.id === activeGuest.id ? activeGuest : g)));
- } else {
- setGuests([...guests, activeGuest]);
- }
- setShowGuestModal(false);
- setActiveGuest(null);
- };
-
- const handleModalDocUpload = (file: File) => {
- if (!activeGuest) return;
- const error = validateDocument(file);
- if (error) {
- alert(error);
- return;
- }
- const previewUrl = URL.createObjectURL(file);
- setActiveGuest({
- ...activeGuest,
- pendingDocFile: file,
- pendingDocPreview: previewUrl,
- idDocument: { public_id: previewUrl, secure_url: previewUrl }
- });
- };
-
- const handleModalRemoveDoc = () => {
- if (!activeGuest) return;
- setActiveGuest({
- ...activeGuest,
- pendingDocFile: null,
- pendingDocPreview: null,
- idDocument: null
- });
- };
 
  // Initialize from edit mode data
  useEffect(() => {
@@ -2687,24 +2626,78 @@ const CheckInForm = ({
                  </thead>
                  <tbody>
                    {coGuests.map((g) => {
-                     let badgeClass = "bg-gray-100 text-gray-500 border-gray-200";
-                     if (g.idType !== "Not Required") {
-                       if (g.idType === "Aadhaar Card" || g.idType === "Aadhar Card") badgeClass = "bg-green-50 text-green-600 border-green-200";
-                       else badgeClass = "bg-blue-50 text-blue-600 border-blue-200";
-                     }
                      return (
-                       <tr key={g.id} className="border-b border-border hover:bg-gray-50/50">
-                         <td className="p-2 font-bold text-gray-800">{g.name || "(No Name)"}</td>
-                         <td className="p-2 font-medium text-gray-600">{g.age || "-"}</td>
-                         <td className="p-2 font-medium text-gray-600">{g.gender || "-"}</td>
+                       <tr key={g.id} className="border-b border-gray-50 hover:bg-gray-50/50">
                          <td className="p-2">
-                           <span className={`px-2 py-0.5 rounded text-[8px] font-black border uppercase ${badgeClass}`}>{g.idType}</span>
+                           <input
+                             type="text"
+                             value={g.name}
+                             onChange={(e) => updateGuest(g.id, "name", e.target.value)}
+                             className="w-full bg-transparent border-b border-transparent focus:border-indigo-500 focus:outline-none font-bold text-gray-700 placeholder-gray-300"
+                             placeholder="Guest Name"
+                           />
                          </td>
                          <td className="p-2">
-                           <div className="flex items-center gap-1.5">
-                             <button onClick={() => openEditGuestModal(g)} className="text-gray-400 hover:text-orange-500 font-bold" title="Edit Occupant">✏️</button>
-                             <button onClick={() => removeGuest(g.id)} className="text-gray-400 hover:text-red-500 font-bold" title="Delete Occupant">🗑️</button>
+                           <input
+                             type="text"
+                             value={g.age}
+                             onChange={(e) => {
+                               const val = e.target.value;
+                               if (/^[0-9]*$/.test(val) || val === "") updateGuest(g.id, "age", val);
+                             }}
+                             className="w-12 bg-transparent border-b border-transparent focus:border-indigo-500 focus:outline-none font-bold text-gray-700"
+                             placeholder="Age"
+                           />
+                         </td>
+                         <td className="p-2">
+                           <select
+                             value={g.gender}
+                             onChange={(e) => updateGuest(g.id, "gender", e.target.value)}
+                             className="w-20 bg-transparent border-b border-transparent focus:border-indigo-500 focus:outline-none font-bold text-gray-700"
+                           >
+                             <option value="">Select</option>
+                             <option value="Male">Male</option>
+                             <option value="Female">Female</option>
+                             <option value="Other">Other</option>
+                           </select>
+                         </td>
+                         <td className="p-2">
+                           <div className="flex flex-col gap-1">
+                             <select
+                               value={g.idType}
+                               onChange={(e) => updateGuest(g.id, "idType", e.target.value)}
+                               className="w-full bg-transparent border-b border-transparent focus:border-indigo-500 focus:outline-none font-bold text-gray-700 text-[9px]"
+                             >
+                               <option value="Not Required">Not Required</option>
+                               <option value="Aadhaar Card">Aadhaar Card</option>
+                               <option value="PAN Card">PAN Card</option>
+                               <option value="Passport">Passport</option>
+                               <option value="Driving License">Driving License</option>
+                             </select>
+                             {g.idType !== "Not Required" && (
+                               g.pendingDocFile ? (
+                                 <div className="flex items-center justify-between p-1 bg-green-50 border border-green-200 rounded text-[8px] font-bold mt-1">
+                                   <span className="truncate text-green-600 max-w-[80px]">{g.pendingDocFile.name}</span>
+                                   <button onClick={() => handleRemoveDocument(g.id)} className="text-red-500 hover:text-red-700 ml-1 font-black text-xs">×</button>
+                                 </div>
+                               ) : (
+                                 <input
+                                   type="file"
+                                   onChange={(e) => e.target.files?.[0] && handleDocumentUpload(g.id, e.target.files[0])}
+                                   className="w-full mt-1 text-[8px] text-gray-400 font-bold file:mr-1 file:py-0.5 file:px-1 file:rounded file:border-0 file:bg-gray-100 hover:file:bg-gray-200 cursor-pointer"
+                                 />
+                               )
+                             )}
                            </div>
+                         </td>
+                         <td className="p-2">
+                           <button
+                             onClick={() => removeGuest(g.id)}
+                             className="text-red-400 hover:text-red-600 transition-colors p-1"
+                             title="Remove Guest"
+                           >
+                             <FiX size={12} />
+                           </button>
                          </td>
                        </tr>
                      );
@@ -2717,7 +2710,7 @@ const CheckInForm = ({
 
         <div className="mt-3 flex justify-end">
           <button
-            onClick={() => openAddGuestModal(room.roomId)}
+            onClick={() => handleAddCoGuest(room.roomId)}
             className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 text-gray-600 border border-border font-bold text-[9px] uppercase rounded-lg hover:bg-gray-100 transition-all"
           >
             <FiPlus size={10} /> Add Co-Guest
@@ -3316,180 +3309,7 @@ const CheckInForm = ({
  </div>
  )}
 
- {/* Add / Edit Co-Guest Modal */}
- {showGuestModal && activeGuest && (
- <div className="fixed inset-0 z-[70] w-full flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
- <div className="bg-white rounded-2xl border border-border p-5 w-[50%] space-y-4">
- {/* Header */}
- <div className="flex justify-between items-center border-b border-gray-100 pb-3">
- <h3 className="text-sm sm:text-base font-black text-gray-700 uppercase tracking-wider">
- {isEditingGuest ? "Edit Occupant Details" : "Add Co-Guest Details"}
- </h3>
- <button
- onClick={() => {
- setShowGuestModal(false);
- setActiveGuest(null);
- }}
- className="p-1 hover:bg-gray-100 rounded-full transition-all"
- >
- <FiX size={16} className="text-gray-400" />
- </button>
- </div>
-
- {/* Body */}
- <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Full Name *</label>
- <input
- type="text"
- value={activeGuest.name}
- onChange={(e) => setActiveGuest({ ...activeGuest, name: e.target.value })}
- placeholder="e.g. Neha Sharma"
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
- />
- </div>
-
- <div className="grid grid-cols-2 gap-3">
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Age *</label>
- <input
- type="text"
- value={activeGuest.age}
- onChange={(e) => {
- const val = e.target.value;
- if (/^\d*$/.test(val)) {
- setActiveGuest({ ...activeGuest, age: val });
- }
- }}
- placeholder="e.g. 32"
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
- />
- </div>
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Gender *</label>
- <select
- value={activeGuest.gender}
- onChange={(e) => setActiveGuest({ ...activeGuest, gender: e.target.value })}
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
- >
- <option value="">Select Gender</option>
- <option value="Male">Male</option>
- <option value="Female">Female</option>
- <option value="Other">Other</option>
- </select>
- </div>
- </div>
-
- <div className="grid grid-cols-2 gap-3">
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Relationship *</label>
- <select
- value={activeGuest.relationship || ""}
- onChange={(e) => setActiveGuest({ ...activeGuest, relationship: e.target.value })}
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
- >
- <option value="">Select Relationship</option>
- <option value="Spouse">Spouse</option>
- <option value="Wife">Wife</option>
- <option value="Husband">Husband</option>
- <option value="Son">Son</option>
- <option value="Daughter">Daughter</option>
- <option value="Friend">Friend</option>
- <option value="Other">Other</option>
- </select>
- </div>
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Mobile No (Optional)</label>
- <input
- type="tel"
- value={activeGuest.mobileNo}
- onChange={(e) => setActiveGuest({ ...activeGuest, mobileNo: e.target.value })}
- placeholder="Mobile No"
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
- />
- </div>
- </div>
-
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">ID Proof Type</label>
- <select
- value={activeGuest.idType}
- onChange={(e) => {
- const type = e.target.value;
- setActiveGuest({
- ...activeGuest,
- idType: type,
- idNumber: type === "Not Required" ? "" : activeGuest.idNumber,
- pendingDocFile: type === "Not Required" ? null : activeGuest.pendingDocFile,
- pendingDocPreview: type === "Not Required" ? null : activeGuest.pendingDocPreview,
- idDocument: type === "Not Required" ? null : activeGuest.idDocument,
- });
- }}
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
- >
- <option value="Not Required">Not Required</option>
- <option value="Aadhaar Card">Aadhaar Card</option>
- <option value="PAN Card">PAN Card</option>
- <option value="Passport">Passport</option>
- <option value="Driving License">Driving License</option>
- </select>
- </div>
-
- {activeGuest.idType !== "Not Required" && (
- <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-gray-50">
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">ID Number *</label>
- <input
- type="text"
- value={activeGuest.idNumber}
- onChange={(e) => setActiveGuest({ ...activeGuest, idNumber: e.target.value })}
- placeholder="ID Number"
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
- />
- </div>
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Upload ID Proof</label>
- {activeGuest.pendingDocPreview ? (
- <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg text-[10px] font-bold">
- <span className="truncate text-green-600 max-w-[100px]">{activeGuest.pendingDocFile?.name || "Uploaded ID"}</span>
- <button onClick={handleModalRemoveDoc} className="text-red-500 hover:text-red-700">
- 🗑️
- </button>
- </div>
- ) : (
- <input
- type="file"
- onChange={(e) => e.target.files?.[0] && handleModalDocUpload(e.target.files[0])}
- className="w-full text-sm text-gray-400 font-bold"
- />
- )}
- </div>
- </div>
- )}
- </div>
-
- {/* Footer */}
- <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
- <button
- onClick={() => {
- setShowGuestModal(false);
- setActiveGuest(null);
- }}
- className="px-4 py-2 border border-gray-200 text-gray-500 rounded-lg text-[10px] font-bold uppercase"
- >
- Cancel
- </button>
- <button
- onClick={saveGuestModal}
- className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-[10px] font-bold uppercase"
- >
- Save Occupant
- </button>
- </div>
- </div>
- </div>
- )}
- </div>
+  </div>
  );
 }
 

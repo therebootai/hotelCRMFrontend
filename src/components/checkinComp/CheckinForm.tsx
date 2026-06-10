@@ -1952,8 +1952,12 @@ const CheckInForm = ({
       <span className="text-[9px] font-bold text-gray-400 uppercase mb-1.5">Adults *</span>
       <div className="flex items-center gap-4">
       <button
-      onClick={() => {
-      if (guests.length > 1) removeGuest(guests[guests.length - 1].id);
+      onClick={(e) => {
+        e.preventDefault();
+        const adultGuests = guests.filter(g => Number(g.age) > 12 || !g.age);
+        if (adultGuests.length > 0 && guests.length > 1) {
+          removeGuest(adultGuests[adultGuests.length - 1].id);
+        }
       }}
       className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm transition-colors"
       >
@@ -1961,7 +1965,10 @@ const CheckInForm = ({
       </button>
       <span className="font-black text-lg w-4 text-center">{guests.filter(g => Number(g.age) > 12 || !g.age).length}</span>
       <button
-      onClick={addGuest}
+      onClick={(e) => {
+        e.preventDefault();
+        addGuest();
+      }}
       className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm transition-colors"
       >
       +
@@ -1971,9 +1978,39 @@ const CheckInForm = ({
     <div className="flex flex-col items-center justify-center p-2.5 bg-gray-50 border border-border rounded-xl">
       <span className="text-[9px] font-bold text-gray-400 uppercase mb-1.5">Children (Below 18 yrs)</span>
       <div className="flex items-center gap-4">
-      <button className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm transition-colors">-</button>
+      <button 
+      onClick={(e) => {
+        e.preventDefault();
+        const childGuests = guests.filter(g => Number(g.age) <= 12 && g.age);
+        if (childGuests.length > 0 && guests.length > 1) {
+          removeGuest(childGuests[childGuests.length - 1].id);
+        }
+      }}
+      className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm transition-colors">-</button>
       <span className="font-black text-lg w-4 text-center">{guests.filter(g => Number(g.age) <= 12 && g.age).length}</span>
-      <button className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm transition-colors">+</button>
+      <button 
+      onClick={(e) => {
+        e.preventDefault();
+        setGuests([
+          ...guests,
+          {
+            id: `g-${Date.now()}`,
+            name: "",
+            mobileNo: "",
+            idType: "Aadhar Card",
+            idNumber: "",
+            gender: "",
+            age: "10",
+            nationality: "Indian",
+            isPrimary: false,
+            assignedRoomId: selectedRooms.length > 0 ? selectedRooms[0].roomId : null,
+            idDocument: null,
+            pendingDocFile: null,
+            pendingDocPreview: null,
+          }
+        ]);
+      }}
+      className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm transition-colors">+</button>
       </div>
     </div>
   </div>

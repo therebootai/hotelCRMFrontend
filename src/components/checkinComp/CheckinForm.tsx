@@ -978,6 +978,28 @@ const CheckInForm = ({
  }
  };
 
+ // Get step validation error for footer display
+ const getProceedError = (step: number): string => {
+   switch (step) {
+     case 1:
+       if (!isDayAccess && bookingData?.rooms?.length > 0) {
+         const unassignedCount = selectedRooms.filter((s) => !s.roomId).length;
+         if (unassignedCount > 0) return `Please assign all booked rooms to continue (${unassignedCount} left).`;
+       }
+       if (partyType === "Individual") {
+         if (!getPrimaryGuest()?.name?.trim()) return "Primary guest name is required.";
+         if (!getPrimaryGuest()?.mobileNo?.trim()) return "Primary guest mobile is required.";
+       } else {
+         if (!corporateDetails.companyName.trim()) return "Company name is required.";
+       }
+       return "";
+     case 2:
+       return getStep2Validation();
+     default:
+       return "";
+   }
+ };
+
  // Get validation message for step 2
  const getStep2Validation = (): string => {
  const primary = getPrimaryGuest();
@@ -3120,6 +3142,11 @@ const CheckInForm = ({
  )}
 
  <div className="flex flex-col items-end gap-1">
+  {!canProceed(currentStep) && currentStep < 3 && getProceedError(currentStep) && (
+    <span className="text-[9px] text-red-500 font-bold mb-1">
+      ⚠️ {getProceedError(currentStep)}
+    </span>
+  )}
  <div className="flex items-center gap-3">
  {currentStep > 1 && (
  <button

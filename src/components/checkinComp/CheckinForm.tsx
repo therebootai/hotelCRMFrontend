@@ -2126,6 +2126,36 @@ const CheckInForm = ({
  </select>
  </div>
 
+ {/* Summary of Booked vs Assigned */}
+ {(() => {
+   const bookedSummary = bookingData?.rooms?.reduce((acc: any, room: any) => {
+     const name = room.roomTypeName || room.roomType?.name || "Any";
+     acc[name] = (acc[name] || 0) + 1;
+     return acc;
+   }, {});
+   const bookedSummaryText = bookedSummary ? Object.entries(bookedSummary).map(([k, v]) => `${k} - ${v}`).join(", ") : "None";
+
+   const selectedSummary = selectedRooms.filter(r => r.roomId).reduce((acc: any, r: any) => {
+     const name = r.roomTypeName || "Any";
+     acc[name] = (acc[name] || 0) + 1;
+     return acc;
+   }, {});
+   const selectedSummaryText = Object.keys(selectedSummary).length > 0 ? Object.entries(selectedSummary).map(([k, v]) => `${k} - ${v}`).join(", ") : "None";
+
+   return (
+     <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 mb-3 text-[10px] font-bold">
+       <div className="flex items-center gap-2 mb-1">
+         <span className="text-gray-400 uppercase tracking-wide w-16">Booked:</span> 
+         <span className="text-gray-700">{bookedSummaryText}</span>
+       </div>
+       <div className="flex items-center gap-2">
+         <span className="text-gray-400 uppercase tracking-wide w-16">Assigned:</span> 
+         <span className="text-orange-600">{selectedSummaryText}</span>
+       </div>
+     </div>
+   );
+ })()}
+
  {/* Selected room tags */}
  {selectedRooms.length > 0 && (
  <div className="flex flex-wrap gap-2 p-2 bg-orange-50/50 border border-orange-100 rounded-xl mb-3">

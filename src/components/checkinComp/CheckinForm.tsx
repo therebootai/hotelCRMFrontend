@@ -1459,47 +1459,30 @@ const CheckInForm = ({
  }
  `}</style>
  <div className={`bg-[var(--color-background)] w-full flex flex-col ${inline ? "h-full bg-transparent" : "max-w-6xl rounded-2xl border border-border max-h-[95vh]"}`}>
- 
- {/* Header Stepper */}
-  <div className={`px-4 sm:px-8 py-6 sm:py-8 bg-white border-b border-border relative ${inline ? "rounded-t-2xl" : "rounded-t-2xl"}`}>
-  
-  {/* Booking ID Badge */}
-  <div className="absolute top-4 sm:top-6 left-4 sm:left-6">
-  {bookingData?.bookingId && (
-  <div className="bg-orange-50/50 text-orange-600 px-3 py-1.5 rounded-lg border border-orange-100 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
-  <FiBriefcase size={12} />
-  <span>Booking #{bookingData.bookingId}</span>
-  </div>
-  )}
-  {editMode && existingCheckIn?.checkInId && (
-  <div className="bg-orange-50/50 text-orange-600 px-3 py-1.5 rounded-lg border border-orange-100 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
-  <FiBriefcase size={12} />
-  <span>Check-in #{existingCheckIn.checkInId}</span>
-  </div>
-  )}
-  </div>
+  {/* Header Stepper */}
+  <div className={`px-4 sm:px-8 pt-4 pb-2 sm:pt-5 sm:pb-3 bg-white border-b border-border relative ${inline ? "rounded-t-2xl" : "rounded-t-2xl"}`}>
 
   {/* Close Button - kept only if not inline (modal context) so users can close the modal */}
   {!inline && (
   <button
   onClick={onClose}
-  className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-all bg-white shadow-sm border border-gray-100"
+  className="absolute top-2 right-2 p-1.5 hover:bg-gray-100 rounded-full transition-all bg-white shadow-sm border border-gray-100 z-20"
   >
-  <FiX size={18} className="text-gray-400" />
+  <FiX size={16} className="text-gray-400" />
   </button>
   )}
 
-  <div className="max-w-3xl mx-auto w-full relative pt-8 sm:pt-4">
+  <div className="w-full relative">
   {/* Background Line */}
-  <div className="absolute top-3 sm:top-4 left-[10%] right-[10%] h-[3px] bg-gray-100 z-0 rounded-full"></div>
+  <div className="absolute top-[11px] sm:top-[15px] left-[15%] right-[15%] h-[3px] bg-gray-100 z-0 rounded-full"></div>
   
   {/* Active Line */}
   <div 
-  className="absolute top-3 sm:top-4 left-[10%] h-[3px] bg-[#FE5F30] z-0 transition-all duration-500 ease-in-out rounded-full shadow-[0_0_8px_rgba(254,95,48,0.4)]"
-  style={{ width: `${(Math.max(0, currentStep - 1) / 2) * 80}%` }}
+  className="absolute top-[11px] sm:top-[15px] left-[15%] h-[3px] bg-[#FE5F30] z-0 transition-all duration-500 ease-in-out rounded-full shadow-[0_0_8px_rgba(254,95,48,0.4)]"
+  style={{ width: `${(Math.max(0, currentStep - 1) / 2) * 70}%` }}
   ></div>
 
-  <div className="flex justify-between relative z-10 w-full px-[2%] sm:px-[10%]">
+  <div className="flex justify-between relative z-10 w-full px-[2%] sm:px-[5%]">
   {[1, 2, 3].map((step) => {
   const isActive = currentStep === step;
   const isCompleted = currentStep > step;
@@ -1508,7 +1491,7 @@ const CheckInForm = ({
   : ["Party & Stay Setup", "Guest / Document Details", "Payment & Confirmation"][step - 1];
   
   return (
-  <div key={step} className="flex flex-col items-center gap-3 w-1/3">
+  <div key={step} className="flex flex-col items-center gap-2 sm:gap-3 w-1/3">
   <div
   className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-black transition-all duration-300 ${
   isActive || isCompleted

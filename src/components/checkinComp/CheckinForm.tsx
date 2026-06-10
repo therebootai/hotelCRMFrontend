@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
  FiX,
  FiUser,
@@ -1459,61 +1459,85 @@ const CheckInForm = ({
  }
  `}</style>
  <div className={`bg-[var(--color-background)] w-full flex flex-col ${inline ? "h-full bg-transparent" : "max-w-6xl rounded-2xl border border-border max-h-[95vh]"}`}>
- {/* Header */}
- <div className={`px-4 sm:px-6 py-3 bg-white flex justify-between items-center border-b border-border ${inline ? "rounded-t-2xl" : "rounded-t-2xl"}`}>
- <div className="flex flex-col">
- <h2 className="text-base sm:text-base font-black text-[var(--color-text-primary)] tracking-tight uppercase">
- {editMode ? "Edit Check-in" : (isDayAccess ? "New Day Access Booking" : "New Check-in")}
- </h2>
- <p className="text-[9px] sm:text-[10px] text-[var(--color-text-secondary)] font-medium">
- {editMode
- ? `Check-in #${existingCheckIn?.checkInId}`
- : `Booking #${bookingData?.bookingId}`}
- </p>
- </div>
+ 
+ {/* Header Stepper */}
+  <div className={`px-4 sm:px-8 py-6 sm:py-8 bg-white border-b border-border relative ${inline ? "rounded-t-2xl" : "rounded-t-2xl"}`}>
+  
+  {/* Booking ID Badge */}
+  <div className="absolute top-4 sm:top-6 left-4 sm:left-6">
+  {bookingData?.bookingId && (
+  <div className="bg-orange-50/50 text-orange-600 px-3 py-1.5 rounded-lg border border-orange-100 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+  <FiBriefcase size={12} />
+  <span>Booking #{bookingData.bookingId}</span>
+  </div>
+  )}
+  {editMode && existingCheckIn?.checkInId && (
+  <div className="bg-orange-50/50 text-orange-600 px-3 py-1.5 rounded-lg border border-orange-100 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+  <FiBriefcase size={12} />
+  <span>Check-in #{existingCheckIn.checkInId}</span>
+  </div>
+  )}
+  </div>
 
- {/* Step Indicators */}
- <div className="flex items-center gap-2 sm:gap-3">
- {[1, 2, 3].map((step, idx) => (
- <React.Fragment key={step}>
- <div className="flex items-center gap-1 sm:gap-2">
- <div
- className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] font-black transition-all ${
- currentStep >= step
- ? "bg-[var(--color-primary)] text-white"
- : "bg-gray-100 text-gray-400"
- }`}
- >
- {currentStep > step ? <FiCheckCircle size={10} /> : step}
- </div>
- <span
- className={`text-[8px] sm:text-[9px] font-bold uppercase tracking-wider hidden sm:inline ${
- currentStep >= step
- ? "text-[var(--color-text-primary)]"
- : "text-gray-400"
- }`}
- >
- {isDayAccess
- ? ["Day Access Setup", "Guest & Liability Details", "Payment & Confirmation"][step - 1]
- : ["Party & Stay Setup", "Guest / Document Details", "Payment & Confirmation"][step - 1]}
- </span>
- </div>
- {idx < 2 && (
- <div
- className={`w-6 sm:w-8 h-0.5 rounded transition-all ${currentStep > step ? "bg-[var(--color-primary)]" : "bg-gray-200"}`}
- />
- )}
- </React.Fragment>
- ))}
- </div>
+  {/* Close Button - kept only if not inline (modal context) so users can close the modal */}
+  {!inline && (
+  <button
+  onClick={onClose}
+  className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-all bg-white shadow-sm border border-gray-100"
+  >
+  <FiX size={18} className="text-gray-400" />
+  </button>
+  )}
 
- <button
- onClick={onClose}
- className="p-2 hover:bg-gray-100 rounded-full transition-all"
- >
- <FiX size={18} className="text-gray-400" />
- </button>
- </div>
+  <div className="max-w-3xl mx-auto w-full relative pt-8 sm:pt-4">
+  {/* Background Line */}
+  <div className="absolute top-3 sm:top-4 left-[10%] right-[10%] h-[3px] bg-gray-100 z-0 rounded-full"></div>
+  
+  {/* Active Line */}
+  <div 
+  className="absolute top-3 sm:top-4 left-[10%] h-[3px] bg-[#FE5F30] z-0 transition-all duration-500 ease-in-out rounded-full shadow-[0_0_8px_rgba(254,95,48,0.4)]"
+  style={{ width: `${(Math.max(0, currentStep - 1) / 2) * 80}%` }}
+  ></div>
+
+  <div className="flex justify-between relative z-10 w-full px-[2%] sm:px-[10%]">
+  {[1, 2, 3].map((step) => {
+  const isActive = currentStep === step;
+  const isCompleted = currentStep > step;
+  const stepName = isDayAccess
+  ? ["Day Access Setup", "Guest & Liability Details", "Payment & Confirmation"][step - 1]
+  : ["Party & Stay Setup", "Guest / Document Details", "Payment & Confirmation"][step - 1];
+  
+  return (
+  <div key={step} className="flex flex-col items-center gap-3 w-1/3">
+  <div
+  className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-black transition-all duration-300 ${
+  isActive || isCompleted
+  ? "bg-[#FE5F30] text-white shadow-[0_0_12px_rgba(254,95,48,0.4)]"
+  : "bg-[#E2E8F0] text-[#64748B]"
+  }`}
+  >
+  {step}
+  </div>
+  <div className="flex flex-col items-center text-center">
+  <span
+  className={`text-[8px] sm:text-[10px] font-black uppercase tracking-wider transition-colors duration-300 ${
+  isActive || isCompleted ? "text-[#FE5F30]" : "text-[#475569]"
+  }`}
+  >
+  {stepName}
+  </span>
+  {isActive && (
+  <span className="text-[8px] text-[#FE5F30] font-bold mt-0.5 opacity-80">
+  (Current)
+  </span>
+  )}
+  </div>
+  </div>
+  );
+  })}
+  </div>
+  </div>
+  </div>
 
  {/* Loading Overlay */}
  {loading && (

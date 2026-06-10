@@ -1909,7 +1909,7 @@ const CheckInForm = ({
  </h3>
  </div>
  
- <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
  <div>
  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Check-in Date & Time *</label>
  <DatePicker

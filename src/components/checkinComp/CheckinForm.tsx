@@ -1990,6 +1990,7 @@ const CheckInForm = ({
                 />
                 <span className="truncate">{r.roomId ? `Room ${r.roomNumber}` : 'Assign room first'}</span>
               </div>
+              {r.roomId && r.extraBedCharge > 0 && <span className="text-gray-400 flex-shrink-0 font-bold">₹{r.extraBedCharge}</span>}
             </label>
           ))}
         </div>

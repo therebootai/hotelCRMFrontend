@@ -2326,7 +2326,17 @@ const CheckInForm = ({
  {/* Occupancy Validation */}
  {(() => {
    const totalCapacity = selectedRooms.reduce((sum, r) => sum + (r.roomId ? ((Number(r.maxAdults) || 2) + (Number(r.maxChildren) || 0) + (r.hasExtraBed ? 1 : 0)) : 0), 0);
-   const isValid = totalCapacity === 0 || guests.length <= totalCapacity;
+   
+   if (totalCapacity === 0) {
+     return (
+       <div className="mt-3 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-[10px] font-bold flex items-center justify-between">
+         <span>🕒 Occupancy Validation: Pending Room Assignment</span>
+         <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[8px] uppercase font-black">Pending</span>
+       </div>
+     );
+   }
+
+   const isValid = guests.length <= totalCapacity;
 
    return (
      <div className={`mt-3 p-2.5 border rounded-xl text-[10px] font-bold flex items-center justify-between ${isValid ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>

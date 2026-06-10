@@ -2485,7 +2485,7 @@ const CheckInForm = ({
                   type="text"
                   value={primaryGuest.name || ""}
                   onChange={(e) => updateGuest(primaryGuest.id, "name", e.target.value)}
-                  placeholder="Rahul Sharma"
+                  placeholder="e.g. Rahul Sharma"
                   className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
                 />
               </div>
@@ -2495,7 +2495,7 @@ const CheckInForm = ({
                   type="tel"
                   value={primaryGuest.mobileNo || ""}
                   onChange={(e) => updateGuest(primaryGuest.id, "mobileNo", e.target.value)}
-                  placeholder="98765 43210"
+                  placeholder="e.g. 98765 43210"
                   className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
                 />
               </div>
@@ -2508,7 +2508,7 @@ const CheckInForm = ({
                     const val = e.target.value;
                     if (/^[0-9]*$/.test(val)) updateGuest(primaryGuest.id, "age", val);
                   }}
-                  placeholder="32"
+                  placeholder="e.g. 32"
                   className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
                 />
               </div>
@@ -2539,7 +2539,7 @@ const CheckInForm = ({
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Address *</label>
+                <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Address (Optional)</label>
                 <input
                   type="text"
                   value={primaryGuest.address || ""}

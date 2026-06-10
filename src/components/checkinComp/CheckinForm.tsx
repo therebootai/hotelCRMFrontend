@@ -1938,42 +1938,41 @@ const CheckInForm = ({
  </div>
  </div>
 
-  {/* Guest Counters & Extra Beds */}
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-    <div className="grid grid-cols-2 gap-4">
-      <div className="flex flex-col items-center p-2 bg-gray-50 border border-border rounded-xl">
-        <span className="text-[9px] font-bold text-gray-400 uppercase mb-1">Adults *</span>
-        <div className="flex items-center gap-3">
-        <button
-        onClick={() => {
-        if (guests.length > 1) removeGuest(guests[guests.length - 1].id);
-        }}
-        className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm"
-        >
-        -
-        </button>
-        <span className="font-black text-base">{guests.filter(g => Number(g.age) > 12 || !g.age).length}</span>
-        <button
-        onClick={addGuest}
-        className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm"
-        >
-        +
-        </button>
-        </div>
-      </div>
-      <div className="flex flex-col items-center p-2 bg-gray-50 border border-border rounded-xl">
-        <span className="text-[9px] font-bold text-gray-400 uppercase mb-1">Children (Below 18 yrs)</span>
-        <div className="flex items-center gap-3">
-        <button className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm">-</button>
-        <span className="font-black text-base">{guests.filter(g => Number(g.age) <= 12 && g.age).length}</span>
-        <button className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm">+</button>
-        </div>
+  {/* Guest Counters */}
+  <div className="grid grid-cols-2 gap-4 mb-4">
+    <div className="flex flex-col items-center justify-center p-2.5 bg-gray-50 border border-border rounded-xl">
+      <span className="text-[9px] font-bold text-gray-400 uppercase mb-1.5">Adults *</span>
+      <div className="flex items-center gap-4">
+      <button
+      onClick={() => {
+      if (guests.length > 1) removeGuest(guests[guests.length - 1].id);
+      }}
+      className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm transition-colors"
+      >
+      -
+      </button>
+      <span className="font-black text-lg w-4 text-center">{guests.filter(g => Number(g.age) > 12 || !g.age).length}</span>
+      <button
+      onClick={addGuest}
+      className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm transition-colors"
+      >
+      +
+      </button>
       </div>
     </div>
+    <div className="flex flex-col items-center justify-center p-2.5 bg-gray-50 border border-border rounded-xl">
+      <span className="text-[9px] font-bold text-gray-400 uppercase mb-1.5">Children (Below 18 yrs)</span>
+      <div className="flex items-center gap-4">
+      <button className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm transition-colors">-</button>
+      <span className="font-black text-lg w-4 text-center">{guests.filter(g => Number(g.age) <= 12 && g.age).length}</span>
+      <button className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100 shadow-sm transition-colors">+</button>
+      </div>
+    </div>
+  </div>
 
-    {/* Extra Beds */}
-    <div className="flex flex-col">
-      <span className="text-[9px] font-bold text-gray-400 uppercase mb-1">Extra Bed Configurations</span>
+  {/* Extra Beds */}
+  <div className="flex flex-col mb-4">
+    <span className="text-[9px] font-bold text-gray-400 uppercase mb-1">Extra Bed Configurations</span>
       <div className="w-full flex-1 min-h-[58px] max-h-[80px] bg-gray-50 border border-border rounded-xl overflow-y-auto custom-scroll p-1.5 shadow-inner">
       {selectedRooms.filter((r: any) => r.extraBedAllowed).length === 0 ? (
         <div className="text-[10px] text-gray-400 text-center py-3 font-bold">No rooms allow extra beds</div>
@@ -1998,7 +1997,6 @@ const CheckInForm = ({
       )}
       </div>
     </div>
-  </div>
 
  {/* Special Request & Remarks */}
  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

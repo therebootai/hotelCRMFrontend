@@ -15,6 +15,8 @@ const CheckinSearchBar: React.FC = () => {
   >([]);
   const navigate = useNavigate();
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const category = searchParams.get("category") || "Room Stay";
 
   // Debounce the search input – simple timeout implementation
   useEffect(() => {
@@ -26,7 +28,7 @@ const CheckinSearchBar: React.FC = () => {
       try {
         // Updated to use the correct endpoint that supports the `search` query
         const resp = await api.get("/bookings/list", {
-          params: { search: term },
+          params: { search: term, bookingCategory: category },
         });
         // Extract the bookings array (may be nested under .data)
         const bookings = resp.data?.data ?? [];
@@ -50,7 +52,7 @@ const CheckinSearchBar: React.FC = () => {
   const handleSelect = (id: string) => {
     // Preserve current pathname, replace query with bookingId
     const base = location.pathname;
-    navigate(`${base}?bookingId=${id}`);
+    navigate(`${base}?bookingId=${id}&category=${encodeURIComponent(category)}`);
     setTerm("");
     setResults([]);
   };

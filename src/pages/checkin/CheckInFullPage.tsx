@@ -31,6 +31,7 @@ const CheckInFullPage = () => {
 
  // URL-driven string filters
  const activeTab = (getParam("tab") as "Individual" | "Corporate") ?? "Individual";
+ const activeCategory = getParam("category") ?? "Room Stay";
  const urlSearch = getParam("search") ?? "";
  const urlStatus = getParam("status") ?? "";
  const urlRoomType = getParam("roomType") ?? "";
@@ -98,6 +99,7 @@ const handleCheckoutClick = (item: any) => {
  const params = {
  ...filters,
  checkInType: activeTab,
+ bookingCategory: activeCategory,
  startDate: filters.startDate?.toISOString(),
  endDate: filters.endDate?.toISOString(),
  status: filters.status,
@@ -127,17 +129,18 @@ const handleCheckoutClick = (item: any) => {
  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [activeTab, filters.search, filters.status, filters.roomType, filters.dateType, filters.page]);
 
- useEffect(() => {
- fetchCheckins();
- // eslint-disable-next-line react-hooks/exhaustive-deps
- }, [
- activeTab,
- filters.page,
- filters.startDate,
- filters.endDate,
- filters.roomType,
- filters.status,
- ]);
+  useEffect(() => {
+    fetchCheckins();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    activeTab,
+    activeCategory,
+    filters.page,
+    filters.startDate,
+    filters.endDate,
+    filters.roomType,
+    filters.status,
+  ]);
 
  useEffect(() => {
   if (bookingId) {

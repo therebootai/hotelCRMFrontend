@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { FiHelpCircle, FiLogOut, FiUser, FiKey } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext";
 import NotificationBell from "./NotificationBell";
@@ -8,6 +8,17 @@ import CheckinSearchBar from "../../components/checkinComp/CheckinSearchBar";
 const TopBar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  const isCheckinPage = location.pathname.startsWith('/checkin') || location.pathname.startsWith('/checkout');
+  const currentCategory = searchParams.get("category") || "Room Stay";
+
+  const handleCategoryChange = (category: string) => {
+    setSearchParams(prev => {
+      prev.set("category", category);
+      return prev;
+    });
+  };
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -36,11 +47,39 @@ const TopBar = () => {
   return (
     <header className="h-17.5 bg-white border-b border-border flex items-center justify-between px-8 shrink-0 relative">
       {/* Left: Property Name & Search */}
-      <div className="flex items-center gap-8 flex-1">
-        <h2 className="text-lg font-semibold text-text-primary whitespace-nowrap">
-          Siddharaj Hotel
-        </h2>
-        { (location.pathname.startsWith('/checkin') || location.pathname.startsWith('/checkout')) && <CheckinSearchBar /> }
+      <div className="flex items-center gap-4 sm:gap-8 flex-1">
+        {!isCheckinPage && (
+          <h2 className="text-lg font-semibold text-text-primary whitespace-nowrap">
+            Siddharaj Hotel
+          </h2>
+        )}
+        
+        {isCheckinPage && (
+          <div className="flex bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => handleCategoryChange("Room Stay")}
+              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all uppercase tracking-wide ${
+                currentCategory === "Room Stay"
+                  ? "bg-white text-orange-500 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Room Stay
+            </button>
+            <button
+              onClick={() => handleCategoryChange("Day Access")}
+              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all uppercase tracking-wide ${
+                currentCategory === "Day Access"
+                  ? "bg-white text-orange-500 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Day Access
+            </button>
+          </div>
+        )}
+
+        { isCheckinPage && <CheckinSearchBar /> }
       </div>
 
       {/* Center/Right: Toggles & Profile */}

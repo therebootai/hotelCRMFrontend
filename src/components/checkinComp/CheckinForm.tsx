@@ -1973,7 +1973,7 @@ const CheckInForm = ({
   {/* Extra Beds */}
   <div className="flex flex-col mb-4">
     <span className="text-[9px] font-bold text-gray-400 uppercase mb-1">Extra Bed Configurations</span>
-      <div className="w-full flex-1 min-h-[58px] max-h-[80px] bg-gray-50 border border-border rounded-xl overflow-y-auto custom-scroll p-1.5 shadow-inner">
+      <div className="w-full flex-1 min-h-[58px] bg-gray-50 border border-border rounded-xl p-1.5 shadow-inner">
       {selectedRooms.filter((r: any) => r.extraBedAllowed).length === 0 ? (
         <div className="text-[10px] text-gray-400 text-center py-3 font-bold">No rooms allow extra beds</div>
       ) : (

@@ -954,6 +954,13 @@ const CheckInForm = ({
  const allAssigned = selectedRooms.every((s) => !!s.roomId);
  if (!allAssigned) return false;
  }
+
+ // Occupancy Validation
+ if (!isDayAccess) {
+   const totalCapacity = selectedRooms.reduce((sum, r) => sum + (r.roomId ? ((Number(r.maxAdults) || 2) + (Number(r.maxChildren) || 0) + (r.hasExtraBed ? 1 : 0)) : 0), 0);
+   if (totalCapacity > 0 && guests.length > totalCapacity) return false;
+ }
+
  if (partyType === "Individual") {
  return (
  getPrimaryGuest()?.name?.trim() !== "" &&
@@ -986,6 +993,12 @@ const CheckInForm = ({
          const unassignedCount = selectedRooms.filter((s) => !s.roomId).length;
          if (unassignedCount > 0) return `Please assign all booked rooms to continue (${unassignedCount} left).`;
        }
+
+       if (!isDayAccess) {
+         const totalCapacity = selectedRooms.reduce((sum, r) => sum + (r.roomId ? ((Number(r.maxAdults) || 2) + (Number(r.maxChildren) || 0) + (r.hasExtraBed ? 1 : 0)) : 0), 0);
+         if (totalCapacity > 0 && guests.length > totalCapacity) return "Total guests exceed the maximum capacity of assigned rooms.";
+       }
+
        if (partyType === "Individual") {
          if (!getPrimaryGuest()?.name?.trim()) return "Primary guest name is required.";
          if (!getPrimaryGuest()?.mobileNo?.trim()) return "Primary guest mobile is required.";

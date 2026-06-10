@@ -2101,7 +2101,7 @@ const CheckInForm = ({
  // Room Stay Step 1 Right Side
  <>
  {/* Section C: Room Selection Table */}
- <div className="bg-white rounded-xl border border-border p-4 flex flex-col max-h-[420px] overflow-hidden">
+ <div className="bg-white rounded-xl border border-border p-4 flex flex-col">
  <div className="flex items-center justify-between mb-3">
  <div className="flex items-center gap-2">
  <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">C</span>
@@ -2174,7 +2174,7 @@ const CheckInForm = ({
  </div>
 
  {/* Rooms Table */}
- <div className="flex-1 overflow-y-auto border border-border rounded-xl">
+ <div className="flex-1 border border-border rounded-xl">
  <table className="w-full text-left border-collapse text-[10px]">
  <thead>
  <tr className="bg-gray-50 border-b border-border sticky top-0 z-10">

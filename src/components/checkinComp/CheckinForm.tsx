@@ -914,9 +914,17 @@ const CheckInForm = ({
  case 2: {
   const primaryGuests = guests.filter(g => g.isPrimary);
   if (primaryGuests.length === 0) return false;
-  return primaryGuests.every(
+  const validPrimary = primaryGuests.every(
     (g) => g.name?.trim() && g.mobileNo?.trim() && g.age?.trim() && g.gender && g.idNumber?.trim()
   );
+  if (!validPrimary) return false;
+  
+  const coGuests = guests.filter(g => !g.isPrimary);
+  return coGuests.every(g => {
+    const hasSomeData = g.name?.trim() || g.age?.trim() || g.gender;
+    if (!hasSomeData) return true; // Ignore completely empty rows
+    return !!g.name?.trim(); // Name is required if they started filling
+  });
  }
  case 3:
  return true;
@@ -966,6 +974,16 @@ const CheckInForm = ({
     if (!primary?.gender) return `Primary guest gender is required (Room ${i + 1})`;
     if (!primary?.idNumber?.trim()) return `Primary guest ID number is required (Room ${i + 1})`;
   }
+
+  const coGuests = guests.filter(g => !g.isPrimary);
+  for (let i = 0; i < coGuests.length; i++) {
+    const cg = coGuests[i];
+    const hasSomeData = cg.name?.trim() || cg.age?.trim() || cg.gender;
+    if (hasSomeData && !cg.name?.trim()) {
+      return `Co-guest name is required (Row ${i + 1})`;
+    }
+  }
+
   return "";
  };
 
@@ -1208,7 +1226,7 @@ const CheckInForm = ({
   ? primaryGuests[0].idDocument
   : null,
   } : null,
- guests: guests.map((g) => ({
+ guests: guests.filter(g => g.isPrimary || g.name?.trim()).map((g) => ({
  id: g.id,
  name: g.name,
  mobileNo: g.mobileNo,

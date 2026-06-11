@@ -107,6 +107,17 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
           payments: d.payments || [],
           advancePaymentsHistory: d.advancePaymentsHistory || [],
         });
+
+        // 🔄 Update with freshest checkoutVerification from backend
+        if (d.checkoutVerification) {
+          setVerification(prev => ({
+            ...prev,
+            ...d.checkoutVerification
+          }));
+          if (d.checkoutVerification.step) {
+            setStep(d.checkoutVerification.step);
+          }
+        }
       }
     } catch (err) {
       console.error(err);

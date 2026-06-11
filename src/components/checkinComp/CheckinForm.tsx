@@ -2611,7 +2611,7 @@ const CheckInForm = ({
  <div className="lg:col-span-3 space-y-3">
  
   {/* Guest List rendering based on isDayAccess or partyType */}
-  {isDayAccess || partyType === "Corporate" ? (
+  {partyType === "Corporate" || selectedRooms.filter(r => !!r.roomId).length === 0 ? (
     <div className="bg-white rounded-xl border border-border p-4 mb-3">
         <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-3">
             <h3 className="text-[11px] font-black text-gray-700 uppercase tracking-wider">{isDayAccess ? "Day Access Guests" : "Primary Guest Info"}</h3>
@@ -2740,57 +2740,7 @@ const CheckInForm = ({
             );
         })()}
 
-        {/* Dynamic Documents Section */}
-        <div className="mt-6 border-t border-gray-100 pt-4">
-            <h4 className="text-[10px] font-black text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                Other Documents <span className="text-[8px] text-gray-400 font-bold bg-gray-100 px-2 py-0.5 rounded">(Optional)</span>
-            </h4>
-            <div className="space-y-3">
-                {dynamicDocs.map((doc, idx) => (
-                    <div key={doc.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-gray-50 p-2 border border-gray-200 rounded-lg">
-                        <div className="flex-1 w-full">
-                            <input 
-                                type="text" 
-                                placeholder="Document Name (e.g. Company ID Card)" 
-                                value={doc.type} 
-                                onChange={(e) => {
-                                    const newDocs = [...dynamicDocs];
-                                    newDocs[idx].type = e.target.value;
-                                    setDynamicDocs(newDocs);
-                                }}
-                                className="w-full p-2 bg-white border border-border rounded-lg text-xs font-bold outline-none"
-                            />
-                        </div>
-                        <div className="flex-1 w-full">
-                            <input 
-                                type="file" 
-                                onChange={(e) => {
-                                    if(e.target.files?.[0]) {
-                                        const newDocs = [...dynamicDocs];
-                                        newDocs[idx].file = e.target.files[0];
-                                        setDynamicDocs(newDocs);
-                                    }
-                                }}
-                                className="w-full text-xs text-gray-500 font-bold"
-                            />
-                        </div>
-                        <button 
-                            onClick={() => setDynamicDocs(dynamicDocs.filter(d => d.id !== doc.id))}
-                            className="text-red-500 hover:text-red-700 p-2 self-end sm:self-center bg-red-50 rounded-lg"
-                            title="Remove Document"
-                        >
-                            🗑️
-                        </button>
-                    </div>
-                ))}
-            </div>
-            <button 
-                onClick={() => setDynamicDocs([...dynamicDocs, { id: `doc-${Date.now()}`, type: "", file: null }])}
-                className="mt-3 px-3 py-1.5 border border-dashed border-gray-300 text-gray-500 rounded-lg text-[10px] font-black uppercase tracking-wider hover:border-orange-400 hover:text-orange-500 transition-all flex items-center gap-1"
-            >
-                + Add Document
-            </button>
-        </div>
+
     </div>
   ) : (
     /* Grouped Guests by Room */
@@ -3071,6 +3021,60 @@ const CheckInForm = ({
     );
   })
  )}
+
+ <div className="bg-white rounded-xl border border-border p-4 mb-3">
+        {/* Dynamic Documents Section */}
+        <div className="">
+            <h4 className="text-[10px] font-black text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                Other Documents <span className="text-[8px] text-gray-400 font-bold bg-gray-100 px-2 py-0.5 rounded">(Optional)</span>
+            </h4>
+            <div className="space-y-3">
+                {dynamicDocs.map((doc, idx) => (
+                    <div key={doc.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-gray-50 p-2 border border-gray-200 rounded-lg">
+                        <div className="flex-1 w-full">
+                            <input 
+                                type="text" 
+                                placeholder="Document Name (e.g. Company ID Card)" 
+                                value={doc.type} 
+                                onChange={(e) => {
+                                    const newDocs = [...dynamicDocs];
+                                    newDocs[idx].type = e.target.value;
+                                    setDynamicDocs(newDocs);
+                                }}
+                                className="w-full p-2 bg-white border border-border rounded-lg text-xs font-bold outline-none"
+                            />
+                        </div>
+                        <div className="flex-1 w-full">
+                            <input 
+                                type="file" 
+                                onChange={(e) => {
+                                    if(e.target.files?.[0]) {
+                                        const newDocs = [...dynamicDocs];
+                                        newDocs[idx].file = e.target.files[0];
+                                        setDynamicDocs(newDocs);
+                                    }
+                                }}
+                                className="w-full text-xs text-gray-500 font-bold"
+                            />
+                        </div>
+                        <button 
+                            onClick={() => setDynamicDocs(dynamicDocs.filter(d => d.id !== doc.id))}
+                            className="text-red-500 hover:text-red-700 p-2 self-end sm:self-center bg-red-50 rounded-lg"
+                            title="Remove Document"
+                        >
+                            🗑️
+                        </button>
+                    </div>
+                ))}
+            </div>
+            <button 
+                onClick={() => setDynamicDocs([...dynamicDocs, { id: `doc-${Date.now()}`, type: "", file: null }])}
+                className="mt-3 px-3 py-1.5 border border-dashed border-gray-300 text-gray-500 rounded-lg text-[10px] font-black uppercase tracking-wider hover:border-orange-400 hover:text-orange-500 transition-all flex items-center gap-1"
+            >
+                + Add Document
+            </button>
+        </div>
+ </div>
 
  {/* Section D: Vehicle Details */}
  <div className="bg-white rounded-xl border border-border p-4">

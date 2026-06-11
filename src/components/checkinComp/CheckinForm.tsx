@@ -1898,63 +1898,7 @@ const CheckInForm = ({
  </div>
  </div>
 
- {/* Section B-1: Corporate / Company Details */}
- {partyType === "Corporate" && (
- <div className="bg-white rounded-xl border border-border p-4">
- <div className="flex items-center gap-2 mb-3">
- <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">B</span>
- <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
- Corporate / Company Details
- </h3>
- </div>
- <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company Name *</label>
- <input type="text" value={corporateDetails.companyName} onChange={(e) => setCorporateDetails({ ...corporateDetails, companyName: e.target.value })} placeholder="Acme Corp" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
- </div>
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company GSTIN</label>
- <input type="text" value={corporateDetails.companyGST} onChange={(e) => setCorporateDetails({ ...corporateDetails, companyGST: e.target.value })} placeholder="29AAAAA0000A1Z5" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
- </div>
- <div className="md:col-span-1">
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company Address</label>
- <input type="text" value={corporateDetails.companyAddress} onChange={(e) => setCorporateDetails({ ...corporateDetails, companyAddress: e.target.value })} placeholder="Address" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
- </div>
- </div>
- <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company Email</label>
- <input type="email" value={corporateDetails.companyEmail} onChange={(e) => setCorporateDetails({ ...corporateDetails, companyEmail: e.target.value })} placeholder="Email" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
- </div>
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company Phone</label>
- <input type="tel" value={corporateDetails.companyPhone} onChange={(e) => setCorporateDetails({ ...corporateDetails, companyPhone: e.target.value })} placeholder="Phone" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
- </div>
- </div>
- 
- <div className="flex items-center gap-2 mt-4 mb-3 pt-3 border-t border-gray-100">
- <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">Contact Person Details</h3>
- </div>
- <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Contact Name *</label>
- <input type="text" value={corporateDetails.contactPersonName} onChange={(e) => setCorporateDetails({ ...corporateDetails, contactPersonName: e.target.value })} placeholder="John Doe" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
- </div>
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Mobile *</label>
- <input type="tel" value={corporateDetails.contactMobile} onChange={(e) => setCorporateDetails({ ...corporateDetails, contactMobile: e.target.value })} placeholder="Mobile Number" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
- </div>
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Email</label>
- <input type="email" value={corporateDetails.contactEmail} onChange={(e) => setCorporateDetails({ ...corporateDetails, contactEmail: e.target.value })} placeholder="Email" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
- </div>
- <div>
- <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Designation</label>
- <input type="text" value={corporateDetails.designation} onChange={(e) => setCorporateDetails({ ...corporateDetails, designation: e.target.value })} placeholder="Manager" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
- </div>
- </div>
- </div>
- )}
+
  <div className="flex flex-col items-center p-2 bg-gray-50 border border-border rounded-xl">
  <span className="text-[9px] font-bold text-gray-400 uppercase mb-1">Children (5-12)</span>
  <div className="flex items-center gap-3">
@@ -2051,6 +1995,64 @@ const CheckInForm = ({
  </button>
  </div>
  </div>
+
+ {/* Section B-1: Corporate / Company Details */}
+ {partyType === "Corporate" && (
+ <div className="bg-white rounded-xl border border-border p-4">
+ <div className="flex items-center gap-2 mb-3">
+ <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">B</span>
+ <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
+ Corporate / Company Details
+ </h3>
+ </div>
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+ <div>
+ <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company Name *</label>
+ <input type="text" value={corporateDetails.companyName} onChange={(e) => setCorporateDetails({ ...corporateDetails, companyName: e.target.value })} placeholder="Acme Corp" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+ </div>
+ <div>
+ <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company GSTIN</label>
+ <input type="text" value={corporateDetails.companyGST} onChange={(e) => setCorporateDetails({ ...corporateDetails, companyGST: e.target.value })} placeholder="29AAAAA0000A1Z5" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+ </div>
+ <div className="md:col-span-1">
+ <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company Address</label>
+ <input type="text" value={corporateDetails.companyAddress} onChange={(e) => setCorporateDetails({ ...corporateDetails, companyAddress: e.target.value })} placeholder="Address" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+ </div>
+ </div>
+ <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+ <div>
+ <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company Email</label>
+ <input type="email" value={corporateDetails.companyEmail} onChange={(e) => setCorporateDetails({ ...corporateDetails, companyEmail: e.target.value })} placeholder="Email" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+ </div>
+ <div>
+ <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company Phone</label>
+ <input type="tel" value={corporateDetails.companyPhone} onChange={(e) => setCorporateDetails({ ...corporateDetails, companyPhone: e.target.value })} placeholder="Phone" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+ </div>
+ </div>
+ 
+ <div className="flex items-center gap-2 mt-4 mb-3 pt-3 border-t border-gray-100">
+ <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">Contact Person Details</h3>
+ </div>
+ <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+ <div>
+ <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Contact Name *</label>
+ <input type="text" value={corporateDetails.contactPersonName} onChange={(e) => setCorporateDetails({ ...corporateDetails, contactPersonName: e.target.value })} placeholder="John Doe" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+ </div>
+ <div>
+ <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Mobile *</label>
+ <input type="tel" value={corporateDetails.contactMobile} onChange={(e) => setCorporateDetails({ ...corporateDetails, contactMobile: e.target.value })} placeholder="Mobile Number" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+ </div>
+ <div>
+ <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Email</label>
+ <input type="email" value={corporateDetails.contactEmail} onChange={(e) => setCorporateDetails({ ...corporateDetails, contactEmail: e.target.value })} placeholder="Email" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+ </div>
+ <div>
+ <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Designation</label>
+ <input type="text" value={corporateDetails.designation} onChange={(e) => setCorporateDetails({ ...corporateDetails, designation: e.target.value })} placeholder="Manager" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+ </div>
+ </div>
+ </div>
+ )}
 
  {/* Section B: Stay Details */}
  <div className="bg-white rounded-xl border border-border p-4">

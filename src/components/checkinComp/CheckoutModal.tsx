@@ -230,11 +230,28 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  } catch (err) {
  alert("Error processing request. Please try again.");
  } finally {
- setSubmitting(false);
- }
- };
+  setSubmitting(false);
+  }
+  };
 
- const paymentMethods = [
+  const handleContinueToSettlement = () => {
+    if (verification.damageFound && verification.damageAmount && Number(verification.damageAmount) > 0) {
+      const existingDamage = extraServices.find(es => es.serviceName === "Damage Charges");
+      if (!existingDamage) {
+        setExtraServices([
+          ...extraServices,
+          { serviceName: "Damage Charges", quantity: 1, rate: Number(verification.damageAmount), total: Number(verification.damageAmount) }
+        ]);
+      } else {
+        setExtraServices(extraServices.map(es => es.serviceName === "Damage Charges" ? { ...es, rate: Number(verification.damageAmount), total: Number(verification.damageAmount) } : es));
+      }
+    } else {
+      setExtraServices(extraServices.filter(es => es.serviceName !== "Damage Charges"));
+    }
+    setStep(2);
+  };
+
+  const paymentMethods = [
  { value: "Cash", label: "Cash", icon: FiDollarSign },
  { value: "UPI", label: "UPI", icon: FiPhone },
  { value: "Card", label: "Card", icon: FiCreditCard },
@@ -486,7 +503,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
    <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-4 rounded-b-[2rem]">
      <button onClick={onClose} className="px-6 py-3 border-2 border-gray-200 text-gray-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">Cancel</button>
       <button
-        onClick={() => setStep(2)}
+        onClick={handleContinueToSettlement}
         disabled={!(verification.guestVacated && verification.keyReturned && verification.roomChecked && verification.noDamage && verification.departmentsVerified)}
         className={`px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${verification.guestVacated && verification.keyReturned && verification.roomChecked && verification.noDamage && verification.departmentsVerified ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-100" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
       >

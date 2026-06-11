@@ -1,17 +1,26 @@
-import { FiMessageCircle, FiPrinter, FiMail, FiCheckCircle, FiUser } from "react-icons/fi";
+import { FiMessageCircle, FiPrinter, FiMail, FiCheckCircle, FiUser, FiLoader } from "react-icons/fi";
 import { format } from "date-fns";
+import { useState } from "react";
+import api from "../../lib/axios";
+import toast from "react-hot-toast";
 
 const BookingConfirmationReceipt = ({ 
-  booking, 
+  booking: initialBooking, 
   onBack, 
   onEdit, 
-  onCreateAnother 
+  onCreateAnother,
+  onSave
 }: { 
   booking: any, 
   onBack: () => void, 
   onEdit: () => void, 
-  onCreateAnother: () => void 
+  onCreateAnother: () => void,
+  onSave?: () => void
 }) => {
+  const [booking, setBooking] = useState(initialBooking);
+  const [saving, setSaving] = useState(false);
+
+  const isSaved = booking?.isSaved !== false;
 
   const customerName = booking?.customerDetails?.name || booking?.customer?.name || "Guest";
   const customerPhone = booking?.customerDetails?.phone || booking?.customer?.phone || "";
@@ -22,6 +31,27 @@ const BookingConfirmationReceipt = ({
   const roomsCount = booking?.rooms?.length || 0;
   
   const roomTypesNames = booking?.rooms?.map((r: any) => r.roomType?.name || "Room").join(", ");
+  
+  const handleConfirm = async () => {
+    if (isSaved) return;
+    setSaving(true);
+    try {
+      let res;
+      if (booking.isEdit) {
+        res = await api.put(`/bookings/${booking._id}`, booking.payloadToSave);
+        toast.success(res.data.message || "Booking updated successfully");
+      } else {
+        res = await api.post("/bookings/create", booking.payloadToSave);
+        toast.success(res.data.message || "Booking created successfully");
+      }
+      setBooking(res.data.data); // Update with real saved booking from backend
+      if (onSave) onSave();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to confirm booking");
+    } finally {
+      setSaving(false);
+    }
+  };
   
   const handlePrint = () => {
     window.print();
@@ -51,9 +81,10 @@ const BookingConfirmationReceipt = ({
             <div className="text-right">
               <p className="text-[10px] text-text-secondary uppercase font-bold tracking-wider mb-1">Booking Status</p>
               <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                !isSaved ? "bg-slate-100 text-slate-700" :
                 advancePaid > 0 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
               }`}>
-                {advancePaid > 0 ? "Advance Paid" : booking?.status || "Pending"}
+                {!isSaved ? "Preview" : advancePaid > 0 ? "Advance Paid" : booking?.status || "Pending"}
               </span>
             </div>
           </div>
@@ -218,10 +249,13 @@ const BookingConfirmationReceipt = ({
               </div>
 
               {/* ACTIONS */}
-              <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm print:hidden">
-                <div className="bg-slate-50 px-5 py-4 border-b border-border flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-black flex items-center justify-center">D</span>
-                  <h3 className="font-bold text-text-primary text-sm uppercase tracking-wider">Actions</h3>
+              <div className={`bg-white rounded-xl border border-border overflow-hidden shadow-sm print:hidden ${!isSaved ? "opacity-50 pointer-events-none" : ""}`}>
+                <div className="bg-slate-50 px-5 py-4 border-b border-border flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-black flex items-center justify-center">D</span>
+                    <h3 className="font-bold text-text-primary text-sm uppercase tracking-wider">Actions</h3>
+                  </div>
+                  {!isSaved && <span className="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded uppercase font-bold">Requires Save</span>}
                 </div>
                 <div className="p-5 space-y-3">
                   <button className="w-full flex items-center justify-between p-3 rounded-lg border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-left group">
@@ -300,19 +334,33 @@ const BookingConfirmationReceipt = ({
         
         {/* Footer Actions */}
         <div className="bg-white border-t border-border p-5 flex items-center justify-between print:hidden">
-          <button onClick={onBack} className="px-6 py-2.5 rounded-lg border border-border text-sm font-bold text-text-secondary hover:bg-slate-50 transition-colors">
-            ← Back to Booking
+          <button onClick={onBack} disabled={saving} className="px-6 py-2.5 rounded-lg border border-border text-sm font-bold text-text-secondary hover:bg-slate-50 transition-colors disabled:opacity-50">
+            {isSaved ? "← Back to Booking" : "← Edit Before Saving"}
           </button>
           <div className="flex items-center gap-3">
-            <button onClick={onEdit} className="px-6 py-2.5 rounded-lg border border-border text-sm font-bold text-text-primary hover:bg-slate-50 transition-colors">
-              Edit Booking
-            </button>
-            <button onClick={onCreateAnother} className="px-6 py-2.5 rounded-lg border border-border text-sm font-bold text-text-primary hover:bg-slate-50 transition-colors">
-              + Create Another Booking
-            </button>
-            <button onClick={onBack} className="px-6 py-2.5 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
-              Done & Back to Booking List →
-            </button>
+            {isSaved && (
+              <>
+                <button onClick={onEdit} className="px-6 py-2.5 rounded-lg border border-border text-sm font-bold text-text-primary hover:bg-slate-50 transition-colors">
+                  Edit Booking
+                </button>
+                <button onClick={onCreateAnother} className="px-6 py-2.5 rounded-lg border border-border text-sm font-bold text-text-primary hover:bg-slate-50 transition-colors">
+                  + Create Another Booking
+                </button>
+                <button onClick={onBack} className="px-6 py-2.5 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
+                  Done & Back to Booking List →
+                </button>
+              </>
+            )}
+            {!isSaved && (
+              <button 
+                onClick={handleConfirm} 
+                disabled={saving}
+                className="px-8 py-2.5 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-orange-100 flex items-center gap-2 disabled:opacity-50"
+              >
+                {saving ? <FiLoader className="animate-spin" size={16} /> : <FiCheckCircle size={16} />}
+                Confirm & Save Booking
+              </button>
+            )}
           </div>
         </div>
 

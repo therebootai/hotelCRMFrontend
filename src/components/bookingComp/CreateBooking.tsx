@@ -672,26 +672,38 @@ const CreateBooking = ({
  payload.selectedTaxId = selectedTaxId;
  }
 
- let res;
- if (booking) {
- res = await api.put(`/bookings/${booking._id}`, payload);
- toast.success(res.data.message || "Booking updated successfully");
- } else {
- res = await api.post("/bookings/create", payload);
- toast.success(res.data.message || "Booking created successfully");
- }
+ // Create mock booking for preview
+ const mockBooking = {
+ isSaved: false,
+ _id: booking ? booking._id : "TBD",
+ reservationNumber: booking ? booking.reservationNumber : "TBD",
+ status: bookingStatus,
+ customerDetails: payload.customerDetails,
+ overallCheckInDate: checkInDate,
+ overallCheckOutDate: checkOutDate,
+ totalNights: totalNights,
+ rooms: payload.roomTypesData?.map((rt: any) => ({
+ roomType: { name: rt.roomTypeName },
+ checkInDate: rt.checkInDate,
+ checkOutDate: rt.checkOutDate
+ })) || [],
+ source: source,
+ pricingSummary: {
+ roomTotal: roomTotal,
+ taxAmount: taxAmount,
+ grandTotal: grandTotal,
+ paidAmount: payload.advanceAmount || 0,
+ dueAmount: grandTotal - (payload.advanceAmount || 0)
+ },
+ specialRequests: payload.specialRequests,
+ payloadToSave: payload,
+ isEdit: !!booking
+ };
 
- if (refreshBookings) refreshBookings();
-
- if (res.data.data) {
- // If we have returned booking data, show the receipt page instead of closing
- setConfirmedBookingDetails(res.data.data);
- } else {
- onClose();
- }
+ setConfirmedBookingDetails(mockBooking);
+ setLoading(false);
  } catch (err: any) {
- toast.error(err.response?.data?.message || (booking ? "Failed to update booking" : "Failed to create booking"));
- } finally {
+ toast.error(err.message || "Failed to generate preview");
  setLoading(false);
  }
  };
@@ -706,6 +718,7 @@ const CreateBooking = ({
  <BookingConfirmationReceipt
  booking={confirmedBookingDetails}
  onBack={onClose}
+ onSave={refreshBookings}
  onEdit={() => setConfirmedBookingDetails(null)}
  onCreateAnother={() => {
  setConfirmedBookingDetails(null);
@@ -1934,7 +1947,7 @@ const CreateBooking = ({
  ) : (
  <FiCheckCircle size={14} />
  )}
- {booking ? "Update Booking" : "Collect Advance & Confirm Booking"}
+ {booking ? "Update Booking" : "Preview & Confirm Booking"}
  </button>
 
  <div className="grid grid-cols-2 gap-2">

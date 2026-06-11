@@ -13,7 +13,7 @@ import {
  FiCalendar,
 } from "react-icons/fi";
 import api from "../../lib/axios";
-import { startOfDay } from "date-fns";
+
 import { FaUtensils } from "react-icons/fa";
 import { BiBuilding } from "react-icons/bi";
 import useClickOutside from "../../hooks/useClickOutside";
@@ -34,7 +34,8 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
    damageFound: false,
    damageAmount: "",
    damageRemarks: "",
-   staffNotes: ""
+   staffNotes: "",
+   departmentsVerified: false
  });
 
  // Editable states
@@ -161,16 +162,8 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
 
  const isFullyPaid = numReceived >= netPayable && netPayable > 0;
  const isZeroBalance = netPayable === 0;
- const expectedOut = checkIn.expectedCheckOutTime
- ? new Date(checkIn.expectedCheckOutTime)
- : null;
 
- const today = startOfDay(new Date());
- const isCheckoutDateReached = expectedOut
- ? today >= startOfDay(expectedOut)
- : true;
-
- const canCheckout = (isFullyPaid || isZeroBalance) && isCheckoutDateReached;
+ const canCheckout = isFullyPaid || isZeroBalance;
 
  // ─── Handlers ────────────────────────────────────────────────────
  const updateExtraService = (index: number, field: string, value: any) => {
@@ -409,35 +402,53 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
 
      {/* STEP 1 - RIGHT COLUMN */}
      <div className="w-full xl:w-[400px] flex flex-col gap-6">
-       <Section title="Department Clearance" accent="blue">
-         <div className="space-y-4">
-           {[
-             { name: "Restaurant Bills", desc: "Food, Beverages, Water", status: "CLEARED", statusColor: "text-green-500 bg-green-50", details: "All bills are cleared" },
-             { name: "Laundry Bills", desc: "Laundry & Dry Clean", status: "CLEARED", statusColor: "text-green-500 bg-green-50", details: "No outstanding" },
-             { name: "Misc Charges", desc: "Extras, Pickup/Drop", status: "PENDING", statusColor: "text-red-500 bg-red-50 border border-red-100", details: "Pending review" }
-           ].map((dept, idx) => (
-             <div key={idx} className="flex items-start justify-between border-b border-gray-50 pb-3 last:border-0 last:pb-0">
-               <div className="flex gap-3">
-                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${idx === 0 ? "bg-orange-100 text-orange-500" : idx === 1 ? "bg-blue-100 text-blue-500" : "bg-purple-100 text-purple-500"}`}>
-                   <span className="font-bold text-sm">{idx + 1}</span>
-                 </div>
-                 <div>
-                   <p className="font-bold text-gray-800 text-sm">{dept.name}</p>
-                   <p className="text-[10px] text-gray-500 mt-0.5">{dept.desc}</p>
-                 </div>
+        <Section title="Department Clearance" accent="blue">
+          <div className="space-y-4">
+            {restaurantCharges > 0 && (
+              <div className="flex items-start justify-between border-b border-gray-50 pb-3">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-orange-100 text-orange-500">
+                    <FaUtensils size={14} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-800 text-sm">Restaurant Bills</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Food & Beverages</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="font-black text-gray-800">₹{restaurantCharges}</span>
+                </div>
+              </div>
+            )}
+            {extraServices.map((es, idx) => (
+              <div key={idx} className="flex items-start justify-between border-b border-gray-50 pb-3">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-500">
+                    <FiFileText size={14} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-800 text-sm">{es.serviceName || "Extra Service"}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Qty: {es.quantity}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="font-black text-gray-800">₹{es.total}</span>
+                </div>
+              </div>
+            ))}
+            {restaurantCharges === 0 && extraServices.length === 0 && (
+              <p className="text-sm text-gray-500 font-semibold italic text-center py-4">No additional department charges.</p>
+            )}
+            
+            <label className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors mt-4">
+               <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${verification.departmentsVerified ? "bg-blue-500 border-blue-500 text-white" : "border-blue-300 bg-white"}`}>
+                 {verification.departmentsVerified && <span className="text-xs">✓</span>}
                </div>
-               <div className="text-right">
-                 <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${dept.statusColor}`}>{dept.status}</span>
-                 <p className="text-[9px] text-gray-400 mt-1">{dept.details}</p>
-               </div>
-             </div>
-           ))}
-           <div className="p-3 bg-orange-50 border border-orange-100 rounded-xl flex items-center gap-2 text-orange-600 text-xs font-semibold">
-             <FiAlertCircle size={14} />
-             <span>Please resolve all pending department charges before proceeding to settlement.</span>
-           </div>
-         </div>
-       </Section>
+               <input type="checkbox" className="hidden" checked={!!verification.departmentsVerified} onChange={(e) => setVerification({ ...verification, departmentsVerified: e.target.checked })} />
+               <span className="font-bold text-blue-800 text-sm">All department charges are verified</span>
+            </label>
+          </div>
+        </Section>
 
        <Section title="Damage / Remarks (Optional)" accent="red">
          <div className="space-y-4">
@@ -474,7 +485,13 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
    </div>
    <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-4 rounded-b-[2rem]">
      <button onClick={onClose} className="px-6 py-3 border-2 border-gray-200 text-gray-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">Cancel</button>
-     <button onClick={() => setStep(2)} className="px-8 py-3 bg-orange-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 shadow-lg shadow-orange-100 transition-all flex items-center gap-2">Continue to Settlement <span>→</span></button>
+      <button
+        onClick={() => setStep(2)}
+        disabled={!(verification.guestVacated && verification.keyReturned && verification.roomChecked && verification.noDamage && verification.departmentsVerified)}
+        className={`px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${verification.guestVacated && verification.keyReturned && verification.roomChecked && verification.noDamage && verification.departmentsVerified ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-100" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+      >
+        Continue to Settlement <span>→</span>
+      </button>
    </div>
    </>
  ) : (
@@ -1047,27 +1064,28 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  : "Confirm Checkout (Full Payment)"}
  </button>
  </div>
- {!isCheckoutDateReached && (
- <p className="text-sm text-red-500 mt-2 font-semibold">
- Checkout will be available on{" "}
- {expectedOut!.toLocaleDateString("en-IN", {
- day: "numeric",
- month: "short",
- year: "numeric",
- })}
- </p>
- )}
 
- <button
- onClick={() => handleAction(false)}
- disabled={submitting}
- className="w-full py-3.5 bg-white border-2 border-gray-200 text-gray-600 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
- >
- <FiSave size={14} />
- Save as Draft{" "}
- {numReceived > 0 &&
- `(₹${numReceived.toLocaleString()} collected)`}
- </button>
+
+ <div className="flex gap-4">
+   <button
+     onClick={onClose}
+     disabled={submitting}
+     className="px-6 py-3.5 bg-white border-2 border-gray-200 text-gray-400 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-gray-50 hover:text-gray-600 transition-all flex items-center justify-center gap-2"
+   >
+     <FiX size={14} />
+     Cancel
+   </button>
+   <button
+   onClick={() => handleAction(false)}
+   disabled={submitting}
+   className="flex-1 py-3.5 bg-white border-2 border-gray-200 text-gray-600 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
+   >
+   <FiSave size={14} />
+   Save as Draft{" "}
+   {numReceived > 0 &&
+   `(₹${numReceived.toLocaleString()} collected)`}
+   </button>
+ </div>
  </div>
 
  {/* Tax GST selector */}

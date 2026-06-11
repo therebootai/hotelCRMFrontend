@@ -17,6 +17,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format, differenceInDays, addDays } from "date-fns";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
+import BookingConfirmationReceipt from "./BookingConfirmationReceipt";
 
 interface RoomSearchResult {
  room: {
@@ -156,6 +157,9 @@ const CreateBooking = ({
  // Search Filters
  const [adultsFilter, setAdultsFilter] = useState(2);
  const [childrenFilter, setChildrenFilter] = useState(1);
+
+ // Confirmed Booking State
+ const [confirmedBookingDetails, setConfirmedBookingDetails] = useState<any>(null);
 
  // Search Results
  const [searchResults, setSearchResults] = useState<RoomSearchResult[]>([]);
@@ -678,7 +682,13 @@ const CreateBooking = ({
  }
 
  if (refreshBookings) refreshBookings();
+
+ if (res.data.data) {
+ // If we have returned booking data, show the receipt page instead of closing
+ setConfirmedBookingDetails(res.data.data);
+ } else {
  onClose();
+ }
  } catch (err: any) {
  toast.error(err.response?.data?.message || (booking ? "Failed to update booking" : "Failed to create booking"));
  } finally {
@@ -690,6 +700,20 @@ const CreateBooking = ({
  (sum, rt) => sum + (selectedCounts[rt._id]?.count || 0),
  0,
  );
+
+ if (confirmedBookingDetails) {
+ return (
+ <BookingConfirmationReceipt
+ booking={confirmedBookingDetails}
+ onBack={onClose}
+ onEdit={() => setConfirmedBookingDetails(null)}
+ onCreateAnother={() => {
+ setConfirmedBookingDetails(null);
+ onClose();
+ }}
+ />
+ );
+ }
 
  return (
  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 new-booking-modal-container">

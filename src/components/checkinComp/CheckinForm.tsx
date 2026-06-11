@@ -2681,8 +2681,8 @@ const CheckInForm = ({
                     </div>
                     </div>
 
-                    {/* Co-Guests Table - Only show for Day Access Individual */}
-                    {(isDayAccess && partyType !== "Corporate") && (
+                    {/* Co-Guests Table */}
+                    {true && (
                     <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
                         <table className="w-full text-left text-[10px]">
                         <thead className="bg-gray-50 border-b border-gray-200 text-gray-500">

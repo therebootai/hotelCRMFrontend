@@ -2712,6 +2712,7 @@ const CheckInForm = ({
                                 </select>
                                 </td>
                                 <td className="p-2">
+                                <div className="flex flex-col gap-1">
                                 <select value={g.idType || "Not Required"} onChange={(e) => updateGuest(g.id, "idType", e.target.value)} className="w-full bg-transparent outline-none font-bold text-gray-500 cursor-pointer text-[9px]">
                                     <option>Not Required</option>
                                     <option>Aadhaar Card</option>
@@ -2719,6 +2720,21 @@ const CheckInForm = ({
                                     <option>Passport</option>
                                     <option>Driving License</option>
                                 </select>
+                                {g.idType !== "Not Required" && (
+                                  g.pendingDocFile ? (
+                                    <div className="flex items-center justify-between p-1 bg-green-50 border border-green-200 rounded text-[8px] font-bold mt-1">
+                                      <span className="truncate text-green-600 max-w-[80px]">{g.pendingDocFile.name}</span>
+                                      <button onClick={() => handleRemoveDocument(g.id)} className="text-red-500 hover:text-red-700 ml-1 font-black text-xs">×</button>
+                                    </div>
+                                  ) : (
+                                    <input
+                                      type="file"
+                                      onChange={(e) => e.target.files?.[0] && handleDocumentUpload(g.id, e.target.files[0])}
+                                      className="w-full mt-1 text-[8px] text-gray-400 font-bold file:mr-1 file:py-0.5 file:px-1 file:rounded file:border-0 file:bg-gray-100 hover:file:bg-gray-200 cursor-pointer"
+                                    />
+                                  )
+                                )}
+                                </div>
                                 </td>
                                 <td className="p-2 text-center">
                                 <button onClick={() => setGuests(prev => prev.filter(pg => pg.id !== g.id))} className="text-red-400 hover:text-red-600 p-1 opacity-50 group-hover:opacity-100 transition-opacity" title="Remove Guest">

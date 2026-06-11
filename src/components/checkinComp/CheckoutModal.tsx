@@ -183,7 +183,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  paymentNote ||
  (isCheckout ? "Checkout settlement" : "Partial payment"),
  }
- : null,
+ : undefined,
  checkoutVerification: isCheckout ? {
    guestVacated: verification.guestVacated,
    keyReturned: verification.keyReturned,
@@ -193,7 +193,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
    damageAmount: Number(verification.damageAmount) || 0,
    damageRemarks: verification.damageRemarks,
    staffNotes: verification.staffNotes,
- } : null,
+ } : undefined,
  };
  const res = await api.post("/billing/process-checkout", payload);
  if (res.data.success) {

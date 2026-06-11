@@ -539,7 +539,7 @@ const CheckInForm = ({
  };
  const fetchAllRooms = async () => {
  try {
- const res = await api.get("/rooms?status=Active");
+ const res = await api.get("/rooms?status=Active&availableOnly=true");
  setAvailableRooms(res.data.data?.rooms || []);
  } catch (err) {
  console.error("Error fetching rooms:", err);
@@ -588,9 +588,9 @@ const CheckInForm = ({
  try {
  let res;
  if (typeId) {
- res = await api.get(`/rooms?status=Active&roomType=${typeId}`);
+ res = await api.get(`/rooms?status=Active&availableOnly=true&roomType=${typeId}`);
  } else {
- res = await api.get("/rooms?status=Active");
+ res = await api.get("/rooms?status=Active&availableOnly=true");
  }
  setAvailableRooms(res.data.data?.rooms || []);
  } catch (err) {

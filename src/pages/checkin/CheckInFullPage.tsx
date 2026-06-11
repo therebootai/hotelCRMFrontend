@@ -17,7 +17,7 @@ import { useQueryParams } from "../../hooks/useQueryParams";
 import { FaEye } from "react-icons/fa";
 import { useSearchParams } from "react-router-dom";
 import ExtendStayModal from "../../components/checkinComp/ExtendStayModal";
-import GenerateBillModal from "../../components/checkinComp/GanerateBillModel";
+import CheckoutModal from "../../components/checkinComp/CheckoutModal";
 import ViewCheckin from "../../components/checkinComp/ViewCheckin";
 import CheckinForm from "../../components/checkinComp/CheckinForm";
 
@@ -439,7 +439,7 @@ const handleCheckoutClick = (item: any) => {
 )}
 
 {isBillingModalOpen && selectedCheckIn && (
- <GenerateBillModal
+ <CheckoutModal
  checkIn={selectedCheckIn}
  onClose={() => setIsBillingModalOpen(false)}
  onSuccess={fetchCheckins}

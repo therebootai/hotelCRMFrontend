@@ -9,6 +9,8 @@ import {
  FiDollarSign,
  FiPhone,
  FiTrash2,
+ FiUser,
+ FiCalendar,
 } from "react-icons/fi";
 import api from "../../lib/axios";
 import { startOfDay } from "date-fns";
@@ -16,11 +18,24 @@ import { FaUtensils } from "react-icons/fa";
 import { BiBuilding } from "react-icons/bi";
 import useClickOutside from "../../hooks/useClickOutside";
 
-const GenerateBillModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose: () => void; onSuccess: () => void; }) => {
+const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose: () => void; onSuccess: () => void; }) => {
+ const [step, setStep] = useState(1);
  const [loading, setLoading] = useState(false);
  const [submitting, setSubmitting] = useState(false);
  const [billData, setBillData] = useState<any>(null);
  const [masterServices, setMasterServices] = useState<any[]>([]);
+
+ // Verification states
+ const [verification, setVerification] = useState({
+   guestVacated: false,
+   keyReturned: false,
+   roomChecked: false,
+   noDamage: false,
+   damageFound: false,
+   damageAmount: "",
+   damageRemarks: "",
+   staffNotes: ""
+ });
 
  // Editable states
  const [extraServices, setExtraServices] = useState<any[]>([]);
@@ -202,6 +217,16 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onCl
  (isCheckout ? "Checkout settlement" : "Partial payment"),
  }
  : null,
+ checkoutVerification: isCheckout ? {
+   guestVacated: verification.guestVacated,
+   keyReturned: verification.keyReturned,
+   roomChecked: verification.roomChecked,
+   noDamage: verification.noDamage,
+   damageFound: verification.damageFound,
+   damageAmount: Number(verification.damageAmount) || 0,
+   damageRemarks: verification.damageRemarks,
+   staffNotes: verification.staffNotes,
+ } : null,
  };
  const res = await api.post("/billing/process-checkout", payload);
  if (res.data.success) {
@@ -243,32 +268,216 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onCl
  className="bg-[#f8f8f6] w-full max-w-6xl rounded-[2rem] shadow-2xl flex flex-col max-h-[96vh] overflow-hidden border border-gray-200"
  >
  {/* ── HEADER ── */}
- <div className="px-8 py-5 border-b border-gray-200 bg-white flex justify-between items-center rounded-t-[2rem]">
+ <div className="px-8 py-4 border-b border-gray-200 bg-white flex justify-between items-center rounded-t-[2rem]">
  <div className="flex items-center gap-4">
- <div className="p-3 bg-orange-500 rounded-xl text-white">
- <FiFileText size={22} />
- </div>
+ <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-full transition-all">
+   <FiX size={20} />
+ </button>
  <div>
- <h2 className="text-lg font-black text-gray-900 uppercase tracking-tight">
- Hotel Bill & Checkout
+ <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">
+ {step === 1 ? "CHECKOUT VERIFICATION" : "CHECKOUT SETTLEMENT"}
  </h2>
- <p className="text-sm text-gray-400 font-semibold mt-0.5">
- {checkIn.guests?.[0]?.name} &nbsp;·&nbsp; Room{" "}
- {checkIn.roomDetails?.[0]?.roomNumber}
- &nbsp;·&nbsp; Invoice Preview
+ <p className="text-[10px] text-gray-500 font-bold mt-0.5 uppercase tracking-widest">
+ Step {step} of 2 - {step === 1 ? "Room Clearance & Verification" : "Financial Settlement & Checkout"}
  </p>
  </div>
  </div>
- <button
- onClick={onClose}
- className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
- >
- <FiX size={22} />
- </button>
+ <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest">
+   <div className={`flex items-center gap-2 ${step === 1 ? "text-orange-500" : "text-green-500"}`}>
+     <span className={`w-5 h-5 flex items-center justify-center rounded-full text-white ${step === 1 ? "bg-orange-500" : "bg-green-500"}`}>
+       {step === 1 ? "1" : "✓"}
+     </span>
+     Verification
+   </div>
+   <div className="w-8 h-px bg-gray-200"></div>
+   <div className={`flex items-center gap-2 ${step === 2 ? "text-orange-500" : "text-gray-400"}`}>
+     <span className={`w-5 h-5 flex items-center justify-center rounded-full ${step === 2 ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-400"}`}>
+       2
+     </span>
+     Settlement & Payment
+   </div>
+ </div>
+ </div>
+
+ {/* ── GUEST SUMMARY (Always Visible) ── */}
+ <div className="px-8 py-4 bg-white border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+   <div className="flex items-center gap-3">
+     <div className="p-2 bg-orange-50 text-orange-500 rounded-lg">
+       <FiUser size={18} />
+     </div>
+     <div>
+       <span className="text-[9px] font-black text-gray-400 uppercase block">Guest Name</span>
+       <span className="text-sm font-bold text-gray-800">{checkIn.checkInType === "Corporate" ? checkIn.corporateCheckInDetails?.companyName : checkIn.guests[0]?.name}</span>
+       <span className="text-[10px] text-gray-500 block font-bold">{checkIn.checkInType === "Corporate" ? checkIn.corporateCheckInDetails?.contactMobile : checkIn.guests[0]?.mobileNo}</span>
+     </div>
+   </div>
+   <div className="flex items-center gap-3">
+     <div className="p-2 bg-purple-50 text-purple-500 rounded-lg">
+       <FiFileText size={18} />
+     </div>
+     <div>
+       <span className="text-[9px] font-black text-gray-400 uppercase block">Check-in ID</span>
+       <span className="text-sm font-bold text-gray-800">{checkIn.checkInId}</span>
+       <span className="text-[10px] text-gray-500 uppercase block font-bold">{checkIn.checkInType}</span>
+     </div>
+   </div>
+   <div className="flex items-center gap-3">
+     <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
+       <BiBuilding size={18} />
+     </div>
+     <div>
+       <span className="text-[9px] font-black text-gray-400 uppercase block">Rooms</span>
+       <span className="text-sm font-bold text-gray-800">{checkIn.roomDetails?.map((r: any) => r.roomNumber).join(", ") || (isDayAccess ? "DA-01" : "N/A")}</span>
+       <span className="text-[10px] text-gray-500 block font-bold">{checkIn.roomDetails?.map((r: any) => r.roomType?.name).join(", ") || (isDayAccess ? "Day Access" : "Room")}</span>
+     </div>
+   </div>
+   <div className="flex items-center gap-3">
+     <div className="p-2 bg-green-50 text-green-500 rounded-lg">
+       <FiCalendar size={18} />
+     </div>
+     <div>
+       <span className="text-[9px] font-black text-gray-400 uppercase block">Stay Duration</span>
+       <span className="text-sm font-bold text-gray-800">{isDayAccess ? "Day Access" : `${Math.max(1, Math.ceil(Math.abs(new Date(checkIn.expectedCheckOutTime).getTime() - new Date(checkIn.checkInTime).getTime()) / (1000 * 60 * 60 * 24)))} Nights`}</span>
+       <span className="text-[10px] text-gray-500 block font-bold">{new Date(checkIn.checkInTime).toLocaleDateString()} - {new Date(checkIn.expectedCheckOutTime).toLocaleDateString()}</span>
+     </div>
+   </div>
  </div>
 
  {/* ── BODY ── */}
  <div className="flex-1 overflow-y-auto">
+ {step === 1 ? (
+   <>
+   <div className="p-6 flex flex-col xl:flex-row gap-6">
+     {/* STEP 1 - LEFT COLUMN */}
+     <div className="flex-1 space-y-6">
+       <Section title="Room Occupancy Summary" accent="blue">
+         <table className="w-full text-sm text-left">
+           <thead>
+             <tr className="border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+               <th className="pb-3">Room No.</th>
+               <th className="pb-3">Room Type</th>
+               <th className="pb-3">Occupants</th>
+               <th className="pb-3">Room Status</th>
+             </tr>
+           </thead>
+           <tbody>
+             {checkIn.roomDetails?.map((r: any, idx: number) => (
+               <tr key={idx} className="border-b border-gray-50">
+                 <td className="py-3 font-bold text-gray-800">{r.roomNumber}</td>
+                 <td className="py-3 text-gray-600">{r.roomType?.name}</td>
+                 <td className="py-3 text-gray-600 font-semibold">{checkIn.checkInType === "Corporate" ? checkIn.corporateCheckInDetails?.companyName : checkIn.guests[0]?.name}</td>
+                 <td className="py-3">
+                   <span className="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase rounded-full">Occupied</span>
+                 </td>
+               </tr>
+             ))}
+           </tbody>
+         </table>
+       </Section>
+
+       <Section title="Verification Checklist" accent="purple">
+         <div className="space-y-4">
+           <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-2">Room Verification</p>
+           {[
+             { id: "guestVacated", label: "Guest Vacated Room" },
+             { id: "keyReturned", label: "Room Key Returned" },
+             { id: "roomChecked", label: "Room Physically Checked by Staff" },
+             { id: "noDamage", label: "No Major Damage Found" },
+           ].map(item => (
+             <label key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-gray-200">
+               <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${verification[item.id as keyof typeof verification] ? "bg-purple-500 border-purple-500 text-white" : "border-gray-300 bg-white"}`}>
+                 {verification[item.id as keyof typeof verification] && <span className="text-xs">✓</span>}
+               </div>
+               <input type="checkbox" className="hidden" checked={!!verification[item.id as keyof typeof verification]} onChange={(e) => setVerification({ ...verification, [item.id]: e.target.checked })} />
+               <span className="font-bold text-gray-700 text-sm">{item.label}</span>
+               {verification[item.id as keyof typeof verification] && <span className="ml-auto text-green-500 font-bold text-sm">✓</span>}
+             </label>
+           ))}
+           <div className="mt-4 pt-4 border-t border-gray-100">
+             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Staff Notes / Remarks (Optional)</label>
+             <textarea
+               className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-purple-500 text-sm font-semibold transition-colors"
+               rows={3}
+               placeholder="Enter any additional notes or remarks..."
+               value={verification.staffNotes}
+               onChange={(e) => setVerification({ ...verification, staffNotes: e.target.value })}
+             />
+           </div>
+         </div>
+       </Section>
+     </div>
+
+     {/* STEP 1 - RIGHT COLUMN */}
+     <div className="w-full xl:w-[400px] flex flex-col gap-6">
+       <Section title="Department Clearance" accent="blue">
+         <div className="space-y-4">
+           {[
+             { name: "Restaurant Bills", desc: "Food, Beverages, Water", status: "CLEARED", statusColor: "text-green-500 bg-green-50", details: "All bills are cleared" },
+             { name: "Laundry Bills", desc: "Laundry & Dry Clean", status: "CLEARED", statusColor: "text-green-500 bg-green-50", details: "No outstanding" },
+             { name: "Misc Charges", desc: "Extras, Pickup/Drop", status: "PENDING", statusColor: "text-red-500 bg-red-50 border border-red-100", details: "Pending review" }
+           ].map((dept, idx) => (
+             <div key={idx} className="flex items-start justify-between border-b border-gray-50 pb-3 last:border-0 last:pb-0">
+               <div className="flex gap-3">
+                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${idx === 0 ? "bg-orange-100 text-orange-500" : idx === 1 ? "bg-blue-100 text-blue-500" : "bg-purple-100 text-purple-500"}`}>
+                   <span className="font-bold text-sm">{idx + 1}</span>
+                 </div>
+                 <div>
+                   <p className="font-bold text-gray-800 text-sm">{dept.name}</p>
+                   <p className="text-[10px] text-gray-500 mt-0.5">{dept.desc}</p>
+                 </div>
+               </div>
+               <div className="text-right">
+                 <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${dept.statusColor}`}>{dept.status}</span>
+                 <p className="text-[9px] text-gray-400 mt-1">{dept.details}</p>
+               </div>
+             </div>
+           ))}
+           <div className="p-3 bg-orange-50 border border-orange-100 rounded-xl flex items-center gap-2 text-orange-600 text-xs font-semibold">
+             <FiAlertCircle size={14} />
+             <span>Please resolve all pending department charges before proceeding to settlement.</span>
+           </div>
+         </div>
+       </Section>
+
+       <Section title="Damage / Remarks (Optional)" accent="red">
+         <div className="space-y-4">
+           <div className="flex items-center gap-6">
+             <div>
+               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Damage Found?</label>
+               <div className="flex gap-4">
+                 <label className="flex items-center gap-2 cursor-pointer">
+                   <input type="radio" name="damageFound" checked={!verification.damageFound} onChange={() => setVerification({ ...verification, damageFound: false })} className="accent-red-500" />
+                   <span className="text-sm font-bold text-gray-700">No</span>
+                 </label>
+                 <label className="flex items-center gap-2 cursor-pointer">
+                   <input type="radio" name="damageFound" checked={verification.damageFound} onChange={() => setVerification({ ...verification, damageFound: true })} className="accent-red-500" />
+                   <span className="text-sm font-bold text-gray-700">Yes</span>
+                 </label>
+               </div>
+             </div>
+             {verification.damageFound && (
+               <div className="flex-1">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Damage Amount (₹)</label>
+                 <input type="number" value={verification.damageAmount} onChange={(e) => setVerification({ ...verification, damageAmount: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 outline-none focus:border-red-500 text-sm font-semibold" placeholder="0.00" />
+               </div>
+             )}
+           </div>
+           {verification.damageFound && (
+             <div>
+               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Damage Remarks</label>
+               <textarea value={verification.damageRemarks} onChange={(e) => setVerification({ ...verification, damageRemarks: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-red-500 text-sm font-semibold" rows={3} placeholder="Enter damage details if any..."></textarea>
+             </div>
+           )}
+         </div>
+       </Section>
+     </div>
+   </div>
+   <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-4 rounded-b-[2rem]">
+     <button onClick={onClose} className="px-6 py-3 border-2 border-gray-200 text-gray-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">Cancel</button>
+     <button onClick={() => setStep(2)} className="px-8 py-3 bg-orange-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 shadow-lg shadow-orange-100 transition-all flex items-center gap-2">Continue to Settlement <span>→</span></button>
+   </div>
+   </>
+ ) : (
  <div className="p-6 flex flex-col xl:flex-row gap-6">
  {/* ══ LEFT COLUMN ══ */}
  <div className="flex-1 space-y-5">
@@ -812,7 +1021,14 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onCl
 
  {/* Action Buttons */}
  <div className="space-y-2.5">
- <button
+ <div className="flex gap-4">
+   <button
+     onClick={() => setStep(1)}
+     className="px-6 py-4 bg-white border-2 border-gray-200 text-gray-600 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-gray-50 transition-all whitespace-nowrap"
+   >
+     ← Back
+   </button>
+   <button
  onClick={() => handleAction(true)}
  disabled={submitting || !canCheckout}
  className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
@@ -830,6 +1046,7 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onCl
  ? "Confirm Checkout (No Balance)"
  : "Confirm Checkout (Full Payment)"}
  </button>
+ </div>
  {!isCheckoutDateReached && (
  <p className="text-sm text-red-500 mt-2 font-semibold">
  Checkout will be available on{" "}
@@ -878,6 +1095,7 @@ const GenerateBillModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onCl
  </div>
  </div>
  </div>
+ )}
  </div>
  </div>
  </div>
@@ -938,4 +1156,4 @@ const LineItem = ({
  </div>
 );
 
-export default GenerateBillModal;
+export default CheckoutModal;

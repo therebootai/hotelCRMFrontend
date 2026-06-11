@@ -8,7 +8,6 @@ import {
  FiCreditCard,
  FiDollarSign,
  FiPhone,
- FiTrash2,
  FiUser,
  FiCalendar,
 } from "react-icons/fi";
@@ -20,57 +19,54 @@ import useClickOutside from "../../hooks/useClickOutside";
 
 const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose: () => void; onSuccess: () => void; }) => {
  const [step, setStep] = useState(1);
- const [loading, setLoading] = useState(false);
- const [submitting, setSubmitting] = useState(false);
- const [billData, setBillData] = useState<any>(null);
- const [masterServices, setMasterServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [billData, setBillData] = useState<any>(null);
 
- // Verification states
- const [verification, setVerification] = useState({
-   guestVacated: false,
-   keyReturned: false,
-   roomChecked: false,
-   noDamage: false,
-   damageFound: false,
-   damageAmount: "",
-   damageRemarks: "",
-   staffNotes: "",
-   departmentsVerified: false
- });
+  // Verification states
+  const [verification, setVerification] = useState({
+    guestVacated: false,
+    keyReturned: false,
+    roomChecked: false,
+    noDamage: false,
+    damageFound: false,
+    damageAmount: "",
+    damageRemarks: "",
+    staffNotes: "",
+    departmentsVerified: false
+  });
 
- // Editable states
- const [extraServices, setExtraServices] = useState<any[]>([]);
- const [restaurantCharges, setRestaurantCharges] = useState(0);
- const [discount, setDiscount] = useState(0);
- const [taxPercentage, setTaxPercentage] = useState(12);
- const [taxOptions, setTaxOptions] = useState<any[]>([]);
- const [selectedTaxId, setSelectedTaxId] = useState<string>("");
- const [notes, setNotes] = useState("");
+  // Editable states
+  const [extraServices, setExtraServices] = useState<any[]>([]);
+  const [restaurantCharges, setRestaurantCharges] = useState<number>(0);
+  const [discount, setDiscount] = useState<number>(0);
+  const [notes, setNotes] = useState("");
 
- // Payment settlement
- const [paymentMethod, setPaymentMethod] = useState("Cash");
- const [receivedAmount, setReceivedAmount] = useState<number | "">("");
- const [paymentNote, setPaymentNote] = useState("");
- // Payment settlement
+  const [taxOptions, setTaxOptions] = useState<any[]>([]);
+  const [selectedTaxId, setSelectedTaxId] = useState("");
+  const [taxPercentage, setTaxPercentage] = useState(12); // Default to 12% if none chosen
 
- const isDayAccess = checkIn.bookingCategory === "Day Access";
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [receivedAmount, setReceivedAmount] = useState<string | number>("");
+  const [paymentNote, setPaymentNote] = useState("");
 
- const modalRef = useClickOutside<HTMLDivElement>(
- () => {
- if (!submitting) onClose();
- },
- true,
- );
+  const isDayAccess = checkIn.bookingCategory === "Day Access";
 
- useEffect(() => {
- const fetchData = async () => {
- try {
- setLoading(true);
- const [billRes, serviceRes, taxRes] = await Promise.all([
- api.get(`/billing/preview/${checkIn._id}`),
- api.get(`/extra-services?activeOnly=true`),
- api.get(`/tax-gst`, { params: { activeOnly: "true" } }),
- ]);
+  const modalRef = useClickOutside<HTMLDivElement>(
+    () => {
+      if (!submitting) onClose();
+    },
+    true,
+  );
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [billRes, taxRes] = await Promise.all([
+          api.get(`/billing/preview/${checkIn._id}`),
+          api.get(`/tax-gst`, { params: { activeOnly: "true" } }),
+        ]);
  if (billRes.data.success) {
  const d = billRes.data.data;
 
@@ -102,17 +98,16 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
 
  setReceivedAmount("");
 
- setBillData({
- ...d,
- paidAmount: d.paidAmount || 0,
- dueAmount: d.dueAmount || 0,
- payments: d.payments || [],
- advancePaymentsHistory: d.advancePaymentsHistory || [],
- });
- }
- setMasterServices(serviceRes.data.data || []);
- } catch (err) {
- console.error(err);
+        setBillData({
+          ...d,
+          paidAmount: d.paidAmount || 0,
+          dueAmount: d.dueAmount || 0,
+          payments: d.payments || [],
+          advancePaymentsHistory: d.advancePaymentsHistory || [],
+        });
+      }
+    } catch (err) {
+      console.error(err);
  } finally {
  setLoading(false);
  }
@@ -165,27 +160,6 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
 
  const canCheckout = isFullyPaid || isZeroBalance;
 
- // ─── Handlers ────────────────────────────────────────────────────
- const updateExtraService = (index: number, field: string, value: any) => {
- const updated = [...extraServices];
- updated[index] = { ...updated[index], [field]: value };
- if (field === "quantity" || field === "rate") {
- updated[index].total =
- Number(updated[index].quantity) * Number(updated[index].rate);
- }
- setExtraServices(updated);
- };
-
- const removeExtraService = (index: number) => {
- setExtraServices(extraServices.filter((_, i) => i !== index));
- };
-
- const addExtraService = () => {
- setExtraServices([
- ...extraServices,
- { serviceName: "", quantity: 1, rate: 0, total: 0 },
- ]);
- };
 
  const handleAction = async (isCheckout: boolean) => {
  if (isCheckout && !canCheckout) return;
@@ -658,16 +632,9 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  size={16}
  className="text-blue-400 flex-shrink-0"
  />
- <input
- type="number"
- min={0}
- className="flex-1 p-3 bg-blue-50 border border-blue-100 rounded-xl font-bold text-blue-700 outline-none focus:border-blue-400 transition-colors text-base"
- placeholder="Enter total food/restaurant bill"
- value={restaurantCharges}
- onChange={(e) =>
- setRestaurantCharges(Number(e.target.value))
- }
- />
+ <span className="flex-1 text-sm font-bold text-gray-800">
+ Total Restaurant Bill
+ </span>
  <span className="text-base font-black text-blue-600 w-28 text-right">
  ₹{Number(restaurantCharges).toLocaleString()}
  </span>
@@ -679,78 +646,27 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  <div className="space-y-3">
  {extraServices.length === 0 && (
  <p className="text-center text-sm text-gray-400 py-4">
- No extra services added yet.
+ No extra services added.
  </p>
  )}
  {extraServices.map((s, i) => (
  <div
  key={i}
- className="flex gap-2 items-center bg-gray-50 rounded-xl p-2"
+ className="flex items-center justify-between border-b border-gray-50 pb-3 last:border-0 last:pb-0"
  >
- <select
- className="flex-1 p-2 border border-gray-200 rounded-lg text-sm font-semibold bg-white outline-none"
- value={s.serviceName}
- onChange={(e) =>
- updateExtraService(i, "serviceName", e.target.value)
- }
- >
- <option value="">Select service…</option>
- {masterServices.map((ms) => (
- <option key={ms._id} value={ms.name}>
- {ms.name}
- </option>
- ))}
- </select>
- <div className="flex items-center gap-1">
- <span className="text-sm text-gray-400">Qty</span>
- <input
- type="number"
- min={1}
- className="w-14 p-2 border border-gray-200 rounded-lg text-sm text-center font-bold outline-none"
- value={s.quantity}
- onChange={(e) =>
- updateExtraService(
- i,
- "quantity",
- Number(e.target.value),
- )
- }
- />
+ <div>
+ <p className="font-bold text-gray-800 text-sm">
+ {s.serviceName || "Extra Service"}
+ </p>
+ <p className="text-[10px] text-gray-500 mt-0.5">
+ Qty: {s.quantity} @ ₹{s.rate}
+ </p>
  </div>
- <div className="flex items-center gap-1">
- <span className="text-sm text-gray-400">₹</span>
- <input
- type="number"
- min={0}
- className="w-20 p-2 border border-gray-200 rounded-lg text-sm text-right font-bold outline-none"
- placeholder="Rate"
- value={s.rate}
- onChange={(e) =>
- updateExtraService(
- i,
- "rate",
- Number(e.target.value),
- )
- }
- />
- </div>
- <div className="w-20 text-right text-sm font-black text-purple-600">
+ <div className="text-right font-black text-purple-600 text-sm">
  ₹{Number(s.total).toLocaleString()}
  </div>
- <button
- onClick={() => removeExtraService(i)}
- className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
- >
- <FiTrash2 size={15} />
- </button>
  </div>
  ))}
- <button
- onClick={addExtraService}
- className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm font-bold text-gray-400 hover:border-purple-300 hover:text-purple-500 hover:bg-purple-50 transition-all"
- >
- + Add Extra Service
- </button>
  {extraServices.length > 0 && (
  <div className="flex justify-between px-2 pt-2 border-t border-gray-100">
  <span className="text-sm font-black text-gray-500 uppercase">

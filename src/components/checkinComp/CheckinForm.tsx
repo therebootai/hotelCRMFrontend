@@ -421,7 +421,20 @@ const CheckInForm = ({
  { vehicleNumber: "", vehicleType: "", driverName: "", driverContact: "" },
  ]);
 
- // Corporate Details
+   // Corporate Files
+  const [corporateFiles, setCorporateFiles] = useState<{
+    contactIdDocument: File | null;
+    guestListDocument: File | null;
+    authorizationLetter: File | null;
+    companyDocument: File | null;
+  }>({
+    contactIdDocument: null,
+    guestListDocument: null,
+    authorizationLetter: null,
+    companyDocument: null,
+  });
+
+  // Corporate Details
  const [corporateDetails, setCorporateDetails] = useState({
  companyName: bookingData?.corporateDetails?.companyName || "",
  companyGST: bookingData?.corporateDetails?.gstNumber || "",
@@ -1287,6 +1300,12 @@ const CheckInForm = ({
 
  // Append JSON payload
  multipartFormData.append("payload", JSON.stringify(payload));
+
+ // Append corporate files if they exist
+ if (corporateFiles.contactIdDocument) multipartFormData.append("contactIdDocument", corporateFiles.contactIdDocument);
+ if (corporateFiles.guestListDocument) multipartFormData.append("guestListDocument", corporateFiles.guestListDocument);
+ if (corporateFiles.authorizationLetter) multipartFormData.append("authorizationLetter", corporateFiles.authorizationLetter);
+ if (corporateFiles.companyDocument) multipartFormData.append("companyDocument", corporateFiles.companyDocument);
 
  // Append guest document files with their indices for proper mapping
  const guestsWithDocs = guests
@@ -2490,8 +2509,137 @@ const CheckInForm = ({
  {/* Left Column (Guests, IDs, Photos) */}
  <div className="lg:col-span-3 space-y-3">
  
-  {/* Grouped Guests by Room */}
-  {selectedRooms.filter(r => !!r.roomId).map((room, roomIdx) => {
+  {/* Guest List rendering based on isDayAccess */}
+  {isDayAccess ? (
+    <div className="bg-white rounded-xl border border-border p-4 mb-3">
+        <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-3">
+            <h3 className="text-[11px] font-black text-gray-700 uppercase tracking-wider">Day Access Guests</h3>
+            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded font-black text-[8px] uppercase">{guests.length} Guest(s)</span>
+        </div>
+        
+        {/* Render Primary Guest */}
+        {(() => {
+            const primaryGuest = guests.find(g => g.isPrimary) || guests[0];
+            const coGuests = guests.filter(g => g.id !== primaryGuest?.id);
+            if (!primaryGuest) return null;
+            return (
+                <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                    <span className="px-2 py-0.5 bg-orange-100 text-orange-600 border border-orange-200 rounded font-black text-[8px] uppercase">Primary Guest</span>
+                    <span className="text-[10px] font-black text-gray-700">{primaryGuest.name || "Pending Name"}</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3">
+                    <div className="md:col-span-2">
+                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Full Name *</label>
+                        <input type="text" value={primaryGuest.name || ""} onChange={(e) => updateGuest(primaryGuest.id, "name", e.target.value)} placeholder="e.g. Rahul Sharma" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+                    </div>
+                    <div>
+                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Mobile Number *</label>
+                        <input type="tel" value={primaryGuest.mobileNo || ""} onChange={(e) => updateGuest(primaryGuest.id, "mobileNo", e.target.value)} placeholder="e.g. 98765 43210" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+                    </div>
+                    <div>
+                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Age *</label>
+                        <input type="text" value={primaryGuest.age || ""} onChange={(e) => { const val = e.target.value; if (/^[0-9]*$/.test(val)) updateGuest(primaryGuest.id, "age", val); }} placeholder="e.g. 32" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+                    </div>
+                    <div>
+                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Gender *</label>
+                        <select value={primaryGuest.gender || ""} onChange={(e) => updateGuest(primaryGuest.id, "gender", e.target.value)} className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none">
+                        <option value="">Select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-gray-100">
+                    <div>
+                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">ID Proof Type *</label>
+                        <select value={primaryGuest.idType} onChange={(e) => updateGuest(primaryGuest.id, "idType", e.target.value)} className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none">
+                        <option>Aadhaar Card</option>
+                        <option>PAN Card</option>
+                        <option>Passport</option>
+                        <option>Driving License</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">ID Number *</label>
+                        <input type="text" value={primaryGuest.idNumber || ""} onChange={(e) => updateGuest(primaryGuest.id, "idNumber", e.target.value)} placeholder="ID Number" className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none" />
+                    </div>
+                    <div>
+                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Upload ID Proof *</label>
+                        {primaryGuest.pendingDocFile ? (
+                        <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg text-[10px] font-bold">
+                            <span className="truncate text-green-600 max-w-[100px]">{primaryGuest.pendingDocFile?.name}</span>
+                            <button onClick={() => handleRemoveDocument(primaryGuest.id)} className="text-red-500 hover:text-red-700">🗑️</button>
+                        </div>
+                        ) : (
+                        <input type="file" onChange={(e) => e.target.files?.[0] && handleDocumentUpload(primaryGuest.id, e.target.files[0])} className="w-full text-sm text-gray-400 font-bold" />
+                        )}
+                    </div>
+                    </div>
+
+                    {/* Co-Guests Table */}
+                    <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
+                        <table className="w-full text-left text-[10px]">
+                        <thead className="bg-gray-50 border-b border-gray-200 text-gray-500">
+                            <tr>
+                            <th className="p-2 font-black uppercase tracking-wider">Full Name</th>
+                            <th className="p-2 font-black uppercase tracking-wider w-16">Age</th>
+                            <th className="p-2 font-black uppercase tracking-wider w-24">Gender</th>
+                            <th className="p-2 font-black uppercase tracking-wider w-32">ID Proof</th>
+                            <th className="p-2 font-black uppercase tracking-wider w-12 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 bg-white">
+                            {coGuests.map((g) => (
+                            <tr key={g.id} className="hover:bg-gray-50/50 transition-colors group">
+                                <td className="p-2">
+                                <input type="text" value={g.name || ""} onChange={(e) => updateGuest(g.id, "name", e.target.value)} placeholder="e.g. Guest Name" className="w-full bg-transparent outline-none font-bold text-gray-700 placeholder-gray-300" />
+                                </td>
+                                <td className="p-2">
+                                <input type="text" value={g.age || ""} onChange={(e) => { const val = e.target.value; if (/^[0-9]*$/.test(val)) updateGuest(g.id, "age", val); }} placeholder="Age" className="w-full bg-transparent outline-none font-bold text-gray-700 placeholder-gray-300" />
+                                </td>
+                                <td className="p-2">
+                                <select value={g.gender || ""} onChange={(e) => updateGuest(g.id, "gender", e.target.value)} className="w-full bg-transparent outline-none font-bold text-gray-700 cursor-pointer">
+                                    <option value="">Select</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                </td>
+                                <td className="p-2">
+                                <select value={g.idType || "Not Required"} onChange={(e) => updateGuest(g.id, "idType", e.target.value)} className="w-full bg-transparent outline-none font-bold text-gray-500 cursor-pointer text-[9px]">
+                                    <option>Not Required</option>
+                                    <option>Aadhaar Card</option>
+                                    <option>PAN Card</option>
+                                    <option>Passport</option>
+                                    <option>Driving License</option>
+                                </select>
+                                </td>
+                                <td className="p-2 text-center">
+                                <button onClick={() => setGuests(prev => prev.filter(pg => pg.id !== g.id))} className="text-red-400 hover:text-red-600 p-1 opacity-50 group-hover:opacity-100 transition-opacity" title="Remove Guest">
+                                    🗑️
+                                </button>
+                                </td>
+                            </tr>
+                            ))}
+                        </tbody>
+                        </table>
+                        <div className="bg-gray-50 p-2 border-t border-gray-200">
+                        <button onClick={() => handleAddCoGuest("")} className="w-full py-1.5 border border-dashed border-gray-300 text-gray-500 rounded text-[9px] font-black uppercase tracking-wider hover:border-orange-400 hover:text-orange-500 transition-all flex items-center justify-center gap-1">
+                            Add Co-Guest
+                        </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        })()}
+    </div>
+  ) : (
+    /* Grouped Guests by Room */
+    selectedRooms.filter(r => !!r.roomId).map((room, roomIdx) => {
     const roomGuests = guests.filter(g => g.assignedRoomId === room.roomId);
     const primaryGuest = roomGuests.find(g => g.isPrimary) || roomGuests[0];
     const coGuests = roomGuests.filter(g => g.id !== primaryGuest?.id);
@@ -2766,7 +2914,8 @@ const CheckInForm = ({
         )}
       </div>
     );
-  })}
+  })
+ )}
 
  {/* Section D: Vehicle Details */}
  <div className="bg-white rounded-xl border border-border p-4">
@@ -2885,6 +3034,24 @@ const CheckInForm = ({
  className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
  />
  </div>
+ </div>
+ <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+    <div>
+        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Guest List Doc</label>
+        <input type="file" onChange={(e) => setCorporateFiles(prev => ({...prev, guestListDocument: e.target.files?.[0] || null}))} className="w-full text-[10px] text-gray-500 font-bold" />
+    </div>
+    <div>
+        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Auth Letter</label>
+        <input type="file" onChange={(e) => setCorporateFiles(prev => ({...prev, authorizationLetter: e.target.files?.[0] || null}))} className="w-full text-[10px] text-gray-500 font-bold" />
+    </div>
+    <div>
+        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Company Doc</label>
+        <input type="file" onChange={(e) => setCorporateFiles(prev => ({...prev, companyDocument: e.target.files?.[0] || null}))} className="w-full text-[10px] text-gray-500 font-bold" />
+    </div>
+    <div>
+        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Contact ID Doc</label>
+        <input type="file" onChange={(e) => setCorporateFiles(prev => ({...prev, contactIdDocument: e.target.files?.[0] || null}))} className="w-full text-[10px] text-gray-500 font-bold" />
+    </div>
  </div>
  </div>
  )}

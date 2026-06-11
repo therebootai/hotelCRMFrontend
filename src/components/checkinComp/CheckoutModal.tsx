@@ -18,23 +18,25 @@ import { BiBuilding } from "react-icons/bi";
 import useClickOutside from "../../hooks/useClickOutside";
 
 const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose: () => void; onSuccess: () => void; }) => {
- const [step, setStep] = useState(1);
+
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [billData, setBillData] = useState<any>(null);
 
   // Verification states
   const [verification, setVerification] = useState({
-    guestVacated: false,
-    keyReturned: false,
-    roomChecked: false,
-    noDamage: false,
-    damageFound: false,
-    damageAmount: "",
-    damageRemarks: "",
-    staffNotes: "",
-    departmentsVerified: false
+    guestVacated: checkIn.checkoutVerification?.guestVacated || false,
+    keyReturned: checkIn.checkoutVerification?.keyReturned || false,
+    roomChecked: checkIn.checkoutVerification?.roomChecked || false,
+    noDamage: checkIn.checkoutVerification?.noDamage || false,
+    damageFound: checkIn.checkoutVerification?.damageFound || false,
+    damageAmount: checkIn.checkoutVerification?.damageAmount || "",
+    damageRemarks: checkIn.checkoutVerification?.damageRemarks || "",
+    staffNotes: checkIn.checkoutVerification?.staffNotes || "",
+    departmentsVerified: checkIn.checkoutVerification?.departmentsVerified || false
   });
+
+  const [step, setStep] = useState(checkIn.checkoutVerification?.step || 1);
 
   // Editable states
   const [extraServices, setExtraServices] = useState<any[]>([]);
@@ -184,16 +186,18 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  (isCheckout ? "Checkout settlement" : "Partial payment"),
  }
  : undefined,
- checkoutVerification: isCheckout ? {
-   guestVacated: verification.guestVacated,
-   keyReturned: verification.keyReturned,
-   roomChecked: verification.roomChecked,
-   noDamage: verification.noDamage,
-   damageFound: verification.damageFound,
-   damageAmount: Number(verification.damageAmount) || 0,
-   damageRemarks: verification.damageRemarks,
-   staffNotes: verification.staffNotes,
- } : undefined,
+      checkoutVerification: {
+        guestVacated: verification.guestVacated,
+        keyReturned: verification.keyReturned,
+        roomChecked: verification.roomChecked,
+        noDamage: verification.noDamage,
+        damageFound: verification.damageFound,
+        damageAmount: Number(verification.damageAmount) || 0,
+        damageRemarks: verification.damageRemarks,
+        staffNotes: verification.staffNotes,
+        departmentsVerified: verification.departmentsVerified,
+        step: step,
+      },
  };
  const res = await api.post("/billing/process-checkout", payload);
  if (res.data.success) {
@@ -393,6 +397,37 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
 
      {/* STEP 1 - RIGHT COLUMN */}
      <div className="w-full xl:w-[400px] flex flex-col gap-6">
+      <Section title="Damage / Remarks (Optional)" accent="red">
+         <div className="space-y-4">
+           <div className="flex items-center gap-6">
+             <div>
+               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Damage Found?</label>
+               <div className="flex gap-4">
+                 <label className="flex items-center gap-2 cursor-pointer">
+                   <input type="radio" name="damageFound" checked={!verification.damageFound} onChange={() => setVerification({ ...verification, damageFound: false })} className="accent-red-500" />
+                   <span className="text-sm font-bold text-gray-700">No</span>
+                 </label>
+                 <label className="flex items-center gap-2 cursor-pointer">
+                   <input type="radio" name="damageFound" checked={verification.damageFound} onChange={() => setVerification({ ...verification, damageFound: true })} className="accent-red-500" />
+                   <span className="text-sm font-bold text-gray-700">Yes</span>
+                 </label>
+               </div>
+             </div>
+             {verification.damageFound && (
+               <div className="flex-1">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Damage Amount (₹)</label>
+                 <input type="number" value={verification.damageAmount} onChange={(e) => setVerification({ ...verification, damageAmount: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 outline-none focus:border-red-500 text-sm font-semibold" placeholder="0.00" />
+               </div>
+             )}
+           </div>
+           {verification.damageFound && (
+             <div>
+               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Damage Remarks</label>
+               <textarea value={verification.damageRemarks} onChange={(e) => setVerification({ ...verification, damageRemarks: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-red-500 text-sm font-semibold" rows={3} placeholder="Enter damage details if any..."></textarea>
+             </div>
+           )}
+         </div>
+       </Section>
         <Section title="Department Clearance" accent="blue">
           <div className="space-y-4">
             {restaurantCharges > 0 && (
@@ -441,37 +476,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
           </div>
         </Section>
 
-       <Section title="Damage / Remarks (Optional)" accent="red">
-         <div className="space-y-4">
-           <div className="flex items-center gap-6">
-             <div>
-               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Damage Found?</label>
-               <div className="flex gap-4">
-                 <label className="flex items-center gap-2 cursor-pointer">
-                   <input type="radio" name="damageFound" checked={!verification.damageFound} onChange={() => setVerification({ ...verification, damageFound: false })} className="accent-red-500" />
-                   <span className="text-sm font-bold text-gray-700">No</span>
-                 </label>
-                 <label className="flex items-center gap-2 cursor-pointer">
-                   <input type="radio" name="damageFound" checked={verification.damageFound} onChange={() => setVerification({ ...verification, damageFound: true })} className="accent-red-500" />
-                   <span className="text-sm font-bold text-gray-700">Yes</span>
-                 </label>
-               </div>
-             </div>
-             {verification.damageFound && (
-               <div className="flex-1">
-                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Damage Amount (₹)</label>
-                 <input type="number" value={verification.damageAmount} onChange={(e) => setVerification({ ...verification, damageAmount: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-2 outline-none focus:border-red-500 text-sm font-semibold" placeholder="0.00" />
-               </div>
-             )}
-           </div>
-           {verification.damageFound && (
-             <div>
-               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Damage Remarks</label>
-               <textarea value={verification.damageRemarks} onChange={(e) => setVerification({ ...verification, damageRemarks: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-red-500 text-sm font-semibold" rows={3} placeholder="Enter damage details if any..."></textarea>
-             </div>
-           )}
-         </div>
-       </Section>
+       
      </div>
    </div>
    <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-4 rounded-b-[2rem]">

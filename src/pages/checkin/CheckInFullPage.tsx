@@ -314,73 +314,107 @@ const handleCheckoutClick = (item: any) => {
 
  {/* Table Section */}
  <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden overflow-x-auto w-full ">
- <table className="w-full text-left border-collapse min-w-[950px] lg:min-w-0">
+ <table className="w-full text-left border-collapse min-w-[1200px] lg:min-w-0">
  <thead>
  <tr className="bg-gray-50/50 border-b border-gray-100">
- <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest ">Room</th>
- <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest ">Guest</th>
- <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest ">Check-in</th>
- <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center ">Nights</th>
- <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest ">Checkout</th>
- <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest ">Status</th>
- <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right ">Actions</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap ">Check-In ID</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap ">Guest / Company</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap ">Room(s)</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap ">Check-in Date</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap ">Expected Checkout</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap text-center ">Stay Duration</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap text-right ">Total Amount</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap text-right ">Paid</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap text-right ">Due</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap text-center ">Status</th>
+ <th className="p-2 text-[9px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap text-center ">Action</th>
  </tr>
  </thead>
  <tbody>
  {loading ? (
  <tr>
  <td
- colSpan={7}
+ colSpan={11}
  className="text-center py-20 font-bold text-gray-400 "
  >
  Loading live data...
  </td>
  </tr>
  ) : (
- checkins.map((item: any) => (
- <tr key={item._id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-all">
- <td className="p-2 ">
- <span className="text-sm font-black text-gray-800 ">{item.roomDetails.map((r: any) => r.roomNumber).join(", ")}</span>
- </td>
- <td className="p-2 ">
- <span className="text-sm font-bold text-gray-800 ">{activeTab === "Individual" ? item.guests[0]?.name : item.corporateCheckInDetails?.companyName}</span>
- <span className="text-[10px] text-gray-400 block ">{activeTab === "Individual" ? item.guests[0]?.mobileNo : `${item.roomIds?.length || item.roomDetails?.length} Rooms`}</span>
- </td>
- <td className="p-2 ">
- <span className="text-sm font-bold text-gray-700 ">{format(new Date(item.checkInTime), "dd MMM HH:mm")}</span>
- </td>
- <td className="p-2 text-center ">
- <span className="text-sm font-black text-gray-800 ">{Math.max(1, differenceInDays(new Date(item.expectedCheckOutTime), new Date(item.checkInTime)))}N</span>
- </td>
- <td className="p-2 ">
- <span className="text-sm font-bold text-gray-700 ">{format(new Date(item.expectedCheckOutTime), "dd MMM HH:mm")}</span>
- </td>
- <td className="p-2 ">
- <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${item.status === "Active" ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"}`}>
- <span className={`w-1 h-1 rounded-full ${item.status === "Active" ? "bg-green-500 animate-pulse" : "bg-gray-400"}`}></span>
- {item.status}
- </span>
- </td>
- <td className="p-2 text-right">
- <div className="flex items-center justify-end gap-1 ">
- <button onClick={() => { setViewCheckInData(item); setIsViewModalOpen(true); }} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all border border-blue-100 " title="View">
- <FaEye size={12} className=" " />
- </button>
- <button onClick={() => { setEditCheckInData(item); setIsEditMode(true); }} className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all border border-indigo-100 " title="Edit">
- <FiEdit2 size={12} className=" " />
- </button>
- <button onClick={() => { setSelectedItem(item); setIsExtendModalOpen(true); }} className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all " title="Extend">
- <FiCalendar size={12} className=" " />
- </button>
- {item.status === "Active" && (
- <button onClick={() => handleCheckoutClick(item)} className="px-3 py-1.5 bg-orange-500 text-white rounded-lg font-bold text-[9px] uppercase hover:bg-orange-600 shadow-sm transition-all ">
- Checkout
- </button>
- )}
- </div>
- </td>
- </tr>
- ))
+ checkins.map((item: any) => {
+   const isDayAccess = item.bookingCategory === "Day Access";
+   const typeLabel = isDayAccess ? "DAY ACCESS" : (item.checkInType || "INDIVIDUAL").toUpperCase();
+   const totalAmt = item.paymentSummary?.totalAmount || 0;
+   const paidAmt = item.paymentSummary?.totalPaid || 0;
+   const dueAmt = item.paymentSummary?.dueAmount || 0;
+   
+   return (
+   <tr key={item._id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-all">
+   <td className="p-2 ">
+     <span className="text-sm font-bold text-gray-800 block">{item.checkInId || "N/A"}</span>
+     <span className="text-[9px] font-black text-gray-400 uppercase">{typeLabel}</span>
+   </td>
+   <td className="p-2 ">
+     <div className="flex items-center gap-2">
+       <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+         <FiUser size={12} />
+       </div>
+       <div>
+         <span className="text-sm font-bold text-gray-800 block">{item.checkInType === "Corporate" ? item.corporateCheckInDetails?.companyName : item.guests[0]?.name}</span>
+         <span className="text-[10px] text-gray-500 font-bold block">{item.checkInType === "Corporate" ? item.corporateCheckInDetails?.contactMobile : item.guests[0]?.mobileNo}</span>
+       </div>
+     </div>
+   </td>
+   <td className="p-2 ">
+     <span className="text-sm font-bold text-gray-800 block">{item.roomDetails?.map((r: any) => r.roomNumber).join(", ") || (isDayAccess ? "DA-01" : "N/A")}</span>
+     <span className="text-[10px] text-gray-500 font-bold block">{item.roomDetails?.map((r: any) => r.roomType?.name || "Room").join(", ") || (isDayAccess ? "Day Access" : "")}</span>
+   </td>
+   <td className="p-2 ">
+     <span className="text-sm font-bold text-gray-800 block">{format(new Date(item.checkInTime), "dd MMM yyyy")}</span>
+     <span className="text-[10px] text-gray-500 font-bold block">{format(new Date(item.checkInTime), "hh:mm a")}</span>
+   </td>
+   <td className="p-2 ">
+     <span className="text-sm font-bold text-orange-500 block">{format(new Date(item.expectedCheckOutTime), "dd MMM yyyy")}</span>
+     <span className="text-[10px] text-orange-400 font-bold block">{format(new Date(item.expectedCheckOutTime), "hh:mm a")}</span>
+   </td>
+   <td className="p-2 text-center ">
+     <span className="text-xs font-bold text-gray-800 ">{isDayAccess ? "Day Access" : `${Math.max(1, differenceInDays(new Date(item.expectedCheckOutTime), new Date(item.checkInTime)))} Nights`}</span>
+   </td>
+   <td className="p-2 text-right ">
+     <span className="text-sm font-bold text-gray-800 ">₹ {totalAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+   </td>
+   <td className="p-2 text-right ">
+     <span className="text-sm font-bold text-green-500 ">₹ {paidAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+   </td>
+   <td className="p-2 text-right ">
+     <span className={`text-sm font-bold ${dueAmt > 0 ? "text-red-500" : "text-green-500"}`}>₹ {dueAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+   </td>
+   <td className="p-2 text-center ">
+     <span className={`inline-flex items-center px-2 py-1 rounded text-[9px] font-black uppercase ${item.status === "Active" ? (dueAmt > 0 ? "bg-red-50 text-red-500 border border-red-100" : "bg-green-50 text-green-500 border border-green-100") : "bg-gray-100 text-gray-500 border border-gray-200"}`}>
+     {item.status === "Active" ? (dueAmt > 0 ? "PENDING DUE" : "READY") : item.status}
+     </span>
+   </td>
+   <td className="p-2 text-center">
+     <div className="flex items-center justify-center gap-1 ">
+     <button onClick={() => { setViewCheckInData(item); setIsViewModalOpen(true); }} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all border border-blue-100 " title="View">
+     <FaEye size={12} className=" " />
+     </button>
+     <button onClick={() => { setEditCheckInData(item); setIsEditMode(true); }} className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all border border-indigo-100 " title="Edit">
+     <FiEdit2 size={12} className=" " />
+     </button>
+     <button onClick={() => { setSelectedItem(item); setIsExtendModalOpen(true); }} className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all " title="Extend">
+     <FiCalendar size={12} className=" " />
+     </button>
+     {item.status === "Active" && (
+     <button onClick={() => handleCheckoutClick(item)} className="p-1.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-lg hover:bg-orange-100 transition-all " title="Checkout">
+     <FiChevronRight size={12} className=" " />
+     </button>
+     )}
+     </div>
+   </td>
+   </tr>
+   );
+ })
  )}
  </tbody>
  </table>

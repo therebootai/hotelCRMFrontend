@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
  FiX,
  FiUser,
@@ -339,8 +339,11 @@ const CheckInForm = ({
  : "Individual",
  );
 
- // Form State - Step 1
- const isDayAccess = bookingData?.bookingCategory === "Day Access";
+  const [searchParams] = useSearchParams();
+  const urlCategory = searchParams.get("category");
+
+  // Form State - Step 1
+  const isDayAccess = bookingData?.bookingCategory === "Day Access" || (!bookingData && urlCategory === "Day Access");
 
  const getInitialCheckInTime = () => {
  if (isDayAccess && bookingData?.accessPackageId) {

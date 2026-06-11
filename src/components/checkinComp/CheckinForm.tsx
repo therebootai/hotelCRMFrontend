@@ -917,14 +917,7 @@ const CheckInForm = ({
    const totalCapacity = selectedRooms.reduce((sum, r) => sum + (r.roomId ? ((Number(r.maxAdults) || 2) + (Number(r.maxChildren) || 0) + (r.hasExtraBed ? 1 : 0)) : 0), 0);
    if (totalCapacity > 0 && guests.length > totalCapacity) return false;
  }
-
- if (partyType === "Individual") {
- return (
- getPrimaryGuest()?.name?.trim() !== "" &&
- getPrimaryGuest()?.mobileNo?.trim() !== ""
- );
- }
- return corporateDetails.companyName.trim() !== "";
+ return true;
  }
  case 2: {
   const primaryGuests = guests.filter(g => g.isPrimary);
@@ -933,7 +926,11 @@ const CheckInForm = ({
     (g) => g.name?.trim() && g.mobileNo?.trim() && g.age?.trim() && g.gender && g.idNumber?.trim()
   );
   if (!validPrimary) return false;
-  
+   
+  if (partyType === "Corporate" && !corporateDetails.companyName.trim()) {
+    return false;
+  }
+   
   const coGuests = guests.filter(g => !g.isPrimary);
   return coGuests.every(g => {
     const hasSomeData = g.name?.trim() || g.age?.trim() || g.gender;
@@ -960,13 +957,6 @@ const CheckInForm = ({
        if (!isDayAccess) {
          const totalCapacity = selectedRooms.reduce((sum, r) => sum + (r.roomId ? ((Number(r.maxAdults) || 2) + (Number(r.maxChildren) || 0) + (r.hasExtraBed ? 1 : 0)) : 0), 0);
          if (totalCapacity > 0 && guests.length > totalCapacity) return "Total guests exceed the maximum capacity of assigned rooms.";
-       }
-
-       if (partyType === "Individual") {
-         if (!getPrimaryGuest()?.name?.trim()) return "Primary guest name is required.";
-         if (!getPrimaryGuest()?.mobileNo?.trim()) return "Primary guest mobile is required.";
-       } else {
-         if (!corporateDetails.companyName.trim()) return "Company name is required.";
        }
        return "";
      case 2:
@@ -997,6 +987,10 @@ const CheckInForm = ({
     if (hasSomeData && !cg.name?.trim()) {
       return `Co-guest name is required (Row ${i + 1})`;
     }
+  }
+
+  if (partyType === "Corporate" && !corporateDetails.companyName.trim()) {
+    return "Company name is required for corporate bookings.";
   }
 
   return "";

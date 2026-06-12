@@ -1003,8 +1003,14 @@ const CheckInForm = ({
     }
   }
 
-  if (partyType === "Corporate" && !corporateDetails.companyName.trim()) {
-    return "Company name is required for corporate bookings.";
+  if (partyType === "Corporate") {
+    if (!corporateDetails.companyName.trim()) {
+      return "Company name is required for corporate bookings.";
+    }
+    const validDocs = dynamicDocs.filter(d => d.type.trim() && d.file);
+    if (validDocs.length === 0) {
+      return "Corporate check-in requires at least one Company Document to be uploaded";
+    }
   }
 
   return "";

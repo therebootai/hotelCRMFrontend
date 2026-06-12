@@ -153,13 +153,20 @@ export function useDashboardData(selectedDate?: Date) {
  dayAfter.setDate(dayAfter.getDate() + 2);
 
  const fromStr = today.toISOString();
- const toStr = dayAfter.toISOString();
+ const dayAfterStr = dayAfter.toISOString();
  const todayStr = today.toISOString().split("T")[0];
 
+ const next7Days = new Date(today);
+ next7Days.setDate(today.getDate() + 7);
+ const next7DaysStr = next7Days.toISOString();
+
  // Fire all requests in parallel; use Promise.allSettled so one 404 doesn't break the whole dashboard
- const [overviewRes, checkInRes, dueAgingRes] = await Promise.allSettled([
+ const [overviewRes, weekOverviewRes, checkInRes, dueAgingRes] = await Promise.allSettled([
  api.get("/bookings/overview", {
- params: { fromDate: fromStr, toDate: toStr, viewMode: "daily" },
+ params: { fromDate: fromStr, toDate: dayAfterStr, viewMode: "daily" },
+ }),
+ api.get("/bookings/overview", {
+ params: { fromDate: fromStr, toDate: next7DaysStr, viewMode: "daily" },
  }),
  api.get("/checkin/list", {
  params: { quickFilter: "today", limit: 100 },
@@ -171,6 +178,12 @@ export function useDashboardData(selectedDate?: Date) {
  overviewRes.status === "fulfilled" && overviewRes.value.data?.success
  ? overviewRes.value.data.data
  : null;
+
+ const weekOverview =
+ weekOverviewRes.status === "fulfilled" && weekOverviewRes.value.data?.success
+ ? weekOverviewRes.value.data.data
+ : null;
+
  const checkInData: CheckInListItem[] =
  checkInRes.status === "fulfilled" && checkInRes.value.data?.success
  ? Array.isArray(checkInRes.value.data.data)
@@ -273,42 +286,52 @@ export function useDashboardData(selectedDate?: Date) {
 
  setFloorOccupancy(Array.from(floorMap.values()));
 
- // --- Room Status Board ---
+ // --- Room Status Board (Next 7 Days) ---
  const statusBoard: RoomStatusData[] = [];
 
- for (let i = 0; i < 5; i++) {
+ for (let i = 0; i < 7; i++) {
  const date = new Date(today);
  date.setDate(date.getDate() + i);
  const dateStr = toDisplayDate(date);
+ 
+ const yyyy = date.getFullYear();
+ const mm = String(date.getMonth() + 1).padStart(2, '0');
+ const dd = String(date.getDate()).padStart(2, '0');
+ const localDateStr = `${yyyy}-${mm}-${dd}`;
 
- if (i === 0) {
  const availableRooms: RoomStatusEntry[] = [];
  const confirmedRooms: RoomStatusEntry[] = [];
  const checkInRooms: RoomStatusEntry[] = [];
 
- for (const room of overview?.rooms || []) {
- const hasActive = room.bookings?.some((b: any) => b.status === "checked-in");
- const hasConfirmed = room.bookings?.some((b: any) => b.status === "confirmed");
+ for (const room of weekOverview?.rooms || []) {
+ const overlappingBookings = room.bookings?.filter((b: any) => {
+   const bCheckIn = b.checkIn.split("T")[0];
+   const bCheckOut = b.checkOut.split("T")[0];
+   return bCheckIn <= localDateStr && bCheckOut > localDateStr;
+ });
+
+ const hasActive = overlappingBookings?.some((b: any) => b.status === "checked-in");
+ const hasConfirmed = overlappingBookings?.some((b: any) => b.status === "confirmed");
 
  if (hasActive) {
- checkInRooms.push({ type: room.type, qty: 1, numbers: room.number });
+   checkInRooms.push({ type: room.type, qty: 1, numbers: room.number });
  } else if (hasConfirmed) {
- confirmedRooms.push({ type: room.type, qty: 1, numbers: room.number });
+   confirmedRooms.push({ type: room.type, qty: 1, numbers: room.number });
  } else {
- availableRooms.push({ type: room.type, qty: 1, numbers: room.number });
+   availableRooms.push({ type: room.type, qty: 1, numbers: room.number });
  }
  }
 
  const collapseRooms = (rooms: RoomStatusEntry[]): RoomStatusEntry[] => {
  const map = new Map<string, RoomStatusEntry>();
  for (const r of rooms) {
- if (map.has(r.type)) {
- const existing = map.get(r.type)!;
- existing.qty += r.qty;
- existing.numbers += `, ${r.numbers}`;
- } else {
- map.set(r.type, { ...r });
- }
+   if (map.has(r.type)) {
+   const existing = map.get(r.type)!;
+   existing.qty += r.qty;
+   existing.numbers += `, ${r.numbers}`;
+   } else {
+   map.set(r.type, { ...r });
+   }
  }
  return Array.from(map.values());
  };
@@ -316,24 +339,16 @@ export function useDashboardData(selectedDate?: Date) {
  statusBoard.push({
  id: String(i + 1),
  date: dateStr,
- isExpanded: true,
+ isExpanded: i === 0,
  availableSummary: availableRooms.length,
  statuses: {
- available: { count: availableRooms.length, rooms: collapseRooms(availableRooms) },
- confirmed: { count: confirmedRooms.length, rooms: collapseRooms(confirmedRooms) },
- pencil: { count: 0, rooms: [] },
- booked: { count: 0, rooms: [] },
- checkIn: { count: checkInRooms.length, rooms: collapseRooms(checkInRooms) },
+   available: { count: availableRooms.length, rooms: collapseRooms(availableRooms) },
+   confirmed: { count: confirmedRooms.length, rooms: collapseRooms(confirmedRooms) },
+   pencil: { count: 0, rooms: [] },
+   booked: { count: 0, rooms: [] },
+   checkIn: { count: checkInRooms.length, rooms: collapseRooms(checkInRooms) },
  },
  });
- } else {
- statusBoard.push({
- id: String(i + 1),
- date: dateStr,
- isExpanded: false,
- availableSummary: 0,
- });
- }
  }
 
  setRoomStatus(statusBoard);

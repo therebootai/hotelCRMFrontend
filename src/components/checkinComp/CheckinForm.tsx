@@ -1195,6 +1195,13 @@ const CheckInForm = ({
   }
  }
 
+ // Validate signed GRC upload
+ if (!editMode && !signedGRCFile) {
+   alert("GRC must be signed and uploaded before checking in!");
+   setLoading(false);
+   return;
+ }
+
  setLoadingStep("Preparing data...");
 
  // Build payment entries

@@ -908,11 +908,14 @@ const CheckInForm = ({
  if (partyType === "Corporate" && (!corporateDetails.companyName.trim() || !corporateDetails.contactPersonName?.trim() || !corporateDetails.contactMobile?.trim())) {
    return false;
  }
- // All booking room slots must be assigned before proceeding
- if (!isDayAccess && bookingData?.rooms?.length > 0) {
- const allAssigned = selectedRooms.every((s) => !!s.roomId);
- if (!allAssigned) return false;
- }
+ if (!isDayAccess) {
+    const assignedCount = selectedRooms.filter((s) => !!s.roomId).length;
+    if (assignedCount === 0) return false;
+
+    if (bookingData?.rooms?.length > 0 && assignedCount !== selectedRooms.length) {
+      return false;
+    }
+  }
 
  // Occupancy Validation
  if (!isDayAccess) {
@@ -954,12 +957,15 @@ const CheckInForm = ({
        if (partyType === "Corporate" && (!corporateDetails.companyName.trim() || !corporateDetails.contactPersonName?.trim() || !corporateDetails.contactMobile?.trim())) {
            return "Company Name, Contact Person, and Mobile are required.";
        }
-       if (!isDayAccess && bookingData?.rooms?.length > 0) {
+       if (!isDayAccess) {
+         if (selectedRooms.length === 0) return "Please assign at least one room to continue.";
+         
+         const assignedCount = selectedRooms.filter((s) => !!s.roomId).length;
+         if (assignedCount === 0) return "Please assign at least one room to continue.";
+         
          const unassignedCount = selectedRooms.filter((s) => !s.roomId).length;
          if (unassignedCount > 0) return `Please assign all booked rooms to continue (${unassignedCount} left).`;
-       }
 
-       if (!isDayAccess) {
          const totalCapacity = selectedRooms.reduce((sum, r) => sum + (r.roomId ? ((Number(r.maxAdults) || 2) + (Number(r.maxChildren) || 0) + (r.hasExtraBed ? 1 : 0)) : 0), 0);
          if (totalCapacity > 0 && guests.length > totalCapacity) return "Total guests exceed the maximum capacity of assigned rooms.";
        }

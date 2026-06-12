@@ -2343,8 +2343,8 @@ const CheckInForm = ({
  <div className="bg-white rounded-xl border border-border p-4 flex flex-col">
  <div className="flex items-center justify-between mb-3">
  <div className="flex items-center gap-2">
- <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">C</span>
- <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
+ <span className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-xs">C</span>
+ <h3 className="text-sm font-black text-gray-700 uppercase tracking-wider">
  Room Selection
  </h3>
  </div>
@@ -2354,7 +2354,7 @@ const CheckInForm = ({
  setRoomTypeFilterId(e.target.value);
  fetchRoomsByType(e.target.value || undefined);
  }}
- className="p-1.5 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none"
+ className="p-1.5 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
  >
  <option value="">All Rooms</option>
  {roomTypes.map((type: any) => (
@@ -2382,7 +2382,7 @@ const CheckInForm = ({
    const selectedSummaryText = Object.keys(selectedSummary).length > 0 ? Object.entries(selectedSummary).map(([k, v]) => `${k} - ${v}`).join(", ") : "None";
 
    return (
-     <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 mb-3 text-[10px] font-bold">
+     <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 mb-3 text-sm font-bold">
        <div className="flex items-center gap-2 mb-1">
          <span className="text-gray-400 uppercase tracking-wide w-16">Booked:</span> 
          <span className="text-gray-700">{bookedSummaryText}</span>
@@ -2415,13 +2415,13 @@ const CheckInForm = ({
          fetchRoomsByType(room.requiredRoomTypeId);
        }
      }}
-     className={`inline-flex items-center gap-1 px-2.5 py-1.5 bg-white border ${isUnassigned ? 'border-orange-300 border-dashed' : 'border-orange-200'} text-orange-600 rounded-lg text-[11px] font-black shadow-sm ${isUnassigned && room.requiredRoomTypeId ? 'cursor-pointer hover:bg-orange-50 hover:border-orange-400 transition-all' : ''}`}
+     className={`inline-flex items-center gap-1 px-2.5 py-1.5 bg-white border ${isUnassigned ? 'border-orange-300 border-dashed' : 'border-orange-200'} text-orange-600 rounded-lg text-sm font-black shadow-sm ${isUnassigned && room.requiredRoomTypeId ? 'cursor-pointer hover:bg-orange-50 hover:border-orange-400 transition-all' : ''}`}
      title={isUnassigned && room.requiredRoomTypeId ? "Click to filter table by this category" : ""}
      >
-     <span className="text-gray-500 uppercase tracking-widest text-[9px] mr-1 border-r border-orange-200 pr-1.5">{typeName}</span>
+     <span className="text-gray-500 uppercase tracking-widest text-xs mr-1 border-r border-orange-200 pr-1.5">{typeName}</span>
      <span className={isUnassigned ? "text-orange-400" : "text-gray-800"}>{room.roomNumber || "Select Room"}</span>
      {!isUnassigned && (
-     <button onClick={(e) => { e.stopPropagation(); toggleRoom({ _id: room.roomId }); }} className="hover:text-red-500 font-bold ml-1.5 text-base leading-none transition-colors">
+     <button onClick={(e) => { e.stopPropagation(); toggleRoom({ _id: room.roomId }); }} className="hover:text-red-500 font-bold ml-1.5 text-lg leading-none transition-colors">
      ×
      </button>
      )}
@@ -2438,13 +2438,13 @@ const CheckInForm = ({
  placeholder="Search room number or type..."
  value={roomSearchQuery}
  onChange={(e) => setRoomSearchQuery(e.target.value)}
- className="w-full pl-3 pr-8 py-2 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none focus:border-orange-400"
+ className="w-full pl-3 pr-8 py-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none focus:border-orange-400"
  />
  </div>
 
  {/* Rooms Table */}
  <div className="flex-1 border border-border rounded-xl">
- <table className="w-full text-left border-collapse text-[10px]">
+ <table className="w-full text-left border-collapse text-sm">
  <thead>
  <tr className="bg-gray-50 border-b border-border sticky top-0 z-10">
  <th className="p-2 font-black text-gray-400 uppercase tracking-wider">Select</th>
@@ -2501,11 +2501,11 @@ const CheckInForm = ({
  <td className="p-2 font-bold text-gray-700">₹{(Number(room.basePrice) || 0).toLocaleString()}</td>
  <td className="p-2">
  {isOccupied ? (
- <span className="px-1 py-0.5 bg-red-100 text-red-600 rounded font-bold text-[8px] uppercase">
+ <span className="px-1.5 py-1 bg-red-100 text-red-600 rounded font-bold text-xs uppercase">
  Occupied
  </span>
  ) : (
- <span className="px-1 py-0.5 bg-green-100 text-green-600 rounded font-bold text-[8px] uppercase">
+ <span className="px-1.5 py-1 bg-green-100 text-green-600 rounded font-bold text-xs uppercase">
  Available
  </span>
  )}
@@ -2523,9 +2523,9 @@ const CheckInForm = ({
    
    if (totalCapacity === 0) {
      return (
-       <div className="mt-3 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-[10px] font-bold flex items-center justify-between">
+       <div className="mt-3 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm font-bold flex items-center justify-between">
          <span>🕒 Occupancy Validation: Pending Room Assignment</span>
-         <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[8px] uppercase font-black">Pending</span>
+         <span className="px-1.5 py-1 bg-gray-200 text-gray-600 rounded text-xs uppercase font-black">Pending</span>
        </div>
      );
    }
@@ -2533,9 +2533,9 @@ const CheckInForm = ({
    const isValid = guests.length <= totalCapacity;
 
    return (
-     <div className={`mt-3 p-2.5 border rounded-xl text-[10px] font-bold flex items-center justify-between ${isValid ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+     <div className={`mt-3 p-2.5 border rounded-xl text-sm font-bold flex items-center justify-between ${isValid ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
        <span>{isValid ? '💚' : '⚠️'} Occupancy Validation: {isValid ? 'Valid' : 'Exceeds Capacity'} (Guests: {guests.length} / Capacity: {totalCapacity})</span>
-       <span className={`px-1.5 py-0.5 rounded text-[8px] uppercase font-black ${isValid ? 'bg-green-200 text-green-700' : 'bg-red-200 text-red-700'}`}>
+       <span className={`px-1.5 py-1 rounded text-xs uppercase font-black ${isValid ? 'bg-green-200 text-green-700' : 'bg-red-200 text-red-700'}`}>
          {isValid ? 'Valid' : 'Over Limit'}
        </span>
      </div>

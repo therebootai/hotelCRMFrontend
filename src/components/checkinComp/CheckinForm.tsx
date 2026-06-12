@@ -1106,10 +1106,11 @@ const CheckInForm = ({
  };
 
  // Open GRC Modal
-     const handleResetForm = () => {
+  const handleResetForm = () => {
     setShowSuccessActions(false);
     setCurrentStep(1);
     setRoomSearchQuery("");
+    setRoomTypeFilterId("");
     setSelectedRooms([]);
     setGuests([{
       id: `g-${Date.now()}`,
@@ -1130,6 +1131,20 @@ const CheckInForm = ({
     setPaymentData({ paymentMode: "Cash", checkInAdvance: 0, transactionId: "", paymentNote: "" });
     setSignedGRCFile(null);
     setSignedGRCPreview(null);
+    setDynamicDocs([]);
+    setSelectedServices([]);
+    setStayFormData({
+      checkInTime: new Date(),
+      expectedCheckOutTime: addDays(new Date(), 1),
+      specialRequests: "",
+    });
+    setPartyType("Individual");
+    setCorporateDetails({
+      companyName: "",
+      companyGST: "",
+      contactPersonName: "",
+      contactMobile: "",
+    });
   };
 
   const handleOpenGRC = () => {

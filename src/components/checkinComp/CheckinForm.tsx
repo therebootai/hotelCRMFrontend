@@ -3087,7 +3087,7 @@ const CheckInForm = ({
         {/* Dynamic Documents Section */}
         <div className="">
             <h4 className="text-[10px] font-black text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                Other Documents <span className={`text-[8px] font-bold px-2 py-0.5 rounded ${partyType === 'Corporate' ? 'text-red-500 bg-red-50' : 'text-gray-400 bg-gray-100'}`}>{partyType === 'Corporate' ? '(Required for Corporate)' : '(Optional)'}</span>
+                {partyType === 'Corporate' ? 'Company Documents' : 'Other Documents'} <span className={`text-[8px] font-bold px-2 py-0.5 rounded ${partyType === 'Corporate' ? 'text-red-500 bg-red-50' : 'text-gray-400 bg-gray-100'}`}>{partyType === 'Corporate' ? '(Required for Corporate)' : '(Optional)'}</span>
             </h4>
             <div className="space-y-3">
                 {dynamicDocs.map((doc, idx) => (

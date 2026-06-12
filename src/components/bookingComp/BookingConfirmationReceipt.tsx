@@ -71,7 +71,9 @@ const BookingConfirmationReceipt = ({
             <button onClick={onBack} className="text-xl text-text-secondary hover:text-text-primary">
               &times;
             </button>
-            <h2 className="text-xl font-bold text-text-primary">Booking Payment & Receipt</h2>
+            <h2 className="text-xl font-bold text-text-primary">
+              {!isSaved ? "Step 2: Preview & Confirm Booking" : "Booking Payment & Receipt"}
+            </h2>
           </div>
           <div className="flex items-center gap-6">
             <div className="text-right">
@@ -334,7 +336,7 @@ const BookingConfirmationReceipt = ({
         
         {/* Footer Actions */}
         <div className="bg-white border-t border-border p-5 flex items-center justify-between print:hidden">
-          <button onClick={onBack} disabled={saving} className="px-6 py-2.5 rounded-lg border border-border text-sm font-bold text-text-secondary hover:bg-slate-50 transition-colors disabled:opacity-50">
+          <button onClick={!isSaved ? onEdit : onBack} disabled={saving} className="px-6 py-2.5 rounded-lg border border-border text-sm font-bold text-text-secondary hover:bg-slate-50 transition-colors disabled:opacity-50">
             {isSaved ? "← Back to Booking" : "← Edit Before Saving"}
           </button>
           <div className="flex items-center gap-3">

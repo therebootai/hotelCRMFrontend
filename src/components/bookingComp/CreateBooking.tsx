@@ -932,7 +932,7 @@ const CreateBooking = ({
  <div className="flex items-center gap-6">
  <div>
  <h2 className="text-lg font-black text-text-primary">
- {booking ? "Edit Reservation" : "New Room Booking / Reservation"}
+ {booking ? "Edit Reservation" : "Step 1: New Room Booking / Reservation"}
  </h2>
  <p className="text-sm text-text-secondary">
  {booking ? `Editing booking ${booking.bookingId}` : "Create a new reservation for your guest"}

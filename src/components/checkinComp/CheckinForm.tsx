@@ -928,12 +928,14 @@ const CheckInForm = ({
   const primaryGuests = guests.filter(g => g.isPrimary);
   if (primaryGuests.length === 0) return false;
   const validPrimary = primaryGuests.every(
-    (g) => g.name?.trim() && g.mobileNo?.trim() && g.age?.trim() && g.gender && g.idNumber?.trim()
+    (g) => g.name?.trim() && g.mobileNo?.trim() && g.age?.trim() && g.gender && g.idNumber?.trim() && (g.pendingDocFile || g.idDocument)
   );
   if (!validPrimary) return false;
    
-  if (partyType === "Corporate" && !corporateDetails.companyName.trim()) {
-    return false;
+  if (partyType === "Corporate") {
+    if (!corporateDetails.companyName.trim()) return false;
+    const validDocs = dynamicDocs.filter(d => d.type.trim() && d.file);
+    if (validDocs.length === 0) return false;
   }
    
   const coGuests = guests.filter(g => !g.isPrimary);
@@ -989,6 +991,7 @@ const CheckInForm = ({
     if (!primary?.age?.trim()) return `Primary guest age is required (Room ${i + 1})`;
     if (!primary?.gender) return `Primary guest gender is required (Room ${i + 1})`;
     if (!primary?.idNumber?.trim()) return `Primary guest ID number is required (Room ${i + 1})`;
+    if (!primary?.pendingDocFile && !primary?.idDocument) return `Primary guest ID document must be uploaded (Room ${i + 1})`;
   }
 
   const coGuests = guests.filter(g => !g.isPrimary);
@@ -1142,8 +1145,16 @@ const CheckInForm = ({
     setCorporateDetails({
       companyName: "",
       companyGST: "",
+      companyAddress: "",
+      companyEmail: "",
+      companyPhone: "",
       contactPersonName: "",
+      designation: "",
       contactMobile: "",
+      contactEmail: "",
+      department: "",
+      visitPurpose: "",
+      remarks: "",
     });
   };
 
@@ -3070,7 +3081,7 @@ const CheckInForm = ({
         {/* Dynamic Documents Section */}
         <div className="">
             <h4 className="text-[10px] font-black text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                Other Documents <span className="text-[8px] text-gray-400 font-bold bg-gray-100 px-2 py-0.5 rounded">(Optional)</span>
+                Other Documents <span className={`text-[8px] font-bold px-2 py-0.5 rounded ${partyType === 'Corporate' ? 'text-red-500 bg-red-50' : 'text-gray-400 bg-gray-100'}`}>{partyType === 'Corporate' ? '(Required for Corporate)' : '(Optional)'}</span>
             </h4>
             <div className="space-y-3">
                 {dynamicDocs.map((doc, idx) => (

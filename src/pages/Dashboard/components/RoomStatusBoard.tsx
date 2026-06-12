@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import type { RoomStatusData } from "../useDashboardData";
 
@@ -88,16 +88,22 @@ interface RoomStatusBoardProps {
 
 const RoomStatusBoard = ({ boardData: propBoardData }: RoomStatusBoardProps) => {
  const [internalBoardData, setInternalBoardData] = useState<RoomStatusData[]>([]);
- const boardData = propBoardData.length > 0 ? propBoardData : internalBoardData;
+
+ useEffect(() => {
+   if (propBoardData.length > 0) {
+     setInternalBoardData(propBoardData);
+   }
+ }, [propBoardData]);
 
  const toggleRow = (id: string) => {
- if (propBoardData.length > 0) return; // controlled, don't toggle
- setInternalBoardData((prev) =>
- prev.map((row) =>
- row.id === id ? { ...row, isExpanded: !row.isExpanded } : row,
- ),
- );
+   setInternalBoardData((prev) =>
+     prev.map((row) =>
+       row.id === id ? { ...row, isExpanded: !row.isExpanded } : row,
+     ),
+   );
  };
+
+ const boardData = internalBoardData;
 
  return (
  <div className="w-full flex flex-col gap-4">

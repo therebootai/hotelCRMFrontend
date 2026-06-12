@@ -28,7 +28,7 @@ const CheckinSearchBar: React.FC = () => {
       try {
         // Updated to use the correct endpoint that supports the `search` query
         const resp = await api.get("/bookings/list", {
-          params: { search: term, bookingCategory: category },
+          params: { search: term, bookingCategory: category, status: "Pending,Confirmed" },
         });
         // Extract the bookings array (may be nested under .data)
         const bookings = resp.data?.data ?? [];

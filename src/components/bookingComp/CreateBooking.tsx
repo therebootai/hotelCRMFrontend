@@ -482,7 +482,8 @@ const CreateBooking = ({
  const count = Number(adultsFilter) + Number(childrenFilter);
  const roomTotal = rate * count;
  const extraBedTotal = 0;
- const subtotal = roomTotal;
+ const addonsTotal = selectedAddons.reduce((sum, a) => sum + (Number(a.total) || 0), 0);
+ const subtotal = roomTotal + addonsTotal;
  const taxAmount = Math.round(subtotal * taxRate);
  const grandTotal = subtotal + taxAmount;
  const paidAmount = paymentForm.advanceAmount || 0;
@@ -503,7 +504,8 @@ const CreateBooking = ({
  0,
  );
  const extraBedTotal = 0;
- const subtotal = roomTotal + extraBedTotal;
+ const addonsTotal = selectedAddons.reduce((sum, a) => sum + (Number(a.total) || 0), 0);
+ const subtotal = roomTotal + extraBedTotal + addonsTotal;
  const taxAmount = Math.round(subtotal * taxRate);
  const grandTotal = subtotal + taxAmount;
  const paidAmount = paymentForm.advanceAmount || 0;
@@ -530,6 +532,7 @@ const CreateBooking = ({
  childrenFilter,
  taxOptions,
  selectedTaxId,
+ selectedAddons,
  ]);
 
  const {

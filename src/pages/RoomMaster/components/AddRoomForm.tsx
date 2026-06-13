@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { FiLoader, FiInfo } from "react-icons/fi";
 import toast from "react-hot-toast";
 import api from "../../../lib/axios";
@@ -57,6 +57,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  status: "Active",
  description: "",
  amenities: [] as string[],
+ basePrice: "",
  });
 
  const [errors, setErrors] = useState<Record<string, string>>({});
@@ -92,6 +93,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  status: initialData.status || "Active",
  description: initialData.description || "",
  amenities: initialData.amenities?.map((a) => a._id) || [],
+ basePrice: initialData.basePrice?.toString() || "",
  });
  }
  } catch (error) {
@@ -103,6 +105,15 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
 
  fetchDependencies();
  }, [initialData]);
+
+ useEffect(() => {
+    if (!initialData && formData.roomType) {
+      const selected = roomTypes.find(rt => rt._id === formData.roomType);
+      if (selected) {
+        setFormData(prev => ({ ...prev, basePrice: selected.basePrice.toString() }));
+      }
+    }
+  }, [formData.roomType, roomTypes, initialData]);
 
  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
  const { name, value, type } = e.target;
@@ -134,6 +145,11 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
 
  if (!formData.roomNumber.trim()) newErrors.roomNumber = "Room Number is required";
  if (!formData.roomType) newErrors.roomType = "Room Type is required";
+
+ const bpNum = Number(formData.basePrice);
+ if (formData.basePrice === "" || isNaN(bpNum) || bpNum < 0) {
+    newErrors.basePrice = "Valid base price >= 0 required";
+ }
 
  const discountNum = Number(formData.discountPercentage);
  if (discountNum < 0 || discountNum > 100) {
@@ -184,6 +200,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  extraBedCharge: Number(formData.extraBedCharge) || 0,
  discountPercentage: Number(formData.discountPercentage) || 0,
  roomSize: formData.roomSize ? Number(formData.roomSize) : undefined,
+ basePrice: Number(formData.basePrice) || 0,
  };
 
  if (!payload.building) delete payload.building;
@@ -212,11 +229,6 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  }
  };
 
- const selectedRoomTypePrice = useMemo(() => {
- const found = roomTypes.find((rt) => rt._id === formData.roomType);
- return found ? found.basePrice : null;
- }, [roomTypes, formData.roomType]);
-
  if (isFetchingDeps) {
  return (
  <div className="flex flex-col items-center justify-center h-64 text-text-secondary">
@@ -226,7 +238,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  );
  }
 
- const basePrice = selectedRoomTypePrice ?? 0;
+ const basePrice = Number(formData.basePrice) || 0;
  const numericBasePrice = basePrice;
  const numericDiscount = Number(formData.discountPercentage) || 0;
  const discountAmount = (basePrice * numericDiscount) / 100;
@@ -370,20 +382,21 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
 
  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
  <div>
- <label className="block text-base font-medium text-gray-700 mb-1">
- Base Price (₹)
- </label>
- {selectedRoomTypePrice !== null ? (
- <div className="w-full border border-gray-200 rounded-lg px-3 py-2 text-base bg-gray-50 text-gray-800">
- ₹{selectedRoomTypePrice.toLocaleString()}
- <span className="text-sm text-gray-500 ml-2">(set by room type)</span>
- </div>
- ) : (
- <div className="w-full border border-gray-200 rounded-lg px-3 py-2 text-base bg-gray-50 text-gray-400">
- Select a room type to see price
- </div>
- )}
- </div>
+  <label className="input-label">Base Price (₹)</label>
+  <input
+    type="number"
+    name="basePrice"
+    value={formData.basePrice}
+    onChange={handleChange}
+    placeholder="0"
+    className={`input-field ${errors.basePrice ? "border-danger focus:ring-danger/20" : ""}`}
+  />
+  {errors.basePrice && (
+    <p className="text-sm text-danger mt-1 font-medium">
+      {errors.basePrice}
+    </p>
+  )}
+  </div>
  <div>
  <label className="input-label">Discount (%)</label>
  <input

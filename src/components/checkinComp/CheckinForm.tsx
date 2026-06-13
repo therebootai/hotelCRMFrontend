@@ -625,10 +625,16 @@ const CheckInForm = ({
  return sum + basePrice * nights + extraBedPrice;
  }, 0);
 
+ const addonsTotal = selectedServices.reduce((sum, sId) => sum + (extraServices.find(s => s._id === sId)?.price || 0), 0);
+ const subTotal = roomTotal + addonsTotal;
+ const taxRate = bookingData?.pricingSummary?.taxPercentage ? bookingData.pricingSummary.taxPercentage / 100 : 0.12;
+ const taxAmount = Math.round(subTotal * taxRate);
+ const grandTotal = subTotal + taxAmount;
+
  const bookingAdvance = bookingData?.advanceAmount || 0;
  const checkInAdvance = paymentData.checkInAdvance;
  const totalPaid = bookingAdvance + checkInAdvance;
- const dueAmount = Math.max(0, roomTotal - totalPaid);
+ const dueAmount = Math.max(0, grandTotal - totalPaid);
 
  // Toggle room selection
  const toggleRoom = (room: any) => {
@@ -1023,7 +1029,7 @@ const CheckInForm = ({
  const bookingAdv = bookingData?.advanceAmount || 0;
  const checkInAdv = paymentData.checkInAdvance;
  const totalPaidAmount = bookingAdv + checkInAdv;
- const balanceDue = Math.max(0, roomTotal - totalPaidAmount);
+ const balanceDue = Math.max(0, grandTotal - totalPaidAmount);
 
  // Group guests by room
  const roomGuestMap: Record<string, string[]> = {};
@@ -1327,7 +1333,15 @@ const CheckInForm = ({
  vehicleDetails: vehicles.filter(
  (v: any) => v.vehicleNumber && v.vehicleNumber.trim() !== "",
  ),
- extraServices: selectedServices,
+  extraServices: selectedServices.map(sId => {
+    const s = extraServices.find(s => s._id === sId);
+    return {
+      serviceName: s?.name,
+      quantity: 1,
+      rate: s?.price || 0,
+      total: s?.price || 0
+    };
+  }),
  specialRequests: stayFormData.specialRequests,
  notes: stayFormData.specialRequests,
  ...(editMode

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import PaymentReceiptTemplate, { type PaymentReceiptRef, type PaymentReceiptData } from "../ui/PaymentReceiptTemplate";
 import {
  FiSearch,
  FiCalendar,
@@ -37,6 +38,29 @@ const ManageBooking = ({
  );
  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
  const [showFilters, setShowFilters] = useState(false);
+
+ const receiptRef = useRef<PaymentReceiptRef>(null);
+ const [printData, setPrintData] = useState<PaymentReceiptData | null>(null);
+
+ const handlePrint = (item: any) => {
+   const data: PaymentReceiptData = {
+     receiptNo: `REC-${item.bookingId || Math.floor(Math.random() * 10000)}`,
+     date: format(new Date(), "dd MMM yyyy"),
+     receivedFrom: {
+       name: item.bookingContact?.name || item.customerId?.name || "Guest",
+       phone: item.bookingContact?.mobile || item.customerId?.phone || "",
+     },
+     referenceNo: item.bookingId || "N/A",
+     paymentMode: "N/A", // Update if there's a specific field for payment mode
+     amount: item.advanceAmount || item.pricingSummary?.paidAmount || 0,
+     remarks: "Booking Advance Payment",
+     cashierName: "Admin",
+   };
+   setPrintData(data);
+   setTimeout(() => {
+     receiptRef.current?.exportToPDF();
+   }, 100);
+ };
 
  // Status badge helper
  const getStatusBadge = (status: string) => {
@@ -314,6 +338,7 @@ const ManageBooking = ({
  
  <button
  title="Print"
+ onClick={() => handlePrint(item)}
  className="p-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg transition-all "
  >
  <FiPrinter size={12} className=" " />
@@ -377,6 +402,13 @@ const ManageBooking = ({
  onPageChange={onPageChange}
  />
  )}
+
+ {/* Hidden Payment Receipt Template for printing */}
+ <div className="hidden">
+   {printData && (
+     <PaymentReceiptTemplate ref={receiptRef} data={printData} />
+   )}
+ </div>
  </div>
  </div>
  );

@@ -77,7 +77,7 @@ const PaymentReceiptTemplate = forwardRef<PaymentReceiptRef, Props>(({ data }, r
         @media print {
           @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 0mm;
           }
           body { margin: 0; background: white; }
           .print-container { width: 100% !important; height: auto !important; box-shadow: none !important; }
@@ -115,22 +115,22 @@ const PaymentReceiptTemplate = forwardRef<PaymentReceiptRef, Props>(({ data }, r
             <div className="flex items-center gap-1">🌐 https://siddharajhotelandresort.com/</div>
           </div>
 
-          <h2 className="text-2xl font-bold text-center text-[#0b1b3d] mb-6 tracking-wide">BOOKING CONFIRMATION</h2>
-
-          {/* Top Bar */}
-          <div className="border border-gray-300 rounded-lg p-3 flex justify-between items-center mb-6">
-            <div>
-              <p className="text-[10px] text-gray-500 font-semibold mb-0.5">Booking ID</p>
-              <p className="font-bold text-sm">{data.bookingId}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[10px] text-gray-500 font-semibold mb-0.5">Booking Date</p>
-              <p className="font-bold text-sm">{data.bookingDate}</p>
-            </div>
-            <div className="text-right flex items-center gap-4">
-              <p className="text-[10px] text-gray-500 font-semibold">Booking Status</p>
-              <div className="border border-green-500 text-green-600 px-3 py-1 rounded font-bold uppercase tracking-wider text-xs">
-                {data.bookingStatus}
+          {/* Top Header / Bar */}
+          <div className="border border-gray-300 rounded-lg p-2.5 mb-6 flex justify-between items-center bg-gray-50/50">
+            <h2 className="text-lg font-bold text-[#0b1b3d] tracking-wide m-0 px-2">BOOKING CONFIRMATION</h2>
+            <div className="flex items-center gap-6 pr-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Booking ID:</span>
+                <span className="font-bold text-sm">{data.bookingId}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Booking Date:</span>
+                <span className="font-bold text-sm">{data.bookingDate}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="border border-green-500 text-green-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">
+                  {data.bookingStatus}
+                </span>
               </div>
             </div>
           </div>
@@ -168,44 +168,7 @@ const PaymentReceiptTemplate = forwardRef<PaymentReceiptRef, Props>(({ data }, r
             </div>
           </div>
 
-          {/* Additional Services */}
-          <div className="border border-gray-300 rounded-lg overflow-hidden mb-6">
-            <div className="bg-[#0b1b3d] text-white px-3 py-2 flex items-center gap-2 font-semibold">
-              <span>🛎️</span> ADDITIONAL SERVICES
-            </div>
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-300 text-[10px] text-gray-600 uppercase">
-                  <th className="px-3 py-2 font-bold w-1/4">SERVICE</th>
-                  <th className="px-3 py-2 font-bold w-1/3">DESCRIPTION</th>
-                  <th className="px-3 py-2 font-bold text-center">QTY</th>
-                  <th className="px-3 py-2 font-bold text-right">UNIT PRICE (₹)</th>
-                  <th className="px-3 py-2 font-bold text-right">AMOUNT (₹)</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-900">
-                {data.services.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-3 py-4 text-center text-gray-500 border-b border-gray-200">No additional services</td>
-                  </tr>
-                ) : (
-                  data.services.map((s, idx) => (
-                    <tr key={idx} className="border-b border-gray-200">
-                      <td className="px-3 py-2">{s.service}</td>
-                      <td className="px-3 py-2">{s.description}</td>
-                      <td className="px-3 py-2 text-center">{s.qty}</td>
-                      <td className="px-3 py-2 text-right">{formatCurrency(s.unitPrice)}</td>
-                      <td className="px-3 py-2 text-right">{formatCurrency(s.amount)}</td>
-                    </tr>
-                  ))
-                )}
-                <tr>
-                  <td colSpan={4} className="px-3 py-2 text-right font-bold text-[10px] text-gray-600 uppercase border-t border-gray-300">TOTAL ADDITIONAL SERVICES</td>
-                  <td className="px-3 py-2 text-right font-bold border-t border-gray-300">₹ {formatCurrency(data.payment.servicesTotal)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+
 
           {/* Payment Summary */}
           <div className="border border-gray-300 rounded-lg overflow-hidden mb-6">
@@ -228,14 +191,15 @@ const PaymentReceiptTemplate = forwardRef<PaymentReceiptRef, Props>(({ data }, r
                   <td className="px-3 py-2 text-right">{formatCurrency(data.payment.taxAmount)}</td>
                   <td className="px-3 py-2 text-right">{formatCurrency(data.payment.roomCharges + data.payment.taxAmount)}</td>
                 </tr>
-                {data.payment.servicesTotal > 0 && (
-                  <tr className="border-b border-gray-200">
-                    <td className="px-3 py-2">Additional Services</td>
-                    <td className="px-3 py-2 text-right">{formatCurrency(data.payment.servicesTotal)}</td>
-                    <td className="px-3 py-2 text-right">0.00</td>
-                    <td className="px-3 py-2 text-right">{formatCurrency(data.payment.servicesTotal)}</td>
-                  </tr>
-                )}
+                {data.services.length > 0 &&
+                  data.services.map((s, idx) => (
+                    <tr key={idx} className="border-b border-gray-200">
+                      <td className="px-3 py-2">{s.service}</td>
+                      <td className="px-3 py-2 text-right">{formatCurrency(s.amount)}</td>
+                      <td className="px-3 py-2 text-right">0.00</td>
+                      <td className="px-3 py-2 text-right">{formatCurrency(s.amount)}</td>
+                    </tr>
+                  ))}
                 <tr className="bg-[#fdf8f0] font-bold text-[11px]">
                   <td className="px-3 py-2 uppercase">GRAND TOTAL</td>
                   <td className="px-3 py-2 text-right">{formatCurrency(data.payment.roomCharges + data.payment.servicesTotal)}</td>
@@ -289,11 +253,7 @@ const PaymentReceiptTemplate = forwardRef<PaymentReceiptRef, Props>(({ data }, r
             </div>
           </div>
 
-          {/* Footer message */}
-          <div className="text-center pb-4 pt-4 border-t border-gray-200">
-            <p className="text-lg text-[#0b1b3d] font-serif italic font-medium">Thank you for choosing Siddharaj Resort.</p>
-            <p className="text-lg text-[#0b1b3d] font-serif italic font-medium">We look forward to hosting you!</p>
-          </div>
+
 
         </div>
       </div>

@@ -908,11 +908,14 @@ const CheckInForm = ({
  if (partyType === "Corporate" && (!corporateDetails.companyName.trim() || !corporateDetails.contactPersonName?.trim() || !corporateDetails.contactMobile?.trim())) {
    return false;
  }
- // All booking room slots must be assigned before proceeding
- if (!isDayAccess && bookingData?.rooms?.length > 0) {
- const allAssigned = selectedRooms.every((s) => !!s.roomId);
- if (!allAssigned) return false;
- }
+ if (!isDayAccess) {
+    const assignedCount = selectedRooms.filter((s) => !!s.roomId).length;
+    if (assignedCount === 0) return false;
+
+    if (bookingData?.rooms?.length > 0 && assignedCount !== selectedRooms.length) {
+      return false;
+    }
+  }
 
  // Occupancy Validation
  if (!isDayAccess) {
@@ -925,12 +928,14 @@ const CheckInForm = ({
   const primaryGuests = guests.filter(g => g.isPrimary);
   if (primaryGuests.length === 0) return false;
   const validPrimary = primaryGuests.every(
-    (g) => g.name?.trim() && g.mobileNo?.trim() && g.age?.trim() && g.gender && g.idNumber?.trim()
+    (g) => g.name?.trim() && g.mobileNo?.trim() && g.age?.trim() && g.gender && g.idNumber?.trim() && (g.pendingDocFile || g.idDocument)
   );
   if (!validPrimary) return false;
    
-  if (partyType === "Corporate" && !corporateDetails.companyName.trim()) {
-    return false;
+  if (partyType === "Corporate") {
+    if (!corporateDetails.companyName.trim()) return false;
+    const validDocs = dynamicDocs.filter(d => d.type.trim() && d.file);
+    if (validDocs.length === 0) return false;
   }
    
   const coGuests = guests.filter(g => !g.isPrimary);
@@ -954,12 +959,15 @@ const CheckInForm = ({
        if (partyType === "Corporate" && (!corporateDetails.companyName.trim() || !corporateDetails.contactPersonName?.trim() || !corporateDetails.contactMobile?.trim())) {
            return "Company Name, Contact Person, and Mobile are required.";
        }
-       if (!isDayAccess && bookingData?.rooms?.length > 0) {
+       if (!isDayAccess) {
+         if (selectedRooms.length === 0) return "Please assign at least one room to continue.";
+         
+         const assignedCount = selectedRooms.filter((s) => !!s.roomId).length;
+         if (assignedCount === 0) return "Please assign at least one room to continue.";
+         
          const unassignedCount = selectedRooms.filter((s) => !s.roomId).length;
          if (unassignedCount > 0) return `Please assign all booked rooms to continue (${unassignedCount} left).`;
-       }
 
-       if (!isDayAccess) {
          const totalCapacity = selectedRooms.reduce((sum, r) => sum + (r.roomId ? ((Number(r.maxAdults) || 2) + (Number(r.maxChildren) || 0) + (r.hasExtraBed ? 1 : 0)) : 0), 0);
          if (totalCapacity > 0 && guests.length > totalCapacity) return "Total guests exceed the maximum capacity of assigned rooms.";
        }
@@ -983,6 +991,7 @@ const CheckInForm = ({
     if (!primary?.age?.trim()) return `Primary guest age is required (Room ${i + 1})`;
     if (!primary?.gender) return `Primary guest gender is required (Room ${i + 1})`;
     if (!primary?.idNumber?.trim()) return `Primary guest ID number is required (Room ${i + 1})`;
+    if (!primary?.pendingDocFile && !primary?.idDocument) return `Primary guest ID document must be uploaded (Room ${i + 1})`;
   }
 
   const coGuests = guests.filter(g => !g.isPrimary);
@@ -994,8 +1003,14 @@ const CheckInForm = ({
     }
   }
 
-  if (partyType === "Corporate" && !corporateDetails.companyName.trim()) {
-    return "Company name is required for corporate bookings.";
+  if (partyType === "Corporate") {
+    if (!corporateDetails.companyName.trim()) {
+      return "Company name is required for corporate bookings.";
+    }
+    const validDocs = dynamicDocs.filter(d => d.type.trim() && d.file);
+    if (validDocs.length === 0) {
+      return "Corporate check-in requires at least one Company Document to be uploaded";
+    }
   }
 
   return "";
@@ -1100,10 +1115,11 @@ const CheckInForm = ({
  };
 
  // Open GRC Modal
-     const handleResetForm = () => {
+  const handleResetForm = () => {
     setShowSuccessActions(false);
     setCurrentStep(1);
     setRoomSearchQuery("");
+    setRoomTypeFilterId("");
     setSelectedRooms([]);
     setGuests([{
       id: `g-${Date.now()}`,
@@ -1124,6 +1140,28 @@ const CheckInForm = ({
     setPaymentData({ paymentMode: "Cash", checkInAdvance: 0, transactionId: "", paymentNote: "" });
     setSignedGRCFile(null);
     setSignedGRCPreview(null);
+    setDynamicDocs([]);
+    setSelectedServices([]);
+    setStayFormData({
+      checkInTime: new Date(),
+      expectedCheckOutTime: addDays(new Date(), 1),
+      specialRequests: "",
+    });
+    setPartyType("Individual");
+    setCorporateDetails({
+      companyName: "",
+      companyGST: "",
+      companyAddress: "",
+      companyEmail: "",
+      companyPhone: "",
+      contactPersonName: "",
+      designation: "",
+      contactMobile: "",
+      contactEmail: "",
+      department: "",
+      visitPurpose: "",
+      remarks: "",
+    });
   };
 
   const handleOpenGRC = () => {
@@ -1193,6 +1231,13 @@ const CheckInForm = ({
     setLoading(false);
     return;
   }
+ }
+
+ // Validate signed GRC upload
+ if (!editMode && !signedGRCFile) {
+   alert("GRC must be signed and uploaded before checking in!");
+   setLoading(false);
+   return;
  }
 
  setLoadingStep("Preparing data...");
@@ -3042,7 +3087,7 @@ const CheckInForm = ({
         {/* Dynamic Documents Section */}
         <div className="">
             <h4 className="text-[10px] font-black text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                Other Documents <span className="text-[8px] text-gray-400 font-bold bg-gray-100 px-2 py-0.5 rounded">(Optional)</span>
+                {partyType === 'Corporate' ? 'Company Documents' : 'Other Documents'} <span className={`text-[8px] font-bold px-2 py-0.5 rounded ${partyType === 'Corporate' ? 'text-red-500 bg-red-50' : 'text-gray-400 bg-gray-100'}`}>{partyType === 'Corporate' ? '(Required for Corporate)' : '(Optional)'}</span>
             </h4>
             <div className="space-y-3">
                 {dynamicDocs.map((doc, idx) => (

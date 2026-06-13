@@ -42,25 +42,54 @@ const ManageBooking = ({
  const receiptRef = useRef<PaymentReceiptRef>(null);
  const [printData, setPrintData] = useState<PaymentReceiptData | null>(null);
 
- const handlePrint = (item: any) => {
-   const data: PaymentReceiptData = {
-     receiptNo: `REC-${item.bookingId || Math.floor(Math.random() * 10000)}`,
-     date: format(new Date(), "dd MMM yyyy"),
-     receivedFrom: {
-       name: item.bookingContact?.name || item.customerId?.name || "Guest",
-       phone: item.bookingContact?.mobile || item.customerId?.phone || "",
-     },
-     referenceNo: item.bookingId || "N/A",
-     paymentMode: "N/A", // Update if there's a specific field for payment mode
-     amount: item.advanceAmount || item.pricingSummary?.paidAmount || 0,
-     remarks: "Booking Advance Payment",
-     cashierName: "Admin",
-   };
-   setPrintData(data);
-   setTimeout(() => {
-     receiptRef.current?.exportToPDF();
-   }, 100);
- };
+  const handlePrint = (item: any) => {
+    const roomTypeNames = item.rooms?.map((r: any) => r.roomType?.name || r.roomType).join(", ") || "N/A";
+    const servicesList = (item.addons || []).map((a: any) => ({
+      service: a.serviceName || a.name || "Add-on",
+      description: "Additional Service",
+      qty: a.quantity || 1,
+      unitPrice: a.rate || 0,
+      amount: a.total || 0,
+    }));
+
+    const data: PaymentReceiptData = {
+      bookingId: item.bookingId || "N/A",
+      bookingDate: item.createdAt ? format(new Date(item.createdAt), "dd MMM yyyy") : format(new Date(), "dd MMM yyyy"),
+      bookingStatus: item.status || "CONFIRMED",
+      guest: {
+        name: item.bookingContact?.name || item.customerId?.name || "Guest",
+        mobile: item.bookingContact?.mobile || item.customerId?.phone || "Not Provided",
+        email: item.bookingContact?.email || item.customerId?.email || "Not Provided",
+        address: item.customerId?.address || "Not Provided",
+        noOfGuests: `${item.adults || 1} Adults${item.children ? ` + ${item.children} Children` : ''}`,
+        idProofType: "Not Provided",
+      },
+      stay: {
+        roomType: roomTypeNames,
+        checkInDate: item.overallCheckInDate ? format(new Date(item.overallCheckInDate), "dd MMM yyyy") : "N/A",
+        checkOutDate: item.overallCheckOutDate ? format(new Date(item.overallCheckOutDate), "dd MMM yyyy") : "N/A",
+        noOfNights: `${item.totalNights || 1} Nights`,
+        view: "Standard View",
+        district: "Jalpaiguri",
+      },
+      services: servicesList,
+      payment: {
+        roomCharges: item.pricingSummary?.roomTotal || 0,
+        roomChargesDesc: `Room Charges (₹${((item.pricingSummary?.roomTotal || 0) / (item.totalNights || 1)).toFixed(2)} × ${item.totalNights || 1} Nights)`,
+        servicesTotal: servicesList.reduce((acc: number, s: any) => acc + s.amount, 0),
+        taxAmount: item.pricingSummary?.taxAmount || 0,
+        grandTotal: item.pricingSummary?.grandTotal || 0,
+        advancePaid: item.pricingSummary?.paidAmount || item.advanceAmount || 0,
+        balanceDue: item.pricingSummary?.dueAmount ?? ((item.pricingSummary?.grandTotal || 0) - (item.pricingSummary?.paidAmount || item.advanceAmount || 0)),
+        paymentMode: item.paymentMode || "Online / UPI",
+      }
+    };
+
+    setPrintData(data);
+    setTimeout(() => {
+      receiptRef.current?.exportToPDF();
+    }, 100);
+  };
 
  // Status badge helper
  const getStatusBadge = (status: string) => {

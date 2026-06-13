@@ -297,6 +297,7 @@ const CreateBooking = ({
  setPaymentForm({
  advanceAmount: booking.advanceAmount || 0,
  paymentMode: booking.paymentMode || "UPI",
+ paymentRemarks: booking.paymentRemarks || "",
  });
 
  if (booking.taxGstId) {
@@ -323,6 +324,7 @@ const CreateBooking = ({
  const [paymentForm, setPaymentForm] = useState({
  advanceAmount: 0,
  paymentMode: "UPI",
+ paymentRemarks: "",
  });
 
  // Tax
@@ -630,6 +632,8 @@ const CreateBooking = ({
  advanceAmount: paymentForm.advanceAmount,
  paymentMode:
  paymentForm.advanceAmount > 0 ? paymentForm.paymentMode : undefined,
+ paymentRemarks:
+ paymentForm.advanceAmount > 0 ? paymentForm.paymentRemarks : undefined,
  specialRequests: mergedSpecialRequests,
  internalNotes,
  vehicleDetails: vehicles,
@@ -1925,6 +1929,24 @@ const CreateBooking = ({
  <option value="Wallet">Wallet</option>
  </select>
  </div>
+ </div>
+
+ <div className="mb-4">
+ <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">
+ Payment Remarks
+ </label>
+ <textarea
+ value={paymentForm.paymentRemarks}
+ onChange={(e) =>
+ setPaymentForm({
+ ...paymentForm,
+ paymentRemarks: e.target.value,
+ })
+ }
+ className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none resize-none font-medium text-text-primary"
+ placeholder="e.g. UPI Ref: 1234567890"
+ rows={2}
+ />
  </div>
 
  <div className="p-3 bg-green-50/50 border border-green-200/50 rounded-xl text-[10px] text-green-700 leading-normal flex items-start gap-2">

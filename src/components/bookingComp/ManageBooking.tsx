@@ -50,6 +50,8 @@ const ManageBooking = ({
       qty: a.quantity || 1,
       unitPrice: a.rate || 0,
       amount: a.total || 0,
+      taxAmount: a.taxAmount || 0,
+      taxPercentage: a.taxPercentage || 0,
     }));
 
     const data: PaymentReceiptData = {
@@ -78,6 +80,7 @@ const ManageBooking = ({
         roomChargesDesc: `Room Charges (₹${((item.pricingSummary?.roomTotal || 0) / (item.totalNights || 1)).toFixed(2)} × ${item.totalNights || 1} Nights)`,
         servicesTotal: servicesList.reduce((acc: number, s: any) => acc + s.amount, 0),
         taxAmount: item.pricingSummary?.taxAmount || 0,
+        roomTaxAmount: (item.pricingSummary?.taxAmount || 0) - servicesList.reduce((acc: number, s: any) => acc + (s.taxAmount || 0), 0),
         grandTotal: item.pricingSummary?.grandTotal || 0,
         advancePaid: item.pricingSummary?.paidAmount || item.advanceAmount || 0,
         balanceDue: item.pricingSummary?.dueAmount ?? ((item.pricingSummary?.grandTotal || 0) - (item.pricingSummary?.paidAmount || item.advanceAmount || 0)),

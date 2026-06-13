@@ -27,12 +27,15 @@ export interface PaymentReceiptData {
     qty: number;
     unitPrice: number;
     amount: number;
+    taxAmount?: number;
+    taxPercentage?: number;
   }[];
   payment: {
     roomCharges: number;
     roomChargesDesc: string;
     servicesTotal: number;
     taxAmount: number;
+    roomTaxAmount?: number;
     grandTotal: number;
     advancePaid: number;
     balanceDue: number;
@@ -188,16 +191,16 @@ const PaymentReceiptTemplate = forwardRef<PaymentReceiptRef, Props>(({ data }, r
                 <tr className="border-b border-gray-200">
                   <td className="px-3 py-2">{data.payment.roomChargesDesc}</td>
                   <td className="px-3 py-2 text-right">{formatCurrency(data.payment.roomCharges)}</td>
-                  <td className="px-3 py-2 text-right">{formatCurrency(data.payment.taxAmount)}</td>
-                  <td className="px-3 py-2 text-right">{formatCurrency(data.payment.roomCharges + data.payment.taxAmount)}</td>
+                  <td className="px-3 py-2 text-right">{formatCurrency(data.payment.roomTaxAmount ?? data.payment.taxAmount)}</td>
+                  <td className="px-3 py-2 text-right">{formatCurrency(data.payment.roomCharges + (data.payment.roomTaxAmount ?? data.payment.taxAmount))}</td>
                 </tr>
                 {data.services.length > 0 &&
                   data.services.map((s, idx) => (
                     <tr key={idx} className="border-b border-gray-200">
                       <td className="px-3 py-2">{s.service}</td>
                       <td className="px-3 py-2 text-right">{formatCurrency(s.amount)}</td>
-                      <td className="px-3 py-2 text-right">0.00</td>
-                      <td className="px-3 py-2 text-right">{formatCurrency(s.amount)}</td>
+                      <td className="px-3 py-2 text-right">{formatCurrency(s.taxAmount || 0)}</td>
+                      <td className="px-3 py-2 text-right">{formatCurrency(s.amount + (s.taxAmount || 0))}</td>
                     </tr>
                   ))}
                 <tr className="bg-[#fdf8f0] font-bold text-[11px]">

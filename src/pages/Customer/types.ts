@@ -18,6 +18,11 @@ export interface CustomerProfile {
  };
  internalNotes?: string;
  createdAt: string;
+ totalRevenue?: number;
+ lastStayDate?: string;
+ lastStayType?: string;
+ lastBookingStatus?: string;
+ bookingCount?: number;
 }
 
 export interface CustomerDetail extends CustomerProfile {

@@ -9,7 +9,9 @@ import { AxiosError } from 'axios';
 export interface ExtraService {
  _id: string;
  name: string;
+ description?: string;
  price: number;
+ taxPercentage: number;
  isActive: boolean;
 }
 
@@ -137,6 +139,7 @@ export default function ExtraServiceMaster() {
  <tr>
  <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-[40%]">Service Name</th>
  <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">Price</th>
+ <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">Tax Slab</th>
  <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">Status</th>
  <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right w-32">Actions</th>
  </tr>
@@ -144,7 +147,7 @@ export default function ExtraServiceMaster() {
  <tbody className="divide-y divide-border">
  {isLoading ? (
  <tr>
- <td colSpan={4} className="px-6 py-12 text-center text-text-secondary">
+ <td colSpan={5} className="px-6 py-12 text-center text-text-secondary">
  <div className="flex flex-col items-center justify-center gap-2">
  <FiLoader className="w-6 h-6 animate-spin text-primary" />
  <span className="text-base">Loading extra services...</span>
@@ -156,10 +159,18 @@ export default function ExtraServiceMaster() {
  <tr key={service._id} className={`hover:bg-background/50 transition-colors group ${!service.isActive ? 'opacity-60' : ''}`}>
  <td className="px-6 py-4">
  <span className="font-bold text-text-primary text-base">{service.name}</span>
+ {service.description && (
+   <p className="text-xs text-text-secondary mt-1">{service.description}</p>
+ )}
  </td>
  <td className="px-6 py-4">
  <span className="text-base text-text-primary font-medium">
  ₹{(service.price ?? 0).toLocaleString()}
+ </span>
+ </td>
+ <td className="px-6 py-4">
+ <span className="text-sm font-medium text-text-secondary">
+ {service.taxPercentage}%
  </span>
  </td>
  <td className="px-6 py-4 text-left">
@@ -190,7 +201,7 @@ export default function ExtraServiceMaster() {
  ))
  ) : (
  <tr>
- <td colSpan={4} className="px-6 py-12 text-center text-text-secondary">
+ <td colSpan={5} className="px-6 py-12 text-center text-text-secondary">
  No extra services registered yet.
  </td>
  </tr>

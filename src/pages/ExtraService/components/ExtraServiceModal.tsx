@@ -7,7 +7,9 @@ import { AxiosError } from 'axios';
 interface ExtraServiceData {
  _id?: string;
  name: string;
+ description?: string;
  price?: number;
+ taxPercentage?: number;
  isActive?: boolean;
 }
 
@@ -20,19 +22,41 @@ interface ExtraServiceModalProps {
 
 export default function ExtraServiceModal({ isOpen, onClose, onSuccess, initialData }: ExtraServiceModalProps) {
  const [isLoading, setIsLoading] = useState(false);
+ const [taxes, setTaxes] = useState<any[]>([]);
  const [formData, setFormData] = useState({
  name: '',
+ description: '',
  price: 0,
+ taxPercentage: 0,
  });
  const [errors, setErrors] = useState<{ name?: string; price?: string }>({});
+
+ useEffect(() => {
+   const fetchTaxes = async () => {
+     try {
+       const response = await api.get('/tax-gst?activeOnly=true');
+       setTaxes(response.data?.data || []);
+     } catch (err) {
+       console.error("Failed to fetch taxes", err);
+     }
+   };
+   if (isOpen) {
+     fetchTaxes();
+   }
+ }, [isOpen]);
 
  useEffect(() => {
  setErrors({});
 
  if (initialData) {
- setFormData({ name: initialData.name, price: initialData.price ?? 0 });
+ setFormData({ 
+   name: initialData.name, 
+   description: initialData.description || '',
+   price: initialData.price ?? 0, 
+   taxPercentage: initialData.taxPercentage ?? 0,
+ });
  } else {
- setFormData({ name: '', price: 0 });
+ setFormData({ name: '', description: '', price: 0, taxPercentage: 0 });
  }
  }, [initialData, isOpen]);
 
@@ -61,9 +85,17 @@ export default function ExtraServiceModal({ isOpen, onClose, onSuccess, initialD
  if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
  };
 
+ const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+ setFormData(prev => ({ ...prev, description: e.target.value }));
+ };
+
  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
  setFormData(prev => ({ ...prev, price: Number(e.target.value) }));
  if (errors.price) setErrors(prev => ({ ...prev, price: undefined }));
+ };
+
+ const handleTaxChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+ setFormData(prev => ({ ...prev, taxPercentage: Number(e.target.value) }));
  };
 
  const handleSubmit = async () => {
@@ -143,6 +175,17 @@ export default function ExtraServiceModal({ isOpen, onClose, onSuccess, initialD
  )}
  </div>
  <div>
+ <label className="input-label uppercase tracking-wider text-[10px]">Description (Optional)</label>
+ <textarea
+ placeholder="Brief description of the service"
+ value={formData.description}
+ onChange={handleDescriptionChange}
+ disabled={isLoading}
+ className="input-field disabled:opacity-70 disabled:cursor-not-allowed resize-none h-20"
+ />
+ </div>
+ <div className="grid grid-cols-2 gap-4">
+ <div>
  <label className="input-label uppercase tracking-wider text-[10px]">Price (₹)</label>
  <input
  type="number"
@@ -158,6 +201,23 @@ export default function ExtraServiceModal({ isOpen, onClose, onSuccess, initialD
  {errors.price && (
  <p className="text-red-500 text-sm mt-1.5 font-medium animate-fade-in">{errors.price}</p>
  )}
+ </div>
+ <div>
+ <label className="input-label uppercase tracking-wider text-[10px]">Tax Slab</label>
+ <select
+ value={formData.taxPercentage}
+ onChange={handleTaxChange}
+ disabled={isLoading}
+ className="input-field disabled:opacity-70 disabled:cursor-not-allowed"
+ >
+ <option value={0}>0% Tax</option>
+ {taxes.map(tax => (
+ <option key={tax._id} value={tax.percentage}>
+ {tax.name} ({tax.percentage}%)
+ </option>
+ ))}
+ </select>
+ </div>
  </div>
  </div>
 

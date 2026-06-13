@@ -297,6 +297,7 @@ const CreateBooking = ({
  setPaymentForm({
  advanceAmount: booking.advanceAmount || 0,
  paymentMode: booking.paymentMode || "UPI",
+ paymentRemarks: booking.paymentRemarks || "",
  });
 
  if (booking.taxGstId) {
@@ -307,7 +308,7 @@ const CreateBooking = ({
 
  // Add-on Services
  const [extraServices, setExtraServices] = useState<
- { _id: string; name: string; price: number }[]
+ { _id: string; name: string; price: number; taxPercentage?: number }[]
  >([]);
  const [selectedAddons, setSelectedAddons] = useState<
  {
@@ -316,6 +317,8 @@ const CreateBooking = ({
  quantity: number;
  rate: number;
  total: number;
+ taxPercentage: number;
+ taxAmount: number;
  }[]
  >([]);
 
@@ -323,6 +326,7 @@ const CreateBooking = ({
  const [paymentForm, setPaymentForm] = useState({
  advanceAmount: 0,
  paymentMode: "UPI",
+ paymentRemarks: "",
  });
 
  // Tax
@@ -462,65 +466,62 @@ const CreateBooking = ({
 
  // Calculate totals
  const calculateTotals = useCallback(() => {
- const selectedTax = taxOptions.find((t) => t._id === selectedTaxId);
- const taxRate = selectedTax ? selectedTax.percentage / 100 : 0;
+  const selectedTax = taxOptions.find((t) => t._id === selectedTaxId);
+  const taxRate = selectedTax ? selectedTax.percentage / 100 : 0;
 
- const selectedRoomTypesList = roomTypes
- .filter((rt) => selectedCounts[rt._id]?.count > 0)
- .map((rt) => ({
- roomTypeId: rt._id,
- roomTypeName: rt.name,
- basePrice: rt.basePrice,
- count: selectedCounts[rt._id].count,
- adults: selectedCounts[rt._id].adults,
- children: selectedCounts[rt._id].children,
- }));
+  const selectedRoomTypesList = roomTypes
+  .filter((rt) => selectedCounts[rt._id]?.count > 0)
+  .map((rt) => ({
+  roomTypeId: rt._id,
+  roomTypeName: rt.name,
+  basePrice: rt.basePrice,
+  count: selectedCounts[rt._id].count,
+  adults: selectedCounts[rt._id].adults,
+  children: selectedCounts[rt._id].children,
+  }));
 
- if (bookingCategory === "Day Access") {
- const pkg = accessPackages.find((p) => p._id === selectedPackageId);
- const rate = pkg ? pkg.adult_price : 0;
- const count = Number(adultsFilter) + Number(childrenFilter);
- const roomTotal = rate * count;
- const extraBedTotal = 0;
- const addonsTotal = selectedAddons.reduce((sum, a) => sum + (Number(a.total) || 0), 0);
- const subtotal = roomTotal + addonsTotal;
- const taxAmount = Math.round(subtotal * taxRate);
- const grandTotal = subtotal + taxAmount;
- const paidAmount = paymentForm.advanceAmount || 0;
- const dueAmount = grandTotal - paidAmount;
- return {
- roomTotal,
- extraBedTotal,
- subtotal,
- taxAmount,
- grandTotal,
- paidAmount,
- dueAmount,
- };
- }
+  let roomTotal = 0;
+  if (bookingCategory === "Day Access") {
+    const pkg = accessPackages.find((p) => p._id === selectedPackageId);
+    const rate = pkg ? pkg.adult_price : 0;
+    const count = Number(adultsFilter) + Number(childrenFilter);
+    roomTotal = rate * count;
+  } else {
+    roomTotal = selectedRoomTypesList.reduce(
+    (sum, entry) => sum + entry.basePrice * entry.count * totalNights,
+    0,
+    );
+  }
 
- const roomTotal = selectedRoomTypesList.reduce(
- (sum, entry) => sum + entry.basePrice * entry.count * totalNights,
- 0,
- );
- const extraBedTotal = 0;
- const addonsTotal = selectedAddons.reduce((sum, a) => sum + (Number(a.total) || 0), 0);
- const subtotal = roomTotal + extraBedTotal + addonsTotal;
- const taxAmount = Math.round(subtotal * taxRate);
- const grandTotal = subtotal + taxAmount;
- const paidAmount = paymentForm.advanceAmount || 0;
- const dueAmount = grandTotal - paidAmount;
+  const extraBedTotal = 0;
+  
+  let addonsTotal = 0;
+  let addonsTaxAmount = 0;
+  selectedAddons.forEach((a: any) => {
+    const aTotal = Number(a.total) || 0;
+    const aTaxAmt = Number(a.taxAmount) || 0;
+    addonsTotal += aTotal;
+    addonsTaxAmount += aTaxAmt;
+  });
 
- return {
- roomTotal,
- extraBedTotal,
- subtotal,
- taxAmount,
- grandTotal,
- paidAmount,
- dueAmount,
- };
- }, [
+  const subtotal = roomTotal + extraBedTotal + addonsTotal;
+  const roomTaxAmount = (roomTotal + extraBedTotal) * taxRate;
+  const taxAmount = Math.round(roomTaxAmount + addonsTaxAmount);
+  
+  const grandTotal = subtotal + taxAmount;
+  const paidAmount = paymentForm.advanceAmount || 0;
+  const dueAmount = grandTotal - paidAmount;
+
+  return {
+  roomTotal,
+  extraBedTotal,
+  subtotal,
+  taxAmount,
+  grandTotal,
+  paidAmount,
+  dueAmount,
+  };
+  }, [
  roomTypes,
  selectedCounts,
  totalNights,
@@ -630,6 +631,8 @@ const CreateBooking = ({
  advanceAmount: paymentForm.advanceAmount,
  paymentMode:
  paymentForm.advanceAmount > 0 ? paymentForm.paymentMode : undefined,
+ paymentRemarks:
+ paymentForm.advanceAmount > 0 ? paymentForm.paymentRemarks : undefined,
  specialRequests: mergedSpecialRequests,
  internalNotes,
  vehicleDetails: vehicles,
@@ -1623,6 +1626,8 @@ const CreateBooking = ({
  quantity: 1,
  rate: first.price || 0,
  total: first.price || 0,
+ taxPercentage: first.taxPercentage || 0,
+ taxAmount: ((first.price || 0) * (first.taxPercentage || 0)) / 100,
  },
  ]);
  toast.success(`Added ${first.name}`);
@@ -1674,6 +1679,8 @@ const CreateBooking = ({
  quantity: 1,
  rate: service.price || 0,
  total: service.price || 0,
+ taxPercentage: service.taxPercentage || 0,
+ taxAmount: ((service.price || 0) * (service.taxPercentage || 0)) / 100,
  },
  ]);
  } else {
@@ -1704,6 +1711,7 @@ const CreateBooking = ({
  ...a,
  quantity: val,
  total: val * a.rate,
+ taxAmount: (val * a.rate * a.taxPercentage) / 100,
  }
  : a,
  ),
@@ -1765,21 +1773,42 @@ const CreateBooking = ({
  </div>
 
  <div className="flex justify-between items-center text-sm text-text-secondary">
- <span>Taxes & Charges ({taxOptions.find((t) => t._id === selectedTaxId)?.percentage ?? 12}%)</span>
+ <span>Taxes & Charges</span>
  <span className="font-bold text-text-primary">
  ₹{taxAmount.toLocaleString()}
  </span>
  </div>
 
+ <div className="pt-2 pb-1 border-b border-border/30">
+ <span className="text-[10px] font-bold text-text-secondary uppercase">Tax Breakdown</span>
+ </div>
+
+ <div className="flex justify-between items-center text-xs text-text-secondary">
+ <span>Room Tax ({taxOptions.find((t) => t._id === selectedTaxId)?.percentage ?? 12}%)</span>
+ <span className="font-bold text-text-primary">
+ ₹{Math.round((roomTotal + 0) * (taxOptions.find((t) => t._id === selectedTaxId)?.percentage ?? 12) / 100).toLocaleString()}
+ </span>
+ </div>
+
+ {selectedAddons.filter(a => a.taxAmount > 0).map((addon, idx) => (
+ <div key={idx} className="flex justify-between items-center text-xs text-text-secondary">
+ <span>{addon.serviceName} Tax ({addon.taxPercentage}%)</span>
+ <span className="font-bold text-text-primary">
+ ₹{Math.round(addon.taxAmount).toLocaleString()}
+ </span>
+ </div>
+ ))}
+
  {taxOptions.length > 0 && (
- <div className="pt-2">
+ <div className="pt-2 hidden">
  <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">
  Select Tax Option
  </label>
  <select
  value={selectedTaxId}
  onChange={(e) => setSelectedTaxId(e.target.value)}
- className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none font-bold text-text-primary focus:border-primary focus:ring-1 focus:ring-primary"
+ disabled
+ className="w-full border border-border rounded-lg p-2 text-sm bg-gray-50 outline-none font-bold text-text-secondary cursor-not-allowed"
  >
  {taxOptions.map((tax) => (
  <option key={tax._id} value={tax._id}>
@@ -1925,6 +1954,24 @@ const CreateBooking = ({
  <option value="Wallet">Wallet</option>
  </select>
  </div>
+ </div>
+
+ <div className="mb-4">
+ <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">
+ Payment Remarks
+ </label>
+ <textarea
+ value={paymentForm.paymentRemarks}
+ onChange={(e) =>
+ setPaymentForm({
+ ...paymentForm,
+ paymentRemarks: e.target.value,
+ })
+ }
+ className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none resize-none font-medium text-text-primary"
+ placeholder="e.g. UPI Ref: 1234567890"
+ rows={2}
+ />
  </div>
 
  <div className="p-3 bg-green-50/50 border border-green-200/50 rounded-xl text-[10px] text-green-700 leading-normal flex items-start gap-2">

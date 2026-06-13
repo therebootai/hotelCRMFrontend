@@ -58,7 +58,7 @@ const SideBar = () => {
  <aside className={`${isCollapsed ? 'w-20 ' : 'w-65 '} h-screen bg-card border-r border-border flex flex-col justify-between shrink-0 transition-all duration-300`}>
  <div className="flex-1 overflow-y-auto no-scrollbar overflow-x-hidden">
  {/* Logo Area */}
- <div className={`h-17.5 flex items-center justify-between px-6 border-b border-border sticky top-0 bg-card z-10 ${isCollapsed ? 'px-0 justify-center flex-col gap-2 py-4' : ''}`}>
+ <div className={`h-17.5 flex items-center justify-between px-6 border-b border-border sticky top-0 bg-card z ${isCollapsed ? 'px-0 justify-center flex-col gap-2 py-4' : ''}`}>
  {!isCollapsed && (
  <div className="flex flex-col justify-center overflow-hidden">
  <h1 className="text-xl font-bold text-text-primary tracking-tight whitespace-nowrap">REBOOT ERP</h1>

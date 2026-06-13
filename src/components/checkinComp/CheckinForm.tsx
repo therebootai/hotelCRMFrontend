@@ -625,11 +625,23 @@ const CheckInForm = ({
  return sum + basePrice * nights + extraBedPrice;
  }, 0);
 
- const addonsTotal = selectedServices.reduce((sum, sId) => sum + (extraServices.find(s => s._id === sId)?.price || 0), 0);
- const subTotal = roomTotal + addonsTotal;
- const taxRate = bookingData?.pricingSummary?.taxPercentage ? bookingData.pricingSummary.taxPercentage / 100 : 0.12;
- const taxAmount = Math.round(subTotal * taxRate);
- const grandTotal = subTotal + taxAmount;
+  let addonsTotal = 0;
+  let addonsTaxAmount = 0;
+  selectedServices.forEach((sId) => {
+    const service = extraServices.find((s) => s._id === sId);
+    if (service) {
+      const price = service.price || 0;
+      const taxPct = (service as any).taxPercentage || 0;
+      addonsTotal += price;
+      addonsTaxAmount += (price * taxPct) / 100;
+    }
+  });
+
+  const subTotal = roomTotal + addonsTotal;
+  const taxRate = bookingData?.pricingSummary?.taxPercentage ? bookingData.pricingSummary.taxPercentage / 100 : 0.12;
+  const roomTaxAmount = roomTotal * taxRate;
+  const taxAmount = Math.round(roomTaxAmount + addonsTaxAmount);
+  const grandTotal = subTotal + taxAmount;
 
  const bookingAdvance = bookingData?.advanceAmount || 0;
  const checkInAdvance = paymentData.checkInAdvance;
@@ -2378,15 +2390,30 @@ const CheckInForm = ({
  <div className="h-px bg-gray-100" />
  <div className="flex justify-between text-sm font-black text-gray-800">
  <span>Sub Total</span>
- <span>₹{roomTotal.toLocaleString()}</span>
+ <span>₹{subTotal.toLocaleString()}</span>
  </div>
  <div className="flex justify-between text-[10px] text-gray-400">
- <span>Tax (12%)</span>
- <span>₹{(roomTotal * 0.12).toLocaleString()}</span>
+ <span>Tax Breakdown</span>
  </div>
+ <div className="flex justify-between text-[10px] text-gray-400 pl-2">
+ <span>Room Tax ({(bookingData?.pricingSummary?.taxPercentage || 12)}%)</span>
+ <span>₹{Math.round(roomTotal * (bookingData?.pricingSummary?.taxPercentage ? bookingData.pricingSummary.taxPercentage / 100 : 0.12)).toLocaleString()}</span>
+ </div>
+ {selectedServices.filter(sId => {
+    const service = extraServices.find(s => s._id === sId);
+    return service && (service as any).taxPercentage > 0;
+ }).map((sId, idx) => {
+    const service = extraServices.find(s => s._id === sId)!;
+    return (
+      <div key={idx} className="flex justify-between text-[10px] text-gray-400 pl-2">
+      <span>{service.name} Tax ({(service as any).taxPercentage}%)</span>
+      <span>₹{Math.round(service.price * ((service as any).taxPercentage / 100)).toLocaleString()}</span>
+      </div>
+    );
+ })}
  <div className="flex justify-between items-center p-3 bg-orange-50 text-orange-500 rounded-xl mt-2 border border-orange-100">
  <span className="text-sm font-black">Estimated Total</span>
- <span className="text-base font-black">₹{(roomTotal * 1.12).toLocaleString()}</span>
+ <span className="text-base font-black">₹{grandTotal.toLocaleString()}</span>
  </div>
  </div>
  
@@ -2640,8 +2667,8 @@ const CheckInForm = ({
  </div>
  <div>
  <p className="text-[9px] text-gray-400 uppercase font-black mb-1">Estimated Room Rent</p>
- <p className="font-bold text-orange-600 text-base">₹{roomTotal.toLocaleString()}</p>
- <p className="text-[8px] text-gray-400">Before Tax & Discounts</p>
+ <p className="font-bold text-orange-600 text-base">₹{grandTotal.toLocaleString()}</p>
+ <p className="text-[8px] text-gray-400">Total Including Tax</p>
  </div>
  <div>
  <p className="text-[9px] text-gray-400 uppercase font-black mb-1">Rate Plan / Tariff</p>
@@ -3326,7 +3353,7 @@ const CheckInForm = ({
  <div className="p-3 bg-gray-50 border border-border rounded-xl space-y-2 text-sm font-bold text-gray-600">
  <div className="flex justify-between">
  <span>Total Estimated Amount</span>
- <span className="text-gray-800">₹{roomTotal.toLocaleString()}</span>
+ <span className="text-gray-800">₹{grandTotal.toLocaleString()}</span>
  </div>
  <div className="flex justify-between">
  <span>Advance Amount Paid</span>

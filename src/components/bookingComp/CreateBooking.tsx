@@ -160,6 +160,7 @@ const CreateBooking = ({
 
  // Confirmed Booking State
  const [confirmedBookingDetails, setConfirmedBookingDetails] = useState<any>(null);
+ const [createdBookingId, setCreatedBookingId] = useState<string | null>(null);
 
  // Search Results
  const [searchResults, setSearchResults] = useState<RoomSearchResult[]>([]);
@@ -542,26 +543,6 @@ const CreateBooking = ({
  grandTotal,
  } = calculateTotals();
 
- // Add vehicle (Commented out because it is not used in the premium redesign UI)
- // const addVehicle = () => {
- // setVehicles([
- // ...vehicles,
- // { vehicleNumber: "", vehicleType: "", driverName: "", driverContact: "" },
- // ]);
- // };
-
- // Remove vehicle (Commented out because it is not used in the premium redesign UI)
- // const removeVehicle = (index: number) => {
- // setVehicles(vehicles.filter((_, i) => i !== index));
- // };
-
- // Update vehicle (Commented out because it is not used in the premium redesign UI)
- // const updateVehicle = (index: number, field: string, value: string) => {
- // const updated = [...vehicles];
- // (updated[index] as any)[field] = value;
- // setVehicles(updated);
- // };
-
  // Submit booking
  const submitBooking = async () => {
  if (!customerForm.name || !customerForm.phone) {
@@ -678,39 +659,40 @@ const CreateBooking = ({
  payload.selectedTaxId = selectedTaxId;
  }
 
- // Create mock booking for preview
- const mockBooking = {
- isSaved: false,
- _id: booking ? booking._id : "TBD",
- reservationNumber: booking ? booking.reservationNumber : "TBD",
- status: bookingStatus,
- customerDetails: payload.customerDetails,
- overallCheckInDate: checkInDate,
- overallCheckOutDate: checkOutDate,
- totalNights: totalNights,
- rooms: payload.roomTypesData?.map((rt: any) => ({
- roomType: { name: rt.roomTypeName },
- checkInDate: rt.checkInDate,
- checkOutDate: rt.checkOutDate
- })) || [],
- source: source,
- pricingSummary: {
- roomTotal: roomTotal,
- taxAmount: taxAmount,
- grandTotal: grandTotal,
- paidAmount: payload.advanceAmount || 0,
- dueAmount: grandTotal - (payload.advanceAmount || 0)
- },
- specialRequests: payload.specialRequests,
- payloadToSave: payload,
- isEdit: !!booking
- };
+  let res;
+  const targetId = booking?._id || createdBookingId;
+  if (targetId) {
+    res = await api.put(`/bookings/${targetId}`, payload);
+    toast.success(res.data.message || "Booking updated successfully");
+  } else {
+    res = await api.post("/bookings/create", payload);
+    toast.success(res.data.message || "Booking created successfully");
+    const newBookingId = res.data.data.booking?._id || res.data.data._id;
+    setCreatedBookingId(newBookingId);
+  }
+  
+  if (refreshBookings) {
+    refreshBookings();
+  }
 
- setConfirmedBookingDetails(mockBooking);
- setLoading(false);
+  const responseData = res.data.data.booking || res.data.data;
+  
+  if (responseData.rooms && Array.isArray(responseData.rooms) && payload.roomTypesData) {
+    responseData.rooms = responseData.rooms.map((r: any, idx: number) => {
+      const match = payload.roomTypesData[idx];
+      if (match && (typeof r.roomType === 'string' || !r.roomType?.name)) {
+        r.roomType = { _id: typeof r.roomType === 'string' ? r.roomType : r.roomType?._id, name: match.roomTypeName };
+      }
+      return r;
+    });
+  }
+
+  const savedBooking = { ...responseData, isSaved: true, isEdit: true };
+  setConfirmedBookingDetails(savedBooking);
+  setLoading(false);
  } catch (err: any) {
- toast.error(err.message || "Failed to generate preview");
- setLoading(false);
+  toast.error(err.response?.data?.message || err.message || "Failed to save booking");
+  setLoading(false);
  }
  };
 

@@ -22,8 +22,8 @@ const BookingConfirmationReceipt = ({
 
   const isSaved = booking?.isSaved !== false;
 
-  const customerName = booking?.customerDetails?.name || booking?.customer?.name || "Guest";
-  const customerPhone = booking?.customerDetails?.phone || booking?.customer?.phone || "";
+  const customerName = booking?.customerDetails?.name || booking?.customer?.name || booking?.bookingContact?.name || "Guest";
+  const customerPhone = booking?.customerDetails?.phone || booking?.customer?.phone || booking?.bookingContact?.mobile || "";
   
   const checkIn = booking?.overallCheckInDate ? new Date(booking.overallCheckInDate) : new Date();
   const checkOut = booking?.overallCheckOutDate ? new Date(booking.overallCheckOutDate) : new Date();

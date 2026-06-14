@@ -125,10 +125,12 @@ const CreateBooking = ({
  onClose,
  refreshBookings,
  booking,
+ onEditNewlyCreated,
 }: {
  onClose: () => void;
  refreshBookings?: () => void;
  booking?: any;
+ onEditNewlyCreated?: (booking: any) => void;
 }) => {
  // State
  const [loading, setLoading] = useState(false);
@@ -707,7 +709,13 @@ const CreateBooking = ({
  booking={confirmedBookingDetails}
  onBack={onClose}
  onSave={refreshBookings}
- onEdit={() => setConfirmedBookingDetails(null)}
+ onEdit={() => {
+   if (onEditNewlyCreated && !booking) {
+     onEditNewlyCreated(confirmedBookingDetails);
+   } else {
+     setConfirmedBookingDetails(null);
+   }
+ }}
  onCreateAnother={() => {
  setConfirmedBookingDetails(null);
  onClose();

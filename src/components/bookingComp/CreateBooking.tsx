@@ -1387,7 +1387,11 @@ const CreateBooking = ({
 
  {/* Available badge */}
  <td className="py-3 text-center">
- {availableCount > 0 ? (
+ {searchingRooms ? (
+ <div className="flex justify-center items-center">
+ <FiLoader className="animate-spin text-text-secondary" />
+ </div>
+ ) : availableCount > 0 ? (
  <span className="px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-md text-[10px] font-bold">
  {availableCount} Rooms
  </span>

@@ -422,7 +422,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  className="input-field cursor-pointer"
  >
  <option value="">No Tax Applied</option>
- {taxes.map((t) => (
+ {taxes.filter(t => t.isActive || t._id === formData.gstId).map((t) => (
  <option key={t._id} value={t._id}>
  {t.name} ({t.percentage}%)
  </option>

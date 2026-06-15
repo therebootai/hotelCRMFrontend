@@ -145,6 +145,10 @@ const BookingFullPage = () => {
  fetchOverview();
  }}
  refreshBookings={fetchBookingList}
+ onEditNewlyCreated={(bookingObj) => {
+    setShowPopup(false);
+    handleOpenEdit(bookingObj);
+  }}
  />
  )}
 

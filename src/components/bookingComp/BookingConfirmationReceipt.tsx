@@ -1,8 +1,9 @@
-import { FiMessageCircle, FiPrinter, FiMail, FiCheckCircle, FiUser, FiLoader } from "react-icons/fi";
+import { FiPrinter, FiMail, FiCheckCircle, FiUser, FiLoader } from "react-icons/fi";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import api from "../../lib/axios";
 import toast from "react-hot-toast";
+import PaymentReceiptTemplate, { type PaymentReceiptRef, type PaymentReceiptData } from "../ui/PaymentReceiptTemplate";
 
 const BookingConfirmationReceipt = ({ 
   booking: initialBooking, 
@@ -19,11 +20,12 @@ const BookingConfirmationReceipt = ({
 }) => {
   const [booking, setBooking] = useState(initialBooking);
   const [saving, setSaving] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const isSaved = booking?.isSaved !== false;
 
-  const customerName = booking?.customerDetails?.name || booking?.customer?.name || "Guest";
-  const customerPhone = booking?.customerDetails?.phone || booking?.customer?.phone || "";
+  const customerName = booking?.customerDetails?.name || booking?.customer?.name || booking?.bookingContact?.name || "Guest";
+  const customerPhone = booking?.customerDetails?.phone || booking?.customer?.phone || booking?.bookingContact?.mobile || "";
   
   const checkIn = booking?.overallCheckInDate ? new Date(booking.overallCheckInDate) : new Date();
   const checkOut = booking?.overallCheckOutDate ? new Date(booking.overallCheckOutDate) : new Date();
@@ -53,8 +55,83 @@ const BookingConfirmationReceipt = ({
     }
   };
   
+  const receiptRef = useRef<PaymentReceiptRef>(null);
+  const [printData, setPrintData] = useState<PaymentReceiptData | null>(null);
+
+  const handleEmail = async () => {
+    if (!booking?._id) return;
+    const emailToUse = booking.bookingContact?.email || booking.customerId?.email || booking.customerDetails?.email;
+    
+    if (!emailToUse) {
+      toast.error("No email address found for this guest");
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      await api.post(`/bookings/${booking._id}/email-receipt`, { email: emailToUse });
+      toast.success(`Receipt sent to ${emailToUse}`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to send email");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const handlePrint = () => {
-    window.print();
+    const item = booking;
+    const roomTypeNames = item.rooms?.map((r: any) => r.roomType?.name || r.roomType).join(", ") || "N/A";
+    const servicesList = (item.addons || []).map((a: any) => ({
+      service: a.serviceName || a.name || "Add-on",
+      description: "Additional Service",
+      qty: a.quantity || 1,
+      unitPrice: a.rate || 0,
+      amount: a.total || 0,
+      taxAmount: a.taxAmount || 0,
+      taxPercentage: a.taxPercentage || 0,
+    }));
+
+    const advancePaid = item.pricingSummary?.paidAmount || item.advanceAmount || 0;
+    const grandTotal = item.pricingSummary?.grandTotal || 0;
+
+    const data: PaymentReceiptData = {
+      bookingId: item.bookingId || item.reservationNumber || item._id?.substring(0, 8) || "N/A",
+      bookingDate: item.createdAt ? format(new Date(item.createdAt), "dd MMM yyyy") : format(new Date(), "dd MMM yyyy"),
+      bookingStatus: item.status || "CONFIRMED",
+      guest: {
+        name: item.bookingContact?.name || item.customerId?.name || item.customerDetails?.name || "Guest",
+        mobile: item.bookingContact?.mobile || item.customerId?.phone || item.customerDetails?.phone || "Not Provided",
+        email: item.bookingContact?.email || item.customerId?.email || item.customerDetails?.email || "Not Provided",
+        address: item.customerId?.address || "Not Provided",
+        noOfGuests: `${item.totalAdults || item.adults || 1} Adults${(item.totalChildren || item.children) ? ` + ${item.totalChildren || item.children} Children` : ''}`,
+        idProofType: "Not Provided",
+      },
+      stay: {
+        roomType: roomTypeNames,
+        checkInDate: item.overallCheckInDate ? format(new Date(item.overallCheckInDate), "dd MMM yyyy") : "N/A",
+        checkOutDate: item.overallCheckOutDate ? format(new Date(item.overallCheckOutDate), "dd MMM yyyy") : "N/A",
+        noOfNights: `${item.totalNights || 1} Nights`,
+        view: "Standard View",
+        district: "Jalpaiguri",
+      },
+      services: servicesList,
+      payment: {
+        roomCharges: item.pricingSummary?.roomTotal || 0,
+        roomChargesDesc: `Room Charges (₹${((item.pricingSummary?.roomTotal || 0) / (item.totalNights || 1)).toFixed(2)} × ${item.totalNights || 1} Nights)`,
+        servicesTotal: servicesList.reduce((acc: number, s: any) => acc + s.amount, 0),
+        taxAmount: item.pricingSummary?.taxAmount || 0,
+        roomTaxAmount: (item.pricingSummary?.taxAmount || 0) - servicesList.reduce((acc: number, s: any) => acc + (s.taxAmount || 0), 0),
+        grandTotal: grandTotal,
+        advancePaid: advancePaid,
+        balanceDue: item.pricingSummary?.dueAmount ?? (grandTotal - advancePaid),
+        paymentMode: advancePaid > 0 ? (item.paymentMode || "Online / UPI") : "N/A",
+      }
+    };
+
+    setPrintData(data);
+    setTimeout(() => {
+      receiptRef.current?.exportToPDF();
+    }, 100);
   };
 
   const advancePaid = booking?.pricingSummary?.paidAmount || booking?.advanceAmount || 0;
@@ -206,7 +283,7 @@ const BookingConfirmationReceipt = ({
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">Payment Mode</label>
-                    <div className="font-bold text-text-primary">Collected via Dashboard</div>
+                    <div className="font-bold text-text-primary">{advancePaid > 0 ? (booking?.paymentMode || "Online / UPI") : "N/A"}</div>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">Payment Date & Time</label>
@@ -260,18 +337,7 @@ const BookingConfirmationReceipt = ({
                   {!isSaved && <span className="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded uppercase font-bold">Requires Save</span>}
                 </div>
                 <div className="p-5 space-y-3">
-                  <button className="w-full flex items-center justify-between p-3 rounded-lg border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-left group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center">
-                        <FiMessageCircle size={16} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold">Send Booking Confirmation via WhatsApp</p>
-                        <p className="text-xs opacity-80">Share booking details and receipt to guest</p>
-                      </div>
-                    </div>
-                    <span className="transform group-hover:translate-x-1 transition-transform">→</span>
-                  </button>
+
                   <button onClick={handlePrint} className="w-full flex items-center justify-between p-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-left group">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center">
@@ -284,13 +350,17 @@ const BookingConfirmationReceipt = ({
                     </div>
                     <span className="transform group-hover:translate-x-1 transition-transform">→</span>
                   </button>
-                  <button className="w-full flex items-center justify-between p-3 rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-left group">
+                  <button 
+                    onClick={handleEmail}
+                    disabled={sendingEmail}
+                    className="w-full flex items-center justify-between p-3 rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-left group disabled:opacity-50"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center">
-                        <FiMail size={16} />
+                        {sendingEmail ? <FiLoader className="animate-spin" size={16} /> : <FiMail size={16} />}
                       </div>
                       <div>
-                        <p className="text-sm font-bold">Email Receipt</p>
+                        <p className="text-sm font-bold">{sendingEmail ? "Sending..." : "Email Receipt"}</p>
                         <p className="text-xs opacity-80">Send receipt to guest email</p>
                       </div>
                     </div>
@@ -335,10 +405,8 @@ const BookingConfirmationReceipt = ({
         </div>
         
         {/* Footer Actions */}
-        <div className="bg-white border-t border-border p-5 flex items-center justify-between print:hidden">
-          <button onClick={!isSaved ? onEdit : onBack} disabled={saving} className="px-6 py-2.5 rounded-lg border border-border text-sm font-bold text-text-secondary hover:bg-slate-50 transition-colors disabled:opacity-50">
-            {isSaved ? "← Back to Booking" : "← Edit Before Saving"}
-          </button>
+        <div className="bg-white border-t border-border p-5 flex items-center justify-end  print:hidden">
+          
           <div className="flex items-center gap-3">
             {isSaved && (
               <>
@@ -366,6 +434,12 @@ const BookingConfirmationReceipt = ({
           </div>
         </div>
 
+        {/* Hidden Payment Receipt Template for printing */}
+        <div className="hidden">
+          {printData && (
+            <PaymentReceiptTemplate ref={receiptRef} data={printData} />
+          )}
+        </div>
       </div>
     </div>
   );

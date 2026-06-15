@@ -405,10 +405,8 @@ const BookingConfirmationReceipt = ({
         </div>
         
         {/* Footer Actions */}
-        <div className="bg-white border-t border-border p-5 flex items-center justify-between print:hidden">
-          <button onClick={!isSaved ? onEdit : onBack} disabled={saving} className="px-6 py-2.5 rounded-lg border border-border text-sm font-bold text-text-secondary hover:bg-slate-50 transition-colors disabled:opacity-50">
-            {isSaved ? "← Back to Booking" : "← Edit Before Saving"}
-          </button>
+        <div className="bg-white border-t border-border p-5 flex items-center justify-end  print:hidden">
+          
           <div className="flex items-center gap-3">
             {isSaved && (
               <>

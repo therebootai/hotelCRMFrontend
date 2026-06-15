@@ -2524,7 +2524,7 @@ const CheckInForm = ({
          <span className="text-gray-400 uppercase tracking-wide w-16">Booked:</span> 
          <span className="text-gray-700">{bookedSummaryText}</span>
        </div>
-       <div className="flex items-center gap-2">
+       <div className="flex items-center gap-4">
          <span className="text-gray-400 uppercase tracking-wide w-16">Assigned:</span> 
          <span className="text-orange-600">{selectedSummaryText}</span>
        </div>

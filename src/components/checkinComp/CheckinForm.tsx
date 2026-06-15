@@ -142,6 +142,30 @@ interface RoomEntry {
  maxChildren?: number;
 }
 
+const Counter = ({ value, onChange, min = 0, max = 10 }: any) => (
+  <div className="flex items-center border border-border rounded-lg overflow-hidden bg-white h-8 w-20">
+    <button
+      type="button"
+      onClick={(e) => { e.preventDefault(); onChange(Math.max(min, value - 1)); }}
+      disabled={value <= min}
+      className="px-2 h-full hover:bg-slate-50 disabled:opacity-30 text-gray-500 transition-all font-bold"
+    >
+      -
+    </button>
+    <span className="flex-1 text-center font-bold text-xs text-gray-800">
+      {value}
+    </span>
+    <button
+      type="button"
+      onClick={(e) => { e.preventDefault(); onChange(Math.min(max, value + 1)); }}
+      disabled={value >= max}
+      className="px-2 h-full hover:bg-slate-50 disabled:opacity-30 text-gray-500 transition-all font-bold"
+    >
+      +
+    </button>
+  </div>
+);
+
 const CheckInForm = ({
  bookingData,
  onClose,
@@ -170,7 +194,7 @@ const CheckInForm = ({
 
  // Extra Services State
  const [extraServices, setExtraServices] = useState<any[]>([]);
- const [selectedServices, setSelectedServices] = useState<string[]>([]);
+ const [selectedAddons, setSelectedAddons] = useState<any[]>([]);
  const [roomSearchQuery, setRoomSearchQuery] = useState("");
 
   const handleAddCoGuest = (roomId: string) => {
@@ -568,10 +592,7 @@ const CheckInForm = ({
  setExtraServices(services);
  // Pre-select services that were booked as add-ons
  if (bookingData?.addons?.length) {
- const preSelected = bookingData.addons
- .map((a: any) => a.serviceId)
- .filter(Boolean);
- setSelectedServices(preSelected);
+ setSelectedAddons(bookingData.addons);
  }
  } catch (err) {
  console.error("Error fetching extra services:", err);
@@ -627,14 +648,9 @@ const CheckInForm = ({
 
   let addonsTotal = 0;
   let addonsTaxAmount = 0;
-  selectedServices.forEach((sId) => {
-    const service = extraServices.find((s) => s._id === sId);
-    if (service) {
-      const price = service.price || 0;
-      const taxPct = (service as any).taxPercentage || 0;
-      addonsTotal += price;
-      addonsTaxAmount += (price * taxPct) / 100;
-    }
+  selectedAddons.forEach((addon: any) => {
+    addonsTotal += addon.total || 0;
+    addonsTaxAmount += addon.taxAmount || 0;
   });
 
   const subTotal = roomTotal + addonsTotal;
@@ -1159,7 +1175,7 @@ const CheckInForm = ({
     setSignedGRCFile(null);
     setSignedGRCPreview(null);
     setDynamicDocs([]);
-    setSelectedServices([]);
+    setSelectedAddons([]);
     setStayFormData({
       checkInTime: new Date(),
       expectedCheckOutTime: addDays(new Date(), 1),
@@ -1345,15 +1361,15 @@ const CheckInForm = ({
  vehicleDetails: vehicles.filter(
  (v: any) => v.vehicleNumber && v.vehicleNumber.trim() !== "",
  ),
-  extraServices: selectedServices.map(sId => {
-    const s = extraServices.find(s => s._id === sId);
-    return {
-      serviceName: s?.name,
-      quantity: 1,
-      rate: s?.price || 0,
-      total: s?.price || 0
-    };
-  }),
+  extraServices: selectedAddons.map((a: any) => ({
+    serviceId: a.serviceId,
+    serviceName: a.serviceName,
+    quantity: a.quantity,
+    rate: a.rate,
+    total: a.total,
+    taxPercentage: a.taxPercentage || 0,
+    taxAmount: a.taxAmount || 0
+  })),
  specialRequests: stayFormData.specialRequests,
  notes: stayFormData.specialRequests,
  ...(editMode
@@ -2086,26 +2102,28 @@ const CheckInForm = ({
  <label className="text-[9px] font-bold text-gray-400 uppercase block mb-2">Add-ons & Facilities (Optional)</label>
  <div className="grid grid-cols-2 gap-2">
  {extraServices.map((service: any) => {
- const isSelected = selectedServices.includes(service._id);
+ const existing = selectedAddons.find((a: any) => a.serviceId === service._id);
+ const isSelected = !!existing;
  return (
- <label
+ <div
  key={service._id}
- className={`flex items-center justify-between p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
- isSelected ? "border-orange-500 bg-orange-50/50" : "border-border hover:border-gray-300"
+ className={`flex flex-col p-2.5 rounded-lg border-2 transition-all ${
+ isSelected ? "border-orange-500 bg-orange-50/50" : "border-border hover:border-gray-300 bg-white"
  }`}
  >
+ <label className="flex items-center justify-between cursor-pointer w-full">
  <div className="flex items-center gap-2">
  <input
  type="checkbox"
  checked={isSelected}
  onChange={() => {
  if (isSelected) {
- setSelectedServices(selectedServices.filter(id => id !== service._id));
+ setSelectedAddons(selectedAddons.filter((a: any) => a.serviceId !== service._id));
  } else {
- setSelectedServices([...selectedServices, service._id]);
+ setSelectedAddons([...selectedAddons, { serviceId: service._id, serviceName: service.name, quantity: 1, rate: service.price || 0, total: service.price || 0, taxPercentage: service.taxPercentage || 0, taxAmount: ((service.price || 0) * (service.taxPercentage || 0)) / 100 }]);
  }
  }}
- className="accent-orange-500"
+ className="accent-orange-500 w-4 h-4"
  />
  <div>
  <p className="font-bold text-[10px] text-gray-800">{service.name}</p>
@@ -2113,6 +2131,21 @@ const CheckInForm = ({
  </div>
  </div>
  </label>
+ {isSelected && (
+ <div className="mt-2 pt-2 border-t border-dashed border-orange-200 flex items-center justify-between">
+ <span className="text-[9px] text-gray-500 font-bold uppercase">Qty</span>
+ <div className="flex items-center gap-2">
+ <Counter
+ value={existing.quantity}
+ onChange={(val: number) => setSelectedAddons(selectedAddons.map((a: any) => a.serviceId === service._id ? { ...a, quantity: val, total: val * a.rate, taxAmount: (val * a.rate * a.taxPercentage) / 100 } : a))}
+ min={1}
+ max={50}
+ />
+ <span className="text-[10px] font-bold text-gray-800 ml-1">₹{existing.total.toLocaleString()}</span>
+ </div>
+ </div>
+ )}
+ </div>
  );
  })}
  </div>
@@ -2276,26 +2309,28 @@ const CheckInForm = ({
  <label className="text-[9px] font-bold text-gray-400 uppercase block mb-2">Add-ons & Facilities (Optional)</label>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
  {extraServices.map((service: any) => {
- const isSelected = selectedServices.includes(service._id);
+ const existing = selectedAddons.find((a: any) => a.serviceId === service._id);
+ const isSelected = !!existing;
  return (
- <label
+ <div
  key={service._id}
- className={`flex items-center justify-between p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
- isSelected ? "border-orange-500 bg-orange-50/50" : "border-border hover:border-gray-300"
+ className={`flex flex-col p-2.5 rounded-lg border-2 transition-all ${
+ isSelected ? "border-orange-500 bg-orange-50/50" : "border-border hover:border-gray-300 bg-white"
  }`}
  >
+ <label className="flex items-center justify-between cursor-pointer w-full">
  <div className="flex items-center gap-2">
  <input
  type="checkbox"
  checked={isSelected}
  onChange={() => {
  if (isSelected) {
- setSelectedServices(selectedServices.filter(id => id !== service._id));
+ setSelectedAddons(selectedAddons.filter((a: any) => a.serviceId !== service._id));
  } else {
- setSelectedServices([...selectedServices, service._id]);
+ setSelectedAddons([...selectedAddons, { serviceId: service._id, serviceName: service.name, quantity: 1, rate: service.price || 0, total: service.price || 0, taxPercentage: service.taxPercentage || 0, taxAmount: ((service.price || 0) * (service.taxPercentage || 0)) / 100 }]);
  }
  }}
- className="accent-orange-500"
+ className="accent-orange-500 w-4 h-4"
  />
  <div>
  <p className="font-bold text-[10px] text-gray-800">{service.name}</p>
@@ -2303,6 +2338,21 @@ const CheckInForm = ({
  </div>
  </div>
  </label>
+ {isSelected && (
+ <div className="mt-2 pt-2 border-t border-dashed border-orange-200 flex items-center justify-between">
+ <span className="text-[9px] text-gray-500 font-bold uppercase">Qty</span>
+ <div className="flex items-center gap-2">
+ <Counter
+ value={existing.quantity}
+ onChange={(val: number) => setSelectedAddons(selectedAddons.map((a: any) => a.serviceId === service._id ? { ...a, quantity: val, total: val * a.rate, taxAmount: (val * a.rate * a.taxPercentage) / 100 } : a))}
+ min={1}
+ max={50}
+ />
+ <span className="text-[10px] font-bold text-gray-800 ml-1">₹{existing.total.toLocaleString()}</span>
+ </div>
+ </div>
+ )}
+ </div>
  );
  })}
  </div>
@@ -2381,10 +2431,10 @@ const CheckInForm = ({
  <span>₹{roomAddOnTotal.toLocaleString()}</span>
  </div>
  )}
- {selectedServices.length > 0 && (
+ {selectedAddons.length > 0 && (
  <div className="flex justify-between">
  <span>Selected Add-ons</span>
- <span>₹{selectedServices.reduce((sum, sId) => sum + (extraServices.find(s => s._id === sId)?.price || 0), 0).toLocaleString()}</span>
+ <span>₹{selectedAddons.reduce((sum, a: any) => sum + (a.total || 0), 0).toLocaleString()}</span>
  </div>
  )}
  <div className="h-px bg-gray-100" />
@@ -2399,18 +2449,12 @@ const CheckInForm = ({
  <span>Room Tax ({(bookingData?.pricingSummary?.taxPercentage || 12)}%)</span>
  <span>₹{Math.round(roomTotal * (bookingData?.pricingSummary?.taxPercentage ? bookingData.pricingSummary.taxPercentage / 100 : 0.12)).toLocaleString()}</span>
  </div>
- {selectedServices.filter(sId => {
-    const service = extraServices.find(s => s._id === sId);
-    return service && (service as any).taxPercentage > 0;
- }).map((sId, idx) => {
-    const service = extraServices.find(s => s._id === sId)!;
-    return (
-      <div key={idx} className="flex justify-between text-[10px] text-gray-400 pl-2">
-      <span>{service.name} Tax ({(service as any).taxPercentage}%)</span>
-      <span>₹{Math.round(service.price * ((service as any).taxPercentage / 100)).toLocaleString()}</span>
-      </div>
-    );
- })}
+ {selectedAddons.filter((a: any) => a.taxAmount > 0).map((addon: any, idx) => (
+ <div key={`addon-tax-${idx}`} className="flex justify-between text-[10px] text-gray-400 pl-2">
+ <span>{addon.serviceName} Tax ({addon.taxPercentage}%)</span>
+ <span>₹{Math.round(addon.taxAmount).toLocaleString()}</span>
+ </div>
+ ))}
  <div className="flex justify-between items-center p-3 bg-orange-50 text-orange-500 rounded-xl mt-2 border border-orange-100">
  <span className="text-sm font-black">Estimated Total</span>
  <span className="text-base font-black">₹{grandTotal.toLocaleString()}</span>

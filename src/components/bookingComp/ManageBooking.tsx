@@ -84,7 +84,7 @@ const ManageBooking = ({
         grandTotal: item.pricingSummary?.grandTotal || 0,
         advancePaid: item.pricingSummary?.paidAmount || item.advanceAmount || 0,
         balanceDue: item.pricingSummary?.dueAmount ?? ((item.pricingSummary?.grandTotal || 0) - (item.pricingSummary?.paidAmount || item.advanceAmount || 0)),
-        paymentMode: item.paymentMode || "Online / UPI",
+        paymentMode: (item.pricingSummary?.paidAmount || item.advanceAmount || 0) > 0 ? (item.paymentMode || "Online / UPI") : "N/A",
       }
     };
 

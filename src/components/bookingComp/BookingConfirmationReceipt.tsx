@@ -124,7 +124,7 @@ const BookingConfirmationReceipt = ({
         grandTotal: grandTotal,
         advancePaid: advancePaid,
         balanceDue: item.pricingSummary?.dueAmount ?? (grandTotal - advancePaid),
-        paymentMode: item.paymentMode || "Online / UPI",
+        paymentMode: advancePaid > 0 ? (item.paymentMode || "Online / UPI") : "N/A",
       }
     };
 
@@ -283,7 +283,7 @@ const BookingConfirmationReceipt = ({
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">Payment Mode</label>
-                    <div className="font-bold text-text-primary">Collected via Dashboard</div>
+                    <div className="font-bold text-text-primary">{advancePaid > 0 ? (booking?.paymentMode || "Online / UPI") : "N/A"}</div>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">Payment Date & Time</label>

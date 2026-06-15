@@ -15,11 +15,13 @@ import {
  FiEye,
  FiMoreVertical,
  FiFilter,
- FiPlus
+ FiPlus,
+ FiCopy
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import Pagination from "../layout/Pagination";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 
 const ManageBooking = ({
  data,
@@ -41,6 +43,12 @@ const ManageBooking = ({
 
  const receiptRef = useRef<PaymentReceiptRef>(null);
  const [printData, setPrintData] = useState<PaymentReceiptData | null>(null);
+
+ const handleCopy = (e: React.MouseEvent, text: string, label: string) => {
+   e.stopPropagation();
+   navigator.clipboard.writeText(text);
+   toast.success(`${label} copied to clipboard!`);
+ };
 
   const handlePrint = (item: any) => {
     const roomTypeNames = item.rooms?.map((r: any) => r.roomType?.name || r.roomType).join(", ") || "N/A";
@@ -286,10 +294,18 @@ const ManageBooking = ({
  className="flex items-center px-4 py-3 hover:bg-gray-50/50 transition-all min-w-[1050px] lg:min-w-0 "
  >
  {/* Booking ID */}
- <div className="flex-[0.8]">
+ <div className="flex-[0.8] flex items-center gap-2">
  <span className={`font-bold text-sm ${viewType === "Corporate" ? "text-blue-600" : "text-orange-500"}`}>
  {item.bookingId}
  </span>
+ <button
+   type="button"
+   onClick={(e) => handleCopy(e, item.bookingId, "Booking ID")}
+   className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+   title="Copy Booking ID"
+ >
+   <FiCopy size={12} />
+ </button>
  </div>
 
  {/* Guest Name / Mobile No. */}
@@ -298,6 +314,16 @@ const ManageBooking = ({
  <div className="flex items-center gap-1 text-[10px] text-gray-500 ">
  <FiPhone size={8} className=" " />
  {guestPhone}
+ {guestPhone && (
+   <button
+     type="button"
+     onClick={(e) => handleCopy(e, guestPhone, "Guest Mobile")}
+     className="text-gray-400 hover:text-gray-600 transition-colors ml-1 p-0.5 rounded hover:bg-gray-100"
+     title="Copy Mobile Number"
+   >
+     <FiCopy size={10} />
+   </button>
+ )}
  </div>
  {viewType === "Corporate" && item.corporateDetails?.companyName && (
  <p className="text-[9px] text-blue-600 font-bold ">{item.corporateDetails.companyName}</p>

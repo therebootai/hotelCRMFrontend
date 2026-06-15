@@ -284,6 +284,7 @@ const CreateBooking = ({
  }
 
  setPurposeOfVisit(booking.purposeOfVisit || "Leisure / Holiday");
+ setRemarks(booking.notes || booking.remarks || "");
  setBookingStatus(booking.status || "Pending");
  if (booking.expiresAt) {
  setHoldTillDate(new Date(booking.expiresAt));

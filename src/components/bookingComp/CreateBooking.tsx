@@ -1392,8 +1392,12 @@ const CreateBooking = ({
  <FiLoader className="animate-spin text-text-secondary" />
  </div>
  ) : availableCount > 0 ? (
- <span className="px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-md text-[10px] font-bold">
- {availableCount} Rooms
+ <span className={`px-2 py-0.5 border rounded-md text-[10px] font-bold ${
+  availableCount - selection.count > 0 
+    ? "bg-green-50 text-green-600 border-green-100" 
+    : "bg-slate-50 text-slate-500 border-slate-200"
+}`}>
+ {Math.max(0, availableCount - selection.count)} {Math.max(0, availableCount - selection.count) === 1 ? "Room" : "Rooms"}
  </span>
  ) : (
  <span className="px-2 py-0.5 bg-red-50 text-red-500 border border-red-100 rounded-md text-[10px] font-bold">

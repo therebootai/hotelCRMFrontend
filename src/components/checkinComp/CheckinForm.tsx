@@ -1756,7 +1756,7 @@ const CheckInForm = ({
  <div>
  <p className="text-[8px] text-gray-400 uppercase font-black">Visit Date</p>
  <p className="font-bold text-gray-800">
- {format(stayFormData.checkInTime, "dd May yyyy")}
+ {format(stayFormData.checkInTime, "dd MMM yyyy")}
  </p>
  </div>
  </div>
@@ -1848,7 +1848,7 @@ const CheckInForm = ({
  <div>
  <p className="text-[8px] text-gray-400 uppercase font-black">Stay Duration</p>
  <p className="font-bold text-gray-800">
- {format(stayFormData.checkInTime, "dd May")} - {format(stayFormData.expectedCheckOutTime, "dd May yyyy")} ({nights} Nights)
+ {format(stayFormData.checkInTime, "dd MMM")} - {format(stayFormData.expectedCheckOutTime, "dd MMM yyyy")} ({nights} Nights)
  </p>
  </div>
  </div>
@@ -2721,7 +2721,7 @@ const CheckInForm = ({
  <div>
  <p className="text-[9px] text-gray-400 uppercase font-black mb-1">Stay Duration</p>
  <p className="font-bold text-gray-800 text-base">{nights} Nights</p>
- <p className="text-[8px] text-gray-400">({format(stayFormData.checkInTime, "dd May")} - {format(stayFormData.expectedCheckOutTime, "dd May")})</p>
+ <p className="text-[8px] text-gray-400">({format(stayFormData.checkInTime, "dd MMM")} - {format(stayFormData.expectedCheckOutTime, "dd MMM")})</p>
  </div>
  <div>
  <p className="text-[9px] text-gray-400 uppercase font-black mb-1">Estimated Room Rent</p>
@@ -3333,11 +3333,11 @@ const CheckInForm = ({
  </div>
  <div className="flex justify-between">
  <span>Check-in</span>
- <span className="text-gray-800">{format(stayFormData.checkInTime, "dd May yyyy, hh:mm a")}</span>
+ <span className="text-gray-800">{format(stayFormData.checkInTime, "dd MMM yyyy, hh:mm a")}</span>
  </div>
  <div className="flex justify-between">
  <span>Check-out</span>
- <span className="text-gray-800">{format(stayFormData.expectedCheckOutTime, "dd May yyyy, hh:mm a")}</span>
+ <span className="text-gray-800">{format(stayFormData.expectedCheckOutTime, "dd MMM yyyy, hh:mm a")}</span>
  </div>
  <div className="flex justify-between">
  <span>Stay Duration</span>
@@ -3506,8 +3506,8 @@ const CheckInForm = ({
  <div>
  <span className="text-[8px] font-bold text-gray-400 uppercase block">Stay & Room Details</span>
  <p className="font-bold text-sm text-gray-800">Rooms: {selectedRooms.map(r => r.roomNumber).join(", ")}</p>
- <p className="text-[9px] text-gray-500 font-medium">📅 Check-in: {format(stayFormData.checkInTime, "dd May yyyy, hh:mm a")}</p>
- <p className="text-[9px] text-gray-500 font-medium">📅 Check-out: {format(stayFormData.expectedCheckOutTime, "dd May yyyy, hh:mm a")}</p>
+ <p className="text-[9px] text-gray-500 font-medium">📅 Check-in: {format(stayFormData.checkInTime, "dd MMM yyyy, hh:mm a")}</p>
+ <p className="text-[9px] text-gray-500 font-medium">📅 Check-out: {format(stayFormData.expectedCheckOutTime, "dd MMM yyyy, hh:mm a")}</p>
  <p className="text-[9px] text-gray-500 font-medium">👤 Guests: {guests.length} ({guests.filter(g => Number(g.age) > 12 || !g.age).length} Adults, {guests.filter(g => Number(g.age) <= 12 && g.age).length} Children)</p>
  </div>
 

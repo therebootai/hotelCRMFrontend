@@ -20,6 +20,7 @@ const BookingConfirmationReceipt = ({
 }) => {
   const [booking, setBooking] = useState(initialBooking);
   const [saving, setSaving] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const isSaved = booking?.isSaved !== false;
 
@@ -56,6 +57,26 @@ const BookingConfirmationReceipt = ({
   
   const receiptRef = useRef<PaymentReceiptRef>(null);
   const [printData, setPrintData] = useState<PaymentReceiptData | null>(null);
+
+  const handleEmail = async () => {
+    if (!booking?._id) return;
+    const emailToUse = booking.bookingContact?.email || booking.customerId?.email || booking.customerDetails?.email;
+    
+    if (!emailToUse) {
+      toast.error("No email address found for this guest");
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      await api.post(`/bookings/${booking._id}/email-receipt`, { email: emailToUse });
+      toast.success(`Receipt sent to ${emailToUse}`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to send email");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   const handlePrint = () => {
     const item = booking;
@@ -329,13 +350,17 @@ const BookingConfirmationReceipt = ({
                     </div>
                     <span className="transform group-hover:translate-x-1 transition-transform">→</span>
                   </button>
-                  <button className="w-full flex items-center justify-between p-3 rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-left group">
+                  <button 
+                    onClick={handleEmail}
+                    disabled={sendingEmail}
+                    className="w-full flex items-center justify-between p-3 rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors text-left group disabled:opacity-50"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center">
-                        <FiMail size={16} />
+                        {sendingEmail ? <FiLoader className="animate-spin" size={16} /> : <FiMail size={16} />}
                       </div>
                       <div>
-                        <p className="text-sm font-bold">Email Receipt</p>
+                        <p className="text-sm font-bold">{sendingEmail ? "Sending..." : "Email Receipt"}</p>
                         <p className="text-xs opacity-80">Send receipt to guest email</p>
                       </div>
                     </div>

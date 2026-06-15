@@ -1,4 +1,4 @@
-import { FiMessageCircle, FiPrinter, FiMail, FiCheckCircle, FiUser, FiLoader } from "react-icons/fi";
+import { FiPrinter, FiMail, FiCheckCircle, FiUser, FiLoader } from "react-icons/fi";
 import { format } from "date-fns";
 import { useState, useRef } from "react";
 import api from "../../lib/axios";

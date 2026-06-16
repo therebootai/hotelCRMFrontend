@@ -94,9 +94,9 @@ const PaymentReceiptTemplate = forwardRef<PaymentReceiptRef, Props>(({ data }, r
         >
           {/* Header section */}
           <div className="flex justify-between items-center mb-2">
-            <div className="w-24 h-24 border border-black-300 flex items-center justify-center rounded-lg bg-black-50 text-black-400">
-              LOGO
-            </div>
+            <div className="w-24 h-24 flex items-center justify-center">
+            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+          </div>
             <div className="flex-1 text-center px-4">
               <h1 className="text-4xl font-bold text-[#0b1b3d] tracking-wider mb-2">SIDDHARAJ RESORT</h1>
               <div className="flex items-center justify-center text-black-700 mb-1 gap-1">
@@ -107,9 +107,11 @@ const PaymentReceiptTemplate = forwardRef<PaymentReceiptRef, Props>(({ data }, r
               <p className="text-black-600 text-[10px]">CIN - U45400WB2015PTC207217</p>
             </div>
             <div className="w-24 flex flex-col items-center">
-              <div className="w-20 h-20 border border-black-300 flex items-center justify-center bg-black-50 text-black-400 mb-1">QR</div>
-              <span className="text-[8px] font-bold">SCAN FOR LOCATION</span>
+            <div className="w-20 h-20 mb-1">
+              <img src="/qr.png" alt="QR Code" className="w-full h-full object-contain" />
             </div>
+            <span className="text-[8px] font-bold">SCAN FOR LOCATION</span>
+          </div>
           </div>
 
           <div className="flex justify-between items-center text-[10px] text-black-800 pb-2 border-b-2 border-[#a47e3c] mb-6 px-4">

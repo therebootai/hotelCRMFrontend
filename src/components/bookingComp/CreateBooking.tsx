@@ -158,7 +158,13 @@ const CreateBooking = ({
 
  // Search Filters
  const [adultsFilter, setAdultsFilter] = useState(2);
- const [childrenFilter, setChildrenFilter] = useState(1);
+ const [childrenFilter, setChildrenFilter] = useState(0);
+
+ // Specific Room Assignment
+ const [isAssignSpecificRoom, setIsAssignSpecificRoom] = useState(false);
+ const [availablePhysicalRooms, setAvailablePhysicalRooms] = useState<any[]>([]);
+ const [fetchingPhysicalRooms, setFetchingPhysicalRooms] = useState(false);
+ const [selectedSpecificRooms, setSelectedSpecificRooms] = useState<Record<string, { adults: number; children: number; roomTypeId: string; roomTypeName: string; basePrice: number; roomNumber: string }>>({});
 
  // Confirmed Booking State
  const [confirmedBookingDetails, setConfirmedBookingDetails] = useState<any>(null);
@@ -389,8 +395,32 @@ const CreateBooking = ({
  setTotalNights(nights > 0 ? nights : 1);
  }, [checkInDate, checkOutDate]);
 
- // Validate check-out time is after check-in time
- useEffect(() => {
+ // Fetch available physical rooms if specific room assignment is checked
+  useEffect(() => {
+    if (isAssignSpecificRoom && bookingCategory === "Room Stay" && checkInDate && checkOutDate) {
+      const fetchPhysicalRooms = async () => {
+        setFetchingPhysicalRooms(true);
+        try {
+          const res = await api.get("/bookings/available", {
+            params: {
+              checkIn: checkInDate.toISOString(),
+              checkOut: checkOutDate.toISOString(),
+            },
+          });
+          // Filter out unavailable rooms just in case
+          const rooms = (res.data.data?.rooms || []).filter((r: any) => r.isAvailable);
+          setAvailablePhysicalRooms(rooms);
+        } catch (error) {
+          console.error("Failed to fetch available physical rooms", error);
+        } finally {
+          setFetchingPhysicalRooms(false);
+        }
+      };
+      fetchPhysicalRooms();
+    }
+  }, [isAssignSpecificRoom, checkInDate, checkOutDate, bookingCategory]);
+
+  useEffect(() => {
  if (checkInDate && checkOutDate) {
  const checkInTime = checkInDate.getTime();
  const checkOutTime = checkOutDate.getTime();
@@ -561,10 +591,14 @@ const CreateBooking = ({
  children: selectedCounts[rt._id].children,
  }));
 
- if (bookingCategory === "Room Stay" && selectedRoomTypesList.length === 0) {
- toast.error("Please select at least one room type");
- return;
- }
+  if (bookingCategory === "Room Stay" && !isAssignSpecificRoom && selectedRoomTypesList.length === 0) {
+    toast.error("Please select at least one room type");
+    return;
+  }
+  if (bookingCategory === "Room Stay" && isAssignSpecificRoom && Object.keys(selectedSpecificRooms).length === 0) {
+    toast.error("Please select at least one specific room");
+    return;
+  }
  if (bookingCategory === "Day Access" && !selectedPackageId) {
  toast.error("Please select an access package");
  return;
@@ -576,19 +610,32 @@ const CreateBooking = ({
 
  setLoading(true);
  try {
- const roomTypesData =
- bookingCategory === "Room Stay"
- ? selectedRoomTypesList.map((entry) => ({
- roomTypeId: entry.roomTypeId,
- roomTypeName: entry.roomTypeName,
- basePrice: entry.basePrice,
- count: entry.count,
- checkInDate: checkInDate.toISOString(),
- checkOutDate: checkOutDate.toISOString(),
- adults: entry.adults,
- children: entry.children,
- }))
- : undefined;
+      const roomTypesData =
+        bookingCategory === "Room Stay" && !isAssignSpecificRoom
+          ? selectedRoomTypesList.map((entry) => ({
+              roomTypeId: entry.roomTypeId,
+              roomTypeName: entry.roomTypeName,
+              basePrice: entry.basePrice,
+              count: entry.count,
+              checkInDate: checkInDate.toISOString(),
+              checkOutDate: checkOutDate.toISOString(),
+              adults: entry.adults,
+              children: entry.children,
+            }))
+          : undefined;
+
+      const roomsData = 
+        bookingCategory === "Room Stay" && isAssignSpecificRoom
+          ? Object.entries(selectedSpecificRooms).map(([roomId, data]) => ({
+              roomId,
+              roomType: data.roomTypeId,
+              checkInDate: checkInDate.toISOString(),
+              checkOutDate: checkOutDate.toISOString(),
+              adults: data.adults,
+              children: data.children,
+              pricePerNight: data.basePrice,
+            }))
+          : undefined;
 
  const mergedSpecialRequests = [
  `[Purpose: ${purposeOfVisit}]`,
@@ -620,6 +667,8 @@ const CreateBooking = ({
  adults: adultsFilter,
  children: childrenFilter,
  addons: selectedAddons,
+ roomTypesData,
+ rooms: roomsData,
  expiresAt: undefined,
  };
 
@@ -1307,7 +1356,7 @@ const CreateBooking = ({
  </div>
 
  {/* SECTION B: ROOM AVAILABILITY (only for Room Stay) */}
- {bookingCategory === "Room Stay" && (
+ {bookingCategory === "Room Stay" && !isAssignSpecificRoom && (
  <div className="bg-white border border-border rounded-xl p-5">
  <div className="flex justify-between items-center mb-4">
  <div className="flex items-center gap-3">
@@ -1466,12 +1515,13 @@ const CreateBooking = ({
  {/* Notice banner */}
  <div className="mt-3 p-3 bg-amber-50/50 border border-amber-200/50 rounded-xl flex items-center justify-between text-[11px] text-amber-700">
  <p>
- ⚠️ Note: Room will be assigned at the time of Check-in based
- on availability.
+ ⚠️ Note: Specific Room selection overrides category counts.
  </p>
  <label className="flex items-center gap-1 cursor-pointer font-bold select-none">
  <input
  type="checkbox"
+ checked={isAssignSpecificRoom}
+ onChange={(e) => setIsAssignSpecificRoom(e.target.checked)}
  className="w-3.5 h-3.5 accent-amber-600 rounded"
  />
  Assign Specific Room (Optional)
@@ -1479,6 +1529,173 @@ const CreateBooking = ({
  </div>
  </div>
  )}
+
+ {bookingCategory === "Room Stay" && isAssignSpecificRoom && (
+  <div className="bg-white border border-border rounded-xl p-5 mt-4">
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-3">
+        <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
+          B
+        </span>
+        <h3 className="font-bold text-text-primary text-sm uppercase tracking-wider">
+          Specific Room Selection
+        </h3>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setIsAssignSpecificRoom(false);
+          setSelectedSpecificRooms({});
+        }}
+        className="text-[10px] font-bold text-slate-500 underline hover:text-slate-800"
+      >
+        Back to Category Selection
+      </button>
+    </div>
+
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm border-collapse">
+        <thead>
+          <tr className="border-b border-border text-[9px] font-black uppercase text-text-secondary tracking-wider">
+            <th className="py-2.5">Room Number</th>
+            <th className="py-2.5">Type & Info</th>
+            <th className="py-2.5 text-center">Max Occupancy</th>
+            <th className="py-2.5 text-right">Rate / Night (₹)</th>
+            <th className="py-2.5 text-center">Guests</th>
+            <th className="py-2.5 text-right pr-2">Select</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {fetchingPhysicalRooms ? (
+            <tr>
+              <td colSpan={6} className="py-4 text-center">
+                <FiLoader className="animate-spin text-primary inline-block mr-2" />
+                <span className="text-text-secondary text-xs">Loading available rooms...</span>
+              </td>
+            </tr>
+          ) : availablePhysicalRooms.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="py-4 text-center text-text-secondary text-xs">
+                No physical rooms available for the selected dates.
+              </td>
+            </tr>
+          ) : (
+            availablePhysicalRooms.map((roomData) => {
+              const r = roomData.room;
+              const rt = roomData.roomType;
+              const isSelected = !!selectedSpecificRooms[r._id];
+              const selection = selectedSpecificRooms[r._id] || { adults: adultsFilter, children: childrenFilter };
+
+              return (
+                <tr
+                  key={r._id}
+                  className={`align-middle hover:bg-slate-50/50 transition-colors ${
+                    isSelected ? "bg-primary/5" : ""
+                  }`}
+                >
+                  <td className="py-3 font-black text-text-primary text-sm">
+                    {r.roomNumber}
+                  </td>
+                  <td className="py-3">
+                    <span className="font-bold text-text-primary text-xs block">
+                      {rt?.name || "Unknown"}
+                    </span>
+                    <span className="text-[10px] text-text-secondary">
+                      Floor {r.floor}
+                    </span>
+                  </td>
+                  <td className="py-3 text-center text-text-secondary text-xs font-bold">
+                    👤 {r.maxAdults} Adults, {r.maxChildren} Kids
+                  </td>
+                  <td className="py-3 text-right font-bold text-text-primary text-sm">
+                    ₹{r.basePrice.toLocaleString()}
+                  </td>
+                  <td className="py-3 text-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span className="text-text-secondary">A:</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={r.maxAdults}
+                          value={selection.adults}
+                          onChange={(e) => {
+                            if (!isSelected) return;
+                            setSelectedSpecificRooms(prev => ({
+                              ...prev,
+                              [r._id]: { ...prev[r._id], adults: Number(e.target.value) }
+                            }));
+                          }}
+                          className={`w-10 border rounded px-1 text-center ${!isSelected ? 'bg-slate-50 text-slate-400' : 'bg-white'}`}
+                          disabled={!isSelected}
+                        />
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span className="text-text-secondary">C:</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={r.maxChildren}
+                          value={selection.children}
+                          onChange={(e) => {
+                            if (!isSelected) return;
+                            setSelectedSpecificRooms(prev => ({
+                              ...prev,
+                              [r._id]: { ...prev[r._id], children: Number(e.target.value) }
+                            }));
+                          }}
+                          className={`w-10 border rounded px-1 text-center ${!isSelected ? 'bg-slate-50 text-slate-400' : 'bg-white'}`}
+                          disabled={!isSelected}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3 text-right pr-2">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedSpecificRooms(prev => ({
+                            ...prev,
+                            [r._id]: {
+                              adults: adultsFilter,
+                              children: childrenFilter,
+                              roomTypeId: rt?._id,
+                              roomTypeName: rt?.name,
+                              basePrice: r.basePrice,
+                              roomNumber: r.roomNumber
+                            }
+                          }));
+                        } else {
+                          setSelectedSpecificRooms(prev => {
+                            const clone = { ...prev };
+                            delete clone[r._id];
+                            return clone;
+                          });
+                        }
+                      }}
+                      className="w-4 h-4 accent-primary rounded cursor-pointer"
+                    />
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+      <span className="text-sm text-text-secondary font-bold">
+        Selected Rooms: {Object.keys(selectedSpecificRooms).length}
+      </span>
+      <span className="text-sm font-black text-text-primary">
+        Total Guests: {Object.values(selectedSpecificRooms).reduce((acc, curr) => acc + curr.adults + curr.children, 0)}
+      </span>
+    </div>
+  </div>
+  )}
 
  {/* SECTION C: GUEST DETAILS (PRIMARY CONTACT) */}
  <div className="bg-white border border-border rounded-xl p-5">

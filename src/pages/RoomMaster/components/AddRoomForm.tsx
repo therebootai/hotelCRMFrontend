@@ -38,7 +38,6 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  const [isFetchingDeps, setIsFetchingDeps] = useState(true);
 
  const [roomTypes, setRoomTypes] = useState<{ _id: string; name: string; basePrice: number }[]>([]);
- const [taxes, setTaxes] = useState<TaxGst[]>([]);
  const [amenitiesList, setAmenitiesList] = useState<Amenity[]>([]);
 
  const [formData, setFormData] = useState({
@@ -65,14 +64,12 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  const fetchDependencies = async () => {
  try {
  setIsFetchingDeps(true);
- const [rtRes, taxRes, amRes] = await Promise.all([
+ const [rtRes, amRes] = await Promise.all([
  api.get("/room-types"),
- api.get("/tax-gst?type=Room"),
  api.get("/amenities"),
  ]);
 
  setRoomTypes(rtRes.data?.data || []);
- setTaxes(taxRes.data?.data || []);
  setAmenitiesList(amRes.data?.data || []);
 
  if (initialData) {

@@ -1233,11 +1233,9 @@ const CheckInForm = ({
       const rooms = selectedRooms.filter(r => !!r.roomId);
 
       if (rooms.length > 0) {
-        rooms.forEach((room, index) => {
-          if (updatedGuests[index]) {
-            updatedGuests[index].assignedRoomId = room.roomId;
-            updatedGuests[index].isPrimary = true;
-          } else {
+        if (partyType === "Corporate") {
+          // For corporate, we only need 1 primary guest. We don't auto-create one per room.
+          if (updatedGuests.length === 0) {
             updatedGuests.push({
               id: `g-${Date.now()}-${Math.random()}`,
               name: "",
@@ -1248,19 +1246,46 @@ const CheckInForm = ({
               age: "30",
               nationality: "Indian",
               isPrimary: true,
-              assignedRoomId: room.roomId,
+              assignedRoomId: rooms[0].roomId,
               idDocument: null,
               pendingDocFile: null,
               pendingDocPreview: null,
             });
+          } else {
+            updatedGuests.forEach(g => g.isPrimary = false);
+            updatedGuests[0].isPrimary = true;
+            updatedGuests[0].assignedRoomId = rooms[0].roomId;
           }
-        });
+        } else {
+          rooms.forEach((room, index) => {
+            if (updatedGuests[index]) {
+              updatedGuests[index].assignedRoomId = room.roomId;
+              updatedGuests[index].isPrimary = true;
+            } else {
+              updatedGuests.push({
+                id: `g-${Date.now()}-${Math.random()}`,
+                name: "",
+                mobileNo: "",
+                idType: "Aadhar Card",
+                idNumber: "",
+                gender: "",
+                age: "30",
+                nationality: "Indian",
+                isPrimary: true,
+                assignedRoomId: room.roomId,
+                idDocument: null,
+                pendingDocFile: null,
+                pendingDocPreview: null,
+              });
+            }
+          });
 
-        // Remaining guests become co-guests distributed across rooms
-        for (let i = rooms.length; i < updatedGuests.length; i++) {
-          updatedGuests[i].isPrimary = false;
-          const roomIndex = i % rooms.length;
-          updatedGuests[i].assignedRoomId = rooms[roomIndex].roomId;
+          // Remaining guests become co-guests distributed across rooms
+          for (let i = rooms.length; i < updatedGuests.length; i++) {
+            updatedGuests[i].isPrimary = false;
+            const roomIndex = i % rooms.length;
+            updatedGuests[i].assignedRoomId = rooms[roomIndex].roomId;
+          }
         }
 
         setGuests(updatedGuests);

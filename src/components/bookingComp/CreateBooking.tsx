@@ -1198,7 +1198,8 @@ const CreateBooking = ({
   }
 }}
  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"
- dateFormat="dd MMM yyyy"
+ dateFormat="dd MMM yyyy, hh:mm a"
+ showTimeSelect
  />
  </div>
  </div>
@@ -1213,8 +1214,9 @@ const CreateBooking = ({
  setCheckOutDate(d || addDays(checkInDate, 1))
  }
  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"
- dateFormat="dd MMM yyyy"
- minDate={checkInDate}
+ dateFormat="dd MMM yyyy, hh:mm a"
+ showTimeSelect
+ minDate={addDays(checkInDate, 1)}
  />
  </div>
 

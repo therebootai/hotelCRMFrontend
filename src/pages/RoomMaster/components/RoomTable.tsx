@@ -15,7 +15,6 @@ export interface Room {
  extraBedAllowed: boolean;
  extraBedCharge?: number;
  discountPercentage: number;
- gstId?: { _id: string; percentage: number };
  roomSize?: number;
  viewType?: string;
  amenities: { _id: string; name: string }[];
@@ -129,7 +128,6 @@ export default function RoomTable({
  <th className={`${headerPadding} font-semibold text-text-secondary uppercase tracking-wider`}>Room No</th>
  <th className={`${headerPadding} font-semibold text-text-secondary uppercase tracking-wider`}>Room Type</th>
  <th className={`${headerPadding} font-semibold text-text-secondary uppercase tracking-wider`}>Base Price</th>
- <th className={`${headerPadding} font-semibold text-text-secondary uppercase tracking-wider`}>GST %</th>
  <th className={`${headerPadding} font-semibold text-text-secondary uppercase tracking-wider`}>Amenities</th>
  <th className={`${headerPadding} font-semibold text-text-secondary uppercase tracking-wider`}>Status</th>
  {!isSelectionMode && (
@@ -167,7 +165,6 @@ export default function RoomTable({
  <td className={`${cellPadding} text-text-primary font-medium ${textScale}`}>
  ₹{(room.basePrice ?? room.roomType?.basePrice)?.toLocaleString('en-IN') ?? '—'}
  </td>
- <td className={`${cellPadding} text-text-secondary ${textScale}`}>{room.gstId?.percentage || 0}%</td>
  <td className={cellPadding}>
  <div className="flex gap-1.5 flex-wrap max-w-[200px]">
  {room.amenities?.slice(0, 3).map((amenity, idx) => (

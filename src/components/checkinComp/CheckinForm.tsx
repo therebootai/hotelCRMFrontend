@@ -197,6 +197,7 @@ const CheckInForm = ({
  const [extraServices, setExtraServices] = useState<any[]>([]);
  const [selectedAddons, setSelectedAddons] = useState<any[]>([]);
  const [roomSearchQuery, setRoomSearchQuery] = useState("");
+ const [showEarlyCheckInWarning, setShowEarlyCheckInWarning] = useState<boolean>(false);
 
   const handleAddCoGuest = (roomId: string) => {
     const newGuest = {
@@ -216,6 +217,21 @@ const CheckInForm = ({
     };
     setGuests(prev => [...prev, newGuest as any]);
   };
+
+  useEffect(() => {
+    if (bookingData && !editMode && !existingCheckIn) {
+      const scheduledCheckIn = bookingData.overallCheckInDate ? new Date(bookingData.overallCheckInDate) : null;
+      if (scheduledCheckIn) {
+        const now = new Date();
+        const startOfScheduled = new Date(scheduledCheckIn.getFullYear(), scheduledCheckIn.getMonth(), scheduledCheckIn.getDate());
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        if (startOfScheduled > startOfToday) {
+          setShowEarlyCheckInWarning(true);
+        }
+      }
+    }
+  }, [bookingData, editMode, existingCheckIn]);
 
 
  // Initialize from edit mode data
@@ -385,25 +401,32 @@ const CheckInForm = ({
  };
 
  const getInitialCheckOutTime = () => {
- if (isDayAccess && bookingData?.accessPackageId) {
- const pkg = bookingData.accessPackageId;
- const today = new Date();
- const entryStr = pkg.entry_time || "09:00";
- const exitStr = pkg.exit_time || "18:00";
- const [entryH, entryM] = entryStr.split(":").map(Number);
- const [exitH, exitM] = exitStr.split(":").map(Number);
- const checkOutDate = new Date(today);
- checkOutDate.setHours(exitH, exitM, 0, 0);
- if (exitH < entryH || (exitH === entryH && exitM < entryM)) {
- checkOutDate.setDate(checkOutDate.getDate() + 1);
- }
- return checkOutDate;
- }
- if (bookingData?.rooms?.[0]?.checkOutDate) {
- return new Date(bookingData.rooms[0].checkOutDate);
- }
- return addDays(new Date(), 1);
- };
+    if (isDayAccess && bookingData?.accessPackageId) {
+      const pkg = bookingData.accessPackageId;
+      const today = new Date();
+      const entryStr = pkg.entry_time || "09:00";
+      const exitStr = pkg.exit_time || "18:00";
+      const [entryH, entryM] = entryStr.split(":").map(Number);
+      const [exitH, exitM] = exitStr.split(":").map(Number);
+      const checkOutDate = new Date(today);
+      checkOutDate.setHours(exitH, exitM, 0, 0);
+      if (exitH < entryH || (exitH === entryH && exitM < entryM)) {
+        checkOutDate.setDate(checkOutDate.getDate() + 1);
+      }
+      return checkOutDate;
+    }
+    if (bookingData?.rooms?.[0]?.checkOutDate) {
+      const originalCheckOut = new Date(bookingData.rooms[0].checkOutDate);
+      const now = new Date();
+      if (originalCheckOut <= now) {
+        // Auto-fix: add original totalNights to now
+        const nights = bookingData.totalNights || 1;
+        return addDays(now, nights);
+      }
+      return originalCheckOut;
+    }
+    return addDays(new Date(), 1);
+  };
 
  const [stayFormData, setStayFormData] = useState({
  checkInTime: getInitialCheckInTime(),
@@ -946,6 +969,9 @@ const CheckInForm = ({
  const canProceed = (step: number): boolean => {
  switch (step) {
  case 1: {
+ if (stayFormData.expectedCheckOutTime <= stayFormData.checkInTime) {
+   return false;
+ }
  if (partyType === "Corporate" && (!corporateDetails.companyName.trim() || !corporateDetails.contactPersonName?.trim() || !corporateDetails.contactMobile?.trim())) {
    return false;
  }
@@ -997,6 +1023,9 @@ const CheckInForm = ({
  const getProceedError = (step: number): string => {
    switch (step) {
      case 1:
+       if (stayFormData.expectedCheckOutTime <= stayFormData.checkInTime) {
+         return "Check-out time must be after check-in time.";
+       }
        if (partyType === "Corporate" && (!corporateDetails.companyName.trim() || !corporateDetails.contactPersonName?.trim() || !corporateDetails.contactMobile?.trim())) {
            return "Company Name, Contact Person, and Mobile are required.";
        }
@@ -1220,11 +1249,9 @@ const CheckInForm = ({
       const rooms = selectedRooms.filter(r => !!r.roomId);
 
       if (rooms.length > 0) {
-        rooms.forEach((room, index) => {
-          if (updatedGuests[index]) {
-            updatedGuests[index].assignedRoomId = room.roomId;
-            updatedGuests[index].isPrimary = true;
-          } else {
+        if (partyType === "Corporate") {
+          // For corporate, we only need 1 primary guest. We don't auto-create one per room.
+          if (updatedGuests.length === 0) {
             updatedGuests.push({
               id: `g-${Date.now()}-${Math.random()}`,
               name: "",
@@ -1235,19 +1262,47 @@ const CheckInForm = ({
               age: "30",
               nationality: "Indian",
               isPrimary: true,
-              assignedRoomId: room.roomId,
+              assignedRoomId: rooms[0].roomId,
               idDocument: null,
               pendingDocFile: null,
               pendingDocPreview: null,
             });
+          } else {
+            // Keep ONLY the primary guest. Remove any auto-generated co-guests.
+            updatedGuests = [updatedGuests[0]];
+            updatedGuests[0].isPrimary = true;
+            updatedGuests[0].assignedRoomId = rooms[0].roomId;
           }
-        });
+        } else {
+          rooms.forEach((room, index) => {
+            if (updatedGuests[index]) {
+              updatedGuests[index].assignedRoomId = room.roomId;
+              updatedGuests[index].isPrimary = true;
+            } else {
+              updatedGuests.push({
+                id: `g-${Date.now()}-${Math.random()}`,
+                name: "",
+                mobileNo: "",
+                idType: "Aadhar Card",
+                idNumber: "",
+                gender: "",
+                age: "30",
+                nationality: "Indian",
+                isPrimary: true,
+                assignedRoomId: room.roomId,
+                idDocument: null,
+                pendingDocFile: null,
+                pendingDocPreview: null,
+              });
+            }
+          });
 
-        // Remaining guests become co-guests distributed across rooms
-        for (let i = rooms.length; i < updatedGuests.length; i++) {
-          updatedGuests[i].isPrimary = false;
-          const roomIndex = i % rooms.length;
-          updatedGuests[i].assignedRoomId = rooms[roomIndex].roomId;
+          // Remaining guests become co-guests distributed across rooms
+          for (let i = rooms.length; i < updatedGuests.length; i++) {
+            updatedGuests[i].isPrimary = false;
+            const roomIndex = i % rooms.length;
+            updatedGuests[i].assignedRoomId = rooms[roomIndex].roomId;
+          }
         }
 
         setGuests(updatedGuests);
@@ -1488,7 +1543,33 @@ const CheckInForm = ({
  );
  }
 
- return (
+  if (showEarlyCheckInWarning && bookingData?.overallCheckInDate) {
+    return (
+      <div className={inline ? "w-full min-w-full h-full min-h-[400px] flex items-center justify-center checkin-modal-container relative p-4" : "fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto checkin-modal-container"}>
+        <div className={inline ? "w-full bg-white rounded-2xl p-10 border border-gray-100 shadow-xl text-center" : "max-w-md w-full bg-white rounded-2xl p-6 border border-gray-100 shadow-xl text-center"}>
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-black text-gray-800 mb-2">Early Check-In Detected</h2>
+          <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+            The scheduled check-in date for this booking is <strong className="text-gray-800">{new Date(bookingData.overallCheckInDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>. Do you want to proceed with an early check-in?
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button onClick={() => { if(onClose) onClose(); else navigate(-1); }} className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-all flex-1">
+              No, Go Back
+            </button>
+            <button onClick={() => setShowEarlyCheckInWarning(false)} className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 text-white font-bold hover:from-orange-600 hover:to-orange-500 shadow-lg shadow-orange-100 transition-all flex-1">
+              Yes, Proceed
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
  <div className={inline ? "w-full flex flex-col checkin-modal-container relative" : "fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto checkin-modal-container"}>
  <style>{`
  /* Scoped styles for the check-in modal to scale for larger screens */
@@ -2020,8 +2101,10 @@ const CheckInForm = ({
  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Visit Date *</label>
  <DatePicker
  selected={stayFormData.checkInTime}
- onChange={(date: Date | null) => date && setStayFormData({ ...stayFormData, checkInTime: date })}
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
+ onChange={() => {}}
+ readOnly
+ disabled
+ className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none opacity-70 cursor-not-allowed"
  dateFormat="dd MMM yyyy"
  />
  </div>
@@ -2029,8 +2112,10 @@ const CheckInForm = ({
  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Entry Time *</label>
  <DatePicker
  selected={stayFormData.checkInTime}
- onChange={(date: Date | null) => date && setStayFormData({ ...stayFormData, checkInTime: date })}
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
+ onChange={() => {}}
+ readOnly
+ disabled
+ className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none opacity-70 cursor-not-allowed"
  showTimeSelect
  showTimeSelectOnly
  timeIntervals={30}
@@ -2043,6 +2128,7 @@ const CheckInForm = ({
  <DatePicker
  selected={stayFormData.expectedCheckOutTime}
  onChange={(date: Date | null) => date && setStayFormData({ ...stayFormData, expectedCheckOutTime: date })}
+ minDate={stayFormData.checkInTime}
  className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
  showTimeSelect
  showTimeSelectOnly
@@ -2190,8 +2276,10 @@ const CheckInForm = ({
  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Check-in Date & Time *</label>
  <DatePicker
  selected={stayFormData.checkInTime}
- onChange={(date: Date | null) => date && setStayFormData({ ...stayFormData, checkInTime: date })}
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none"
+ onChange={() => {}}
+ readOnly
+ disabled
+ className="w-full p-2 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none opacity-70 cursor-not-allowed"
  dateFormat="dd MMM yyyy, hh:mm a"
  showTimeSelect
  />
@@ -2201,6 +2289,7 @@ const CheckInForm = ({
  <DatePicker
  selected={stayFormData.expectedCheckOutTime}
  onChange={(date: Date | null) => date && setStayFormData({ ...stayFormData, expectedCheckOutTime: date })}
+ minDate={stayFormData.checkInTime}
  className="w-full p-2 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none"
  dateFormat="dd MMM yyyy, hh:mm a"
  showTimeSelect
@@ -2826,8 +2915,8 @@ const CheckInForm = ({
                     </div>
 
                     {/* Co-Guests Table */}
-                    {true && (
                     <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
+                        {coGuests.length > 0 && (
                         <table className="w-full text-left text-[10px]">
                         <thead className="bg-gray-50 border-b border-gray-200 text-gray-500">
                             <tr>
@@ -2889,13 +2978,13 @@ const CheckInForm = ({
                             ))}
                         </tbody>
                         </table>
+                        )}
                         <div className="bg-gray-50 p-2 border-t border-gray-200">
                         <button onClick={() => handleAddCoGuest("")} className="w-full py-1.5 border border-dashed border-gray-300 text-gray-500 rounded text-[9px] font-black uppercase tracking-wider hover:border-orange-400 hover:text-orange-500 transition-all flex items-center justify-center gap-1">
                             Add Co-Guest
                         </button>
                         </div>
                     </div>
-                    )}
                 </div>
             );
         })()}
@@ -3351,7 +3440,7 @@ const CheckInForm = ({
  </div>
 
  {/* Section E: Guest Insights */}
- <div className="bg-white rounded-xl border border-border p-4">
+ {/* <div className="bg-white rounded-xl border border-border p-4">
  <div className="flex items-center gap-2 mb-3">
  <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">E</span>
  <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
@@ -3388,7 +3477,7 @@ const CheckInForm = ({
  <div className="mt-3 text-center">
  <a href="#" className="text-[9px] font-black text-orange-500 uppercase hover:underline">View Guest Profile</a>
  </div>
- </div>
+ </div> */}
  </div>
  </div>
  </div>

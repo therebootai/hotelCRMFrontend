@@ -233,10 +233,11 @@ const ManageBooking = ({
  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none font-bold text-sm text-gray-700 "
  >
  <option value="">All Status</option>
- <option value="Pending">Pending</option>
+ <option value="Tentative">Tentative</option>
  <option value="Confirmed">Confirmed</option>
  <option value="Checked-In">Checked-In</option>
  <option value="Checked-Out">Checked-Out</option>
+ <option value="No-Show">No-Show</option>
  <option value="Cancelled">Cancelled</option>
  </select>
  </div>

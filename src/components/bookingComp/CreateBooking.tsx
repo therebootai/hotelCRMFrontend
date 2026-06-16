@@ -158,7 +158,13 @@ const CreateBooking = ({
 
  // Search Filters
  const [adultsFilter, setAdultsFilter] = useState(2);
- const [childrenFilter, setChildrenFilter] = useState(1);
+ const [childrenFilter, setChildrenFilter] = useState(0);
+
+ // Specific Room Assignment
+ const [isAssignSpecificRoom, setIsAssignSpecificRoom] = useState(false);
+ const [availablePhysicalRooms, setAvailablePhysicalRooms] = useState<any[]>([]);
+ const [fetchingPhysicalRooms, setFetchingPhysicalRooms] = useState(false);
+ const [selectedSpecificRooms, setSelectedSpecificRooms] = useState<Record<string, { adults: number; children: number; roomTypeId: string; roomTypeName: string; basePrice: number; roomNumber: string }>>({});
 
  // Confirmed Booking State
  const [confirmedBookingDetails, setConfirmedBookingDetails] = useState<any>(null);
@@ -204,8 +210,8 @@ const CreateBooking = ({
  const [purposeOfVisit, setPurposeOfVisit] = useState("Leisure / Holiday");
 
  // Booking Status (Section F)
- const [bookingStatus, setBookingStatus] = useState("Pending");
- const [holdTillDate, setHoldTillDate] = useState<Date | null>(null);
+ const [bookingStatus, setBookingStatus] = useState("Tentative");
+
  const [remarks, setRemarks] = useState("");
 
  const [specialRequests] = useState("");
@@ -285,10 +291,7 @@ const CreateBooking = ({
 
  setPurposeOfVisit(booking.purposeOfVisit || "Leisure / Holiday");
  setRemarks(booking.notes || booking.remarks || "");
- setBookingStatus(booking.status || "Pending");
- if (booking.expiresAt) {
- setHoldTillDate(new Date(booking.expiresAt));
- }
+ setBookingStatus(booking.status || "Tentative");
 
  if (booking.addons) {
  setSelectedAddons(booking.addons);
@@ -392,8 +395,32 @@ const CreateBooking = ({
  setTotalNights(nights > 0 ? nights : 1);
  }, [checkInDate, checkOutDate]);
 
- // Validate check-out time is after check-in time
- useEffect(() => {
+ // Fetch available physical rooms if specific room assignment is checked
+  useEffect(() => {
+    if (isAssignSpecificRoom && bookingCategory === "Room Stay" && checkInDate && checkOutDate) {
+      const fetchPhysicalRooms = async () => {
+        setFetchingPhysicalRooms(true);
+        try {
+          const res = await api.get("/bookings/available", {
+            params: {
+              checkIn: checkInDate.toISOString(),
+              checkOut: checkOutDate.toISOString(),
+            },
+          });
+          // Filter out unavailable rooms just in case
+          const rooms = (res.data.data?.availableRooms || []).filter((r: any) => r.isAvailable);
+          setAvailablePhysicalRooms(rooms);
+        } catch (error) {
+          console.error("Failed to fetch available physical rooms", error);
+        } finally {
+          setFetchingPhysicalRooms(false);
+        }
+      };
+      fetchPhysicalRooms();
+    }
+  }, [isAssignSpecificRoom, checkInDate, checkOutDate, bookingCategory]);
+
+  useEffect(() => {
  if (checkInDate && checkOutDate) {
  const checkInTime = checkInDate.getTime();
  const checkOutTime = checkOutDate.getTime();
@@ -491,10 +518,17 @@ const CreateBooking = ({
     const count = Number(adultsFilter) + Number(childrenFilter);
     roomTotal = rate * count;
   } else {
-    roomTotal = selectedRoomTypesList.reduce(
-    (sum, entry) => sum + entry.basePrice * entry.count * totalNights,
-    0,
-    );
+    if (isAssignSpecificRoom) {
+      roomTotal = Object.values(selectedSpecificRooms).reduce(
+        (sum: number, room: any) => sum + room.basePrice * totalNights,
+        0
+      );
+    } else {
+      roomTotal = selectedRoomTypesList.reduce(
+        (sum, entry) => sum + entry.basePrice * entry.count * totalNights,
+        0
+      );
+    }
   }
 
   const extraBedTotal = 0;
@@ -538,6 +572,8 @@ const CreateBooking = ({
  taxOptions,
  selectedTaxId,
  selectedAddons,
+ isAssignSpecificRoom,
+ selectedSpecificRooms,
  ]);
 
  const {
@@ -564,10 +600,14 @@ const CreateBooking = ({
  children: selectedCounts[rt._id].children,
  }));
 
- if (bookingCategory === "Room Stay" && selectedRoomTypesList.length === 0) {
- toast.error("Please select at least one room type");
- return;
- }
+  if (bookingCategory === "Room Stay" && !isAssignSpecificRoom && selectedRoomTypesList.length === 0) {
+    toast.error("Please select at least one room type");
+    return;
+  }
+  if (bookingCategory === "Room Stay" && isAssignSpecificRoom && Object.keys(selectedSpecificRooms).length === 0) {
+    toast.error("Please select at least one specific room");
+    return;
+  }
  if (bookingCategory === "Day Access" && !selectedPackageId) {
  toast.error("Please select an access package");
  return;
@@ -579,19 +619,32 @@ const CreateBooking = ({
 
  setLoading(true);
  try {
- const roomTypesData =
- bookingCategory === "Room Stay"
- ? selectedRoomTypesList.map((entry) => ({
- roomTypeId: entry.roomTypeId,
- roomTypeName: entry.roomTypeName,
- basePrice: entry.basePrice,
- count: entry.count,
- checkInDate: checkInDate.toISOString(),
- checkOutDate: checkOutDate.toISOString(),
- adults: entry.adults,
- children: entry.children,
- }))
- : undefined;
+      const roomTypesData =
+        bookingCategory === "Room Stay" && !isAssignSpecificRoom
+          ? selectedRoomTypesList.map((entry) => ({
+              roomTypeId: entry.roomTypeId,
+              roomTypeName: entry.roomTypeName,
+              basePrice: entry.basePrice,
+              count: entry.count,
+              checkInDate: checkInDate.toISOString(),
+              checkOutDate: checkOutDate.toISOString(),
+              adults: entry.adults,
+              children: entry.children,
+            }))
+          : undefined;
+
+      const roomsData = 
+        bookingCategory === "Room Stay" && isAssignSpecificRoom
+          ? Object.entries(selectedSpecificRooms).map(([roomId, data]) => ({
+              roomId,
+              roomType: data.roomTypeId,
+              checkInDate: checkInDate.toISOString(),
+              checkOutDate: checkOutDate.toISOString(),
+              adults: data.adults,
+              children: data.children,
+              pricePerNight: data.basePrice,
+            }))
+          : undefined;
 
  const mergedSpecialRequests = [
  `[Purpose: ${purposeOfVisit}]`,
@@ -623,10 +676,9 @@ const CreateBooking = ({
  adults: adultsFilter,
  children: childrenFilter,
  addons: selectedAddons,
- expiresAt:
- bookingStatus === "Hold" && holdTillDate
- ? holdTillDate.toISOString()
- : undefined,
+ roomTypesData,
+ rooms: roomsData,
+ expiresAt: undefined,
  };
 
  if (bookingCategory === "Day Access") {
@@ -1190,11 +1242,16 @@ const CreateBooking = ({
  <div className="relative">
  <DatePicker
  selected={checkInDate}
- onChange={(d: Date | null) =>
- setCheckInDate(d || new Date())
- }
+ onChange={(d: Date | null) => {
+  const newDate = d || new Date();
+  setCheckInDate(newDate);
+  if (checkOutDate <= newDate) {
+    setCheckOutDate(addDays(newDate, 1));
+  }
+}}
  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"
- dateFormat="dd MMM yyyy"
+ dateFormat="dd MMM yyyy, hh:mm a"
+ showTimeSelect
  />
  </div>
  </div>
@@ -1209,8 +1266,9 @@ const CreateBooking = ({
  setCheckOutDate(d || addDays(checkInDate, 1))
  }
  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"
- dateFormat="dd MMM yyyy"
- minDate={checkInDate}
+ dateFormat="dd MMM yyyy, hh:mm a"
+ showTimeSelect
+ minDate={addDays(checkInDate, 1)}
  />
  </div>
 
@@ -1307,7 +1365,7 @@ const CreateBooking = ({
  </div>
 
  {/* SECTION B: ROOM AVAILABILITY (only for Room Stay) */}
- {bookingCategory === "Room Stay" && (
+ {bookingCategory === "Room Stay" && !isAssignSpecificRoom && (
  <div className="bg-white border border-border rounded-xl p-5">
  <div className="flex justify-between items-center mb-4">
  <div className="flex items-center gap-3">
@@ -1466,12 +1524,13 @@ const CreateBooking = ({
  {/* Notice banner */}
  <div className="mt-3 p-3 bg-amber-50/50 border border-amber-200/50 rounded-xl flex items-center justify-between text-[11px] text-amber-700">
  <p>
- ⚠️ Note: Room will be assigned at the time of Check-in based
- on availability.
+ ⚠️ Note: Specific Room selection overrides category counts.
  </p>
  <label className="flex items-center gap-1 cursor-pointer font-bold select-none">
  <input
  type="checkbox"
+ checked={isAssignSpecificRoom}
+ onChange={(e) => setIsAssignSpecificRoom(e.target.checked)}
  className="w-3.5 h-3.5 accent-amber-600 rounded"
  />
  Assign Specific Room (Optional)
@@ -1479,6 +1538,130 @@ const CreateBooking = ({
  </div>
  </div>
  )}
+
+ {bookingCategory === "Room Stay" && isAssignSpecificRoom && (
+  <div className="bg-white border border-border rounded-xl p-5 mt-4">
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-3">
+        <span className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-black flex items-center justify-center">
+          B
+        </span>
+        <h3 className="font-bold text-text-primary text-sm uppercase tracking-wider">
+          Specific Room Selection
+        </h3>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setIsAssignSpecificRoom(false);
+          setSelectedSpecificRooms({});
+        }}
+        className="text-[10px] font-bold text-slate-500 underline hover:text-slate-800"
+      >
+        Back to Category Selection
+      </button>
+    </div>
+
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm border-collapse">
+        <thead>
+          <tr className="border-b border-border text-[9px] font-black uppercase text-text-secondary tracking-wider">
+            <th className="py-2.5">Room Number</th>
+            <th className="py-2.5">Type & Info</th>
+            <th className="py-2.5 text-center">Max Occupancy</th>
+            <th className="py-2.5 text-right">Rate / Night (₹)</th>
+            <th className="py-2.5 text-right pr-2">Select</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {fetchingPhysicalRooms ? (
+            <tr>
+              <td colSpan={6} className="py-4 text-center">
+                <FiLoader className="animate-spin text-primary inline-block mr-2" />
+                <span className="text-text-secondary text-xs">Loading available rooms...</span>
+              </td>
+            </tr>
+          ) : availablePhysicalRooms.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="py-4 text-center text-text-secondary text-xs">
+                No physical rooms available for the selected dates.
+              </td>
+            </tr>
+          ) : (
+            availablePhysicalRooms.map((roomData) => {
+              const r = roomData.room;
+              const rt = roomData.roomType;
+              const isSelected = !!selectedSpecificRooms[r._id];
+              return (
+                <tr
+                  key={r._id}
+                  className={`align-middle hover:bg-slate-50/50 transition-colors ${
+                    isSelected ? "bg-primary/5" : ""
+                  }`}
+                >
+                  <td className="py-3 font-black text-text-primary text-sm">
+                    {r.roomNumber}
+                  </td>
+                  <td className="py-3">
+                    <span className="font-bold text-text-primary text-xs block">
+                      {rt?.name || "Unknown"}
+                    </span>
+                    <span className="text-[10px] text-text-secondary">
+                      Floor {r.floor}
+                    </span>
+                  </td>
+                  <td className="py-3 text-center text-text-secondary text-xs font-bold">
+                    👤 {r.maxAdults} Adults, {r.maxChildren} Kids
+                  </td>
+                  <td className="py-3 text-right font-bold text-text-primary text-sm">
+                    ₹{r.basePrice.toLocaleString()}
+                  </td>
+                  <td className="py-3 text-right pr-2">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedSpecificRooms(prev => ({
+                            ...prev,
+                            [r._id]: {
+                              adults: adultsFilter,
+                              children: childrenFilter,
+                              roomTypeId: rt?._id,
+                              roomTypeName: rt?.name,
+                              basePrice: r.basePrice,
+                              roomNumber: r.roomNumber
+                            }
+                          }));
+                        } else {
+                          setSelectedSpecificRooms(prev => {
+                            const clone = { ...prev };
+                            delete clone[r._id];
+                            return clone;
+                          });
+                        }
+                      }}
+                      className="w-4 h-4 accent-primary rounded cursor-pointer"
+                    />
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+      <span className="text-sm text-text-secondary font-bold">
+        Selected Rooms: {Object.keys(selectedSpecificRooms).length}
+      </span>
+      <span className="text-sm font-black text-text-primary">
+        Total Rooms: {Object.keys(selectedSpecificRooms).length}
+      </span>
+    </div>
+  </div>
+  )}
 
  {/* SECTION C: GUEST DETAILS (PRIMARY CONTACT) */}
  <div className="bg-white border border-border rounded-xl p-5">
@@ -1858,29 +2041,11 @@ const CreateBooking = ({
  onChange={(e) => setBookingStatus(e.target.value)}
  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none font-bold"
  >
- <option value="Pending">Pending</option>
+ <option value="Tentative">Tentative</option>
  <option value="Confirmed">Confirmed</option>
- <option value="Hold">Hold / Tentative</option>
- <option value="Checked-In">Checked-In</option>
- <option value="Cancelled">Cancelled</option>
  </select>
  </div>
 
- {bookingStatus === "Hold" && (
- <div className="animate-fade-in">
- <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">
- Hold Till (If Hold)
- </label>
- <DatePicker
- selected={holdTillDate}
- onChange={(d: Date | null) => setHoldTillDate(d)}
- showTimeSelect
- dateFormat="dd MMM yyyy, hh:mm a"
- placeholderText="Select release date & time"
- className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary font-bold"
- />
- </div>
- )}
 
  <div>
  <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">
@@ -1999,29 +2164,13 @@ const CreateBooking = ({
  {booking ? "Update Booking" : "Preview & Confirm Booking"}
  </button>
 
- <div className="grid grid-cols-2 gap-2">
- <button
- type="button"
- onClick={async () => {
- // Quick tentative save - sets advance to 0
- setPaymentForm({ ...paymentForm, advanceAmount: 0 });
- setTimeout(() => {
- submitBooking();
- }, 100);
- }}
- disabled={loading}
- className="py-2.5 bg-slate-100 hover:bg-slate-200 text-text-primary rounded-xl font-bold text-sm transition-all"
- >
- {booking ? "Save Booking" : "Save as Tentative"}
- </button>
  <button
  type="button"
  onClick={onClose}
- className="py-2.5 border border-border hover:bg-slate-50 text-text-secondary rounded-xl font-bold text-sm transition-all text-center"
+ className="w-full py-2.5 border border-border hover:bg-slate-50 text-text-secondary rounded-xl font-bold text-sm transition-all text-center"
  >
  Back to List
  </button>
- </div>
  </div>
  </div>
  </div>

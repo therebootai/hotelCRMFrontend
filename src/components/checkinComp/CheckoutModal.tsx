@@ -28,12 +28,10 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
     guestVacated: checkIn.checkoutVerification?.guestVacated || false,
     keyReturned: checkIn.checkoutVerification?.keyReturned || false,
     roomChecked: checkIn.checkoutVerification?.roomChecked || false,
-    noDamage: checkIn.checkoutVerification?.noDamage || false,
     damageFound: checkIn.checkoutVerification?.damageFound || false,
     damageAmount: checkIn.checkoutVerification?.damageAmount || "",
     damageRemarks: checkIn.checkoutVerification?.damageRemarks || "",
-    staffNotes: checkIn.checkoutVerification?.staffNotes || "",
-    departmentsVerified: checkIn.checkoutVerification?.departmentsVerified || false
+    staffNotes: checkIn.checkoutVerification?.staffNotes || ""
   });
 
   const [step, setStep] = useState(checkIn.checkoutVerification?.step || 1);
@@ -151,8 +149,10 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  // 👉 Round tax (no decimals)
  const taxAmount = Math.round((subTotal * taxPercentage) / 100);
 
+ const damageAmount = Number(verification.damageAmount) || 0;
+
  // 👉 Round grand total
- const grandTotal = Math.round(subTotal + taxAmount - Number(discount));
+ const grandTotal = Math.round(subTotal + taxAmount + damageAmount - Number(discount));
 
  const advancePaid = Math.round(billData?.advanceDeducted || 0);
 
@@ -201,12 +201,10 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
         guestVacated: verification.guestVacated,
         keyReturned: verification.keyReturned,
         roomChecked: verification.roomChecked,
-        noDamage: verification.noDamage,
         damageFound: verification.damageFound,
         damageAmount: Number(verification.damageAmount) || 0,
         damageRemarks: verification.damageRemarks,
         staffNotes: verification.staffNotes,
-        departmentsVerified: verification.departmentsVerified,
         step: step,
       },
  };
@@ -224,19 +222,6 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
   };
 
   const handleContinueToSettlement = () => {
-    if (verification.damageFound && verification.damageAmount && Number(verification.damageAmount) > 0) {
-      const existingDamage = extraServices.find(es => es.serviceName === "Damage Charges");
-      if (!existingDamage) {
-        setExtraServices([
-          ...extraServices,
-          { serviceName: "Damage Charges", quantity: 1, rate: Number(verification.damageAmount), total: Number(verification.damageAmount) }
-        ]);
-      } else {
-        setExtraServices(extraServices.map(es => es.serviceName === "Damage Charges" ? { ...es, rate: Number(verification.damageAmount), total: Number(verification.damageAmount) } : es));
-      }
-    } else {
-      setExtraServices(extraServices.filter(es => es.serviceName !== "Damage Charges"));
-    }
     setStep(2);
   };
 
@@ -377,12 +362,11 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
        <Section title="Verification Checklist" accent="purple">
          <div className="space-y-4">
            <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-2">Room Verification</p>
-           {[
-             { id: "guestVacated", label: "Guest Vacated Room" },
-             { id: "keyReturned", label: "Room Key Returned" },
-             { id: "roomChecked", label: "Room Physically Checked by Staff" },
-             { id: "noDamage", label: "No Major Damage Found" },
-           ].map(item => (
+            {[
+              { id: "guestVacated", label: "Guest Vacated Room" },
+              { id: "keyReturned", label: "Room Key Returned" },
+              { id: "roomChecked", label: "Room Physically Checked by Staff" },
+            ].map(item => (
              <label key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-gray-200">
                <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${verification[item.id as keyof typeof verification] ? "bg-purple-500 border-purple-500 text-white" : "border-gray-300 bg-white"}`}>
                  {verification[item.id as keyof typeof verification] && <span className="text-xs">✓</span>}
@@ -477,13 +461,6 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
               <p className="text-sm text-gray-500 font-semibold italic text-center py-4">No additional department charges.</p>
             )}
             
-            <label className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors mt-4">
-               <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${verification.departmentsVerified ? "bg-blue-500 border-blue-500 text-white" : "border-blue-300 bg-white"}`}>
-                 {verification.departmentsVerified && <span className="text-xs">✓</span>}
-               </div>
-               <input type="checkbox" className="hidden" checked={!!verification.departmentsVerified} onChange={(e) => setVerification({ ...verification, departmentsVerified: e.target.checked })} />
-               <span className="font-bold text-blue-800 text-sm">All department charges are verified</span>
-            </label>
           </div>
         </Section>
 
@@ -494,8 +471,8 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
      <button onClick={onClose} className="px-6 py-3 border-2 border-gray-200 text-gray-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">Cancel</button>
       <button
         onClick={handleContinueToSettlement}
-        disabled={!(verification.guestVacated && verification.keyReturned && verification.roomChecked && verification.noDamage && verification.departmentsVerified)}
-        className={`px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${verification.guestVacated && verification.keyReturned && verification.roomChecked && verification.noDamage && verification.departmentsVerified ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-100" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+        disabled={!(verification.guestVacated && verification.keyReturned && verification.roomChecked)}
+        className={`px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${verification.guestVacated && verification.keyReturned && verification.roomChecked ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-100" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
       >
         Continue to Settlement <span>→</span>
       </button>
@@ -811,6 +788,14 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  color="text-gray-500"
  />
 
+ {Number(verification.damageAmount) > 0 && (
+    <LineItem
+      label="Damage Charges"
+      value={Number(verification.damageAmount)}
+      color="text-red-500"
+    />
+  )}
+
  {/* Discount input inline */}
  <div className="flex items-center justify-between">
  <span className="text-sm font-black text-red-500 uppercase">
@@ -1035,29 +1020,6 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
    `(₹${numReceived.toLocaleString()} collected)`}
    </button>
  </div>
- </div>
-
- {/* Tax GST selector */}
- <div className="flex items-center justify-between px-2">
- <span className="text-sm text-gray-400 font-bold">Tax GST</span>
- <select
- className="text-sm font-bold border border-gray-200 rounded-lg px-2 py-1.5 outline-none text-gray-600 bg-white max-w-[140px]"
- value={selectedTaxId}
- onChange={(e) => {
- const selected = taxOptions.find((t: any) => t._id === e.target.value);
- setSelectedTaxId(e.target.value);
- if (selected) {
- setTaxPercentage(selected.percentage);
- }
- }}
- >
- <option value="">— Select —</option>
- {taxOptions.map((t: any) => (
- <option key={t._id} value={t._id}>
- {t.name} ({t.percentage}%)
- </option>
- ))}
- </select>
  </div>
  </div>
  </div>

@@ -9,6 +9,15 @@ interface RoomTypeData {
  name: string;
  description: string;
  basePrice: number | string;
+ gstId?: string;
+}
+
+export interface TaxGst {
+  _id: string;
+  name: string;
+  percentage: number;
+  type: "Room" | "Food" | "Service";
+  isActive: boolean;
 }
 
 interface RoomTypeModalProps {
@@ -24,8 +33,22 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  name: '',
  description: '',
  basePrice: '' as number | string,
+ gstId: '',
  });
+ const [taxes, setTaxes] = useState<TaxGst[]>([]);
  const [errors, setErrors] = useState<{ name?: string; basePrice?: string }>({});
+
+ useEffect(() => {
+   const fetchTaxes = async () => {
+     try {
+       const res = await api.get("/tax-gst?type=Room");
+       setTaxes(res.data?.data || []);
+     } catch (error) {
+       toast.error("Failed to load taxes");
+     }
+   };
+   if (isOpen) fetchTaxes();
+ }, [isOpen]);
 
  useEffect(() => {
  setErrors({});
@@ -34,9 +57,10 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  name: initialData.name,
  description: initialData.description || '',
  basePrice: initialData.basePrice ?? '',
+ gstId: initialData.gstId || '',
  });
  } else {
- setFormData({ name: '', description: '', basePrice: '' });
+ setFormData({ name: '', description: '', basePrice: '', gstId: '' });
  }
  }, [initialData, isOpen]);
 
@@ -56,7 +80,7 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  return Object.keys(newErrors).length === 0;
  };
 
- const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
  const { name, value } = e.target;
  setFormData(prev => ({ ...prev, [name]: value }));
 
@@ -79,11 +103,13 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  try {
  setIsLoading(true);
 
- const payload = {
+ const payload: any = {
  name: formData.name,
  description: formData.description,
  basePrice: Number(formData.basePrice),
  };
+
+ if (formData.gstId) payload.gstId = formData.gstId;
 
  if (initialData?._id) {
  await api.put(`/room-types/${initialData._id}`, payload);
@@ -190,6 +216,26 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  {errors.basePrice && (
  <p className="text-red-500 text-sm mt-1.5 font-medium animate-fade-in">{errors.basePrice}</p>
  )}
+ </div>
+
+ <div>
+ <label className="input-label uppercase tracking-wider text-[10px]">
+ Tax / GST
+ </label>
+ <select
+ name="gstId"
+ value={formData.gstId}
+ onChange={handleChange}
+ disabled={isLoading}
+ className="input-field cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+ >
+ <option value="">No Tax Applied</option>
+ {taxes.filter(t => t.isActive || t._id === formData.gstId).map((t) => (
+ <option key={t._id} value={t._id}>
+ {t.name} ({t.percentage}%)
+ </option>
+ ))}
+ </select>
  </div>
  </div>
 

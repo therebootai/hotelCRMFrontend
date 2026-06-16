@@ -18,6 +18,7 @@ export interface RoomType {
  description?: string;
  basePrice: number;
  isActive: boolean;
+ gstId?: { _id: string; percentage: number; name: string };
 }
 
 interface RoomTypeMasterProps {
@@ -61,8 +62,12 @@ export default function RoomTypeMaster({
 
  // Handlers
  const handleEditClick = (roomType: RoomType) => {
- setEditingData(roomType);
- setIsAddModalOpen(true);
+    // We map gstId from the object to just the _id string for the modal form
+    setEditingData({
+      ...roomType,
+      gstId: roomType.gstId?._id
+    } as any);
+    setIsAddModalOpen(true);
  };
 
  const handleDeleteClick = (roomType: RoomType) => {
@@ -142,11 +147,14 @@ export default function RoomTypeMaster({
  <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-1/4">
  Type Name
  </th>
- <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-2/3">
+ <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-1/3">
  Description
  </th>
  <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
  Base Price
+ </th>
+ <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+ GST %
  </th>
  <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right">
  Actions
@@ -157,7 +165,7 @@ export default function RoomTypeMaster({
  {isLoading ? (
  <tr>
  <td
- colSpan={4}
+ colSpan={5}
  className="px-6 py-12 text-center text-text-secondary"
  >
  <div className="flex flex-col items-center justify-center gap-2">
@@ -197,6 +205,11 @@ export default function RoomTypeMaster({
  </span>
  </td>
  <td className="px-6 py-5">
+ <span className="text-base text-text-secondary">
+ {rt.gstId ? `${rt.gstId.percentage}%` : "—"}
+ </span>
+ </td>
+ <td className="px-6 py-5">
  <div className="flex items-center justify-end gap-2">
  <button
  onClick={() => handleEditClick(rt)}
@@ -217,7 +230,7 @@ export default function RoomTypeMaster({
  ) : (
  <tr>
  <td
- colSpan={4}
+ colSpan={5}
  className="px-6 py-12 text-center text-text-secondary"
  >
  {searchQuery

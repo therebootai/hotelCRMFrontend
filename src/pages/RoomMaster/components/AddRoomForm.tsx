@@ -51,7 +51,6 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  extraBedAllowed: false,
  extraBedCharge: "0",
  discountPercentage: "0",
- gstId: "",
  roomSize: "",
  viewType: "",
  status: "Active",
@@ -87,7 +86,6 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  extraBedAllowed: initialData.extraBedAllowed || false,
  extraBedCharge: initialData.extraBedCharge?.toString() || "0",
  discountPercentage: initialData.discountPercentage?.toString() || "0",
- gstId: initialData.gstId?._id || "",
  roomSize: initialData.roomSize?.toString() || "",
  viewType: initialData.viewType || "",
  status: initialData.status || "Active",
@@ -205,7 +203,6 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
 
  if (!payload.building) delete payload.building;
  if (!payload.floor) delete payload.floor;
- if (!payload.gstId) delete payload.gstId;
  if (!payload.viewType) delete payload.viewType;
  if (!payload.description) delete payload.description;
 
@@ -244,14 +241,13 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  const discountAmount = (basePrice * numericDiscount) / 100;
  const discountedPrice = basePrice - discountAmount;
 
- const selectedTax = taxes.find((t) => t._id === formData.gstId);
- const taxPercentage = selectedTax?.percentage || 0;
+ const selectedRoomType: any = roomTypes.find((rt) => rt._id === formData.roomType);
+ const roomTypeName = selectedRoomType ? selectedRoomType.name : "Select Type";
+ 
+ const taxPercentage = selectedRoomType?.gstId?.percentage || 0;
  const taxAmount = (discountedPrice * taxPercentage) / 100;
 
  const finalPrice = discountedPrice + taxAmount;
-
- const selectedRoomType = roomTypes.find((rt) => rt._id === formData.roomType);
- const roomTypeName = selectedRoomType ? selectedRoomType.name : "Select Type";
  const displayBuilding = formData.building ? ` • ${formData.building}` : "";
 
  return (
@@ -380,7 +376,7 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  Pricing & Rules
  </h3>
 
- <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
  <div>
   <label className="input-label">Base Price (₹)</label>
   <input
@@ -412,22 +408,6 @@ export default function AddRoomForm({ onCancel, onSuccess, initialData }: AddRoo
  {errors.discountPercentage}
  </p>
  )}
- </div>
- <div>
- <label className="input-label">Tax / GST</label>
- <select
- name="gstId"
- value={formData.gstId}
- onChange={handleChange}
- className="input-field cursor-pointer"
- >
- <option value="">No Tax Applied</option>
- {taxes.filter(t => t.isActive || t._id === formData.gstId).map((t) => (
- <option key={t._id} value={t._id}>
- {t.name} ({t.percentage}%)
- </option>
- ))}
- </select>
  </div>
  </div>
 

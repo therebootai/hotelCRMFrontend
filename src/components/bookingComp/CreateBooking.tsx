@@ -205,7 +205,7 @@ const CreateBooking = ({
 
  // Booking Status (Section F)
  const [bookingStatus, setBookingStatus] = useState("Tentative");
- const [holdTillDate, setHoldTillDate] = useState<Date | null>(null);
+
  const [remarks, setRemarks] = useState("");
 
  const [specialRequests] = useState("");
@@ -286,9 +286,6 @@ const CreateBooking = ({
  setPurposeOfVisit(booking.purposeOfVisit || "Leisure / Holiday");
  setRemarks(booking.notes || booking.remarks || "");
  setBookingStatus(booking.status || "Tentative");
- if (booking.expiresAt) {
- setHoldTillDate(new Date(booking.expiresAt));
- }
 
  if (booking.addons) {
  setSelectedAddons(booking.addons);
@@ -623,10 +620,7 @@ const CreateBooking = ({
  adults: adultsFilter,
  children: childrenFilter,
  addons: selectedAddons,
- expiresAt:
- bookingStatus === "Tentative" && holdTillDate
- ? holdTillDate.toISOString()
- : undefined,
+ expiresAt: undefined,
  };
 
  if (bookingCategory === "Day Access") {
@@ -1869,21 +1863,6 @@ const CreateBooking = ({
  </select>
  </div>
 
- {bookingStatus === "Tentative" && (
- <div className="animate-fade-in">
- <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">
- Expires At (Optional)
- </label>
- <DatePicker
- selected={holdTillDate}
- onChange={(d: Date | null) => setHoldTillDate(d)}
- showTimeSelect
- dateFormat="dd MMM yyyy, hh:mm a"
- placeholderText="Select release date & time"
- className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary font-bold"
- />
- </div>
- )}
 
  <div>
  <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">

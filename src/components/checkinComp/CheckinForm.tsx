@@ -1268,7 +1268,8 @@ const CheckInForm = ({
               pendingDocPreview: null,
             });
           } else {
-            updatedGuests.forEach(g => g.isPrimary = false);
+            // Keep ONLY the primary guest. Remove any auto-generated co-guests.
+            updatedGuests = [updatedGuests[0]];
             updatedGuests[0].isPrimary = true;
             updatedGuests[0].assignedRoomId = rooms[0].roomId;
           }
@@ -2914,8 +2915,8 @@ const CheckInForm = ({
                     </div>
 
                     {/* Co-Guests Table */}
-                    {true && (
                     <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
+                        {coGuests.length > 0 && (
                         <table className="w-full text-left text-[10px]">
                         <thead className="bg-gray-50 border-b border-gray-200 text-gray-500">
                             <tr>
@@ -2977,13 +2978,13 @@ const CheckInForm = ({
                             ))}
                         </tbody>
                         </table>
+                        )}
                         <div className="bg-gray-50 p-2 border-t border-gray-200">
                         <button onClick={() => handleAddCoGuest("")} className="w-full py-1.5 border border-dashed border-gray-300 text-gray-500 rounded text-[9px] font-black uppercase tracking-wider hover:border-orange-400 hover:text-orange-500 transition-all flex items-center justify-center gap-1">
                             Add Co-Guest
                         </button>
                         </div>
                     </div>
-                    )}
                 </div>
             );
         })()}

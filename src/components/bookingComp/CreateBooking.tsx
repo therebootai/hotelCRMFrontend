@@ -518,10 +518,17 @@ const CreateBooking = ({
     const count = Number(adultsFilter) + Number(childrenFilter);
     roomTotal = rate * count;
   } else {
-    roomTotal = selectedRoomTypesList.reduce(
-    (sum, entry) => sum + entry.basePrice * entry.count * totalNights,
-    0,
-    );
+    if (isAssignSpecificRoom) {
+      roomTotal = Object.values(selectedSpecificRooms).reduce(
+        (sum: number, room: any) => sum + room.basePrice * totalNights,
+        0
+      );
+    } else {
+      roomTotal = selectedRoomTypesList.reduce(
+        (sum, entry) => sum + entry.basePrice * entry.count * totalNights,
+        0
+      );
+    }
   }
 
   const extraBedTotal = 0;
@@ -565,6 +572,8 @@ const CreateBooking = ({
  taxOptions,
  selectedTaxId,
  selectedAddons,
+ isAssignSpecificRoom,
+ selectedSpecificRooms,
  ]);
 
  const {
@@ -1561,7 +1570,6 @@ const CreateBooking = ({
             <th className="py-2.5">Type & Info</th>
             <th className="py-2.5 text-center">Max Occupancy</th>
             <th className="py-2.5 text-right">Rate / Night (₹)</th>
-            <th className="py-2.5 text-center">Guests</th>
             <th className="py-2.5 text-right pr-2">Select</th>
           </tr>
         </thead>
@@ -1584,8 +1592,6 @@ const CreateBooking = ({
               const r = roomData.room;
               const rt = roomData.roomType;
               const isSelected = !!selectedSpecificRooms[r._id];
-              const selection = selectedSpecificRooms[r._id] || { adults: adultsFilter, children: childrenFilter };
-
               return (
                 <tr
                   key={r._id}
@@ -1609,46 +1615,6 @@ const CreateBooking = ({
                   </td>
                   <td className="py-3 text-right font-bold text-text-primary text-sm">
                     ₹{r.basePrice.toLocaleString()}
-                  </td>
-                  <td className="py-3 text-center">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="flex items-center gap-1 text-[10px]">
-                        <span className="text-text-secondary">A:</span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={r.maxAdults}
-                          value={selection.adults}
-                          onChange={(e) => {
-                            if (!isSelected) return;
-                            setSelectedSpecificRooms(prev => ({
-                              ...prev,
-                              [r._id]: { ...prev[r._id], adults: Number(e.target.value) }
-                            }));
-                          }}
-                          className={`w-10 border rounded px-1 text-center ${!isSelected ? 'bg-slate-50 text-slate-400' : 'bg-white'}`}
-                          disabled={!isSelected}
-                        />
-                      </div>
-                      <div className="flex items-center gap-1 text-[10px]">
-                        <span className="text-text-secondary">C:</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={r.maxChildren}
-                          value={selection.children}
-                          onChange={(e) => {
-                            if (!isSelected) return;
-                            setSelectedSpecificRooms(prev => ({
-                              ...prev,
-                              [r._id]: { ...prev[r._id], children: Number(e.target.value) }
-                            }));
-                          }}
-                          className={`w-10 border rounded px-1 text-center ${!isSelected ? 'bg-slate-50 text-slate-400' : 'bg-white'}`}
-                          disabled={!isSelected}
-                        />
-                      </div>
-                    </div>
                   </td>
                   <td className="py-3 text-right pr-2">
                     <input
@@ -1691,7 +1657,7 @@ const CreateBooking = ({
         Selected Rooms: {Object.keys(selectedSpecificRooms).length}
       </span>
       <span className="text-sm font-black text-text-primary">
-        Total Guests: {Object.values(selectedSpecificRooms).reduce((acc, curr) => acc + curr.adults + curr.children, 0)}
+        Total Rooms: {Object.keys(selectedSpecificRooms).length}
       </span>
     </div>
   </div>

@@ -3372,7 +3372,7 @@ const CheckInForm = ({
  </div>
 
  {/* Section E: Guest Insights */}
- <div className="bg-white rounded-xl border border-border p-4">
+ {/* <div className="bg-white rounded-xl border border-border p-4">
  <div className="flex items-center gap-2 mb-3">
  <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">E</span>
  <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
@@ -3409,7 +3409,7 @@ const CheckInForm = ({
  <div className="mt-3 text-center">
  <a href="#" className="text-[9px] font-black text-orange-500 uppercase hover:underline">View Guest Profile</a>
  </div>
- </div>
+ </div> */}
  </div>
  </div>
  </div>

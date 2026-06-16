@@ -408,7 +408,7 @@ const CreateBooking = ({
             },
           });
           // Filter out unavailable rooms just in case
-          const rooms = (res.data.data?.rooms || []).filter((r: any) => r.isAvailable);
+          const rooms = (res.data.data?.availableRooms || []).filter((r: any) => r.isAvailable);
           setAvailablePhysicalRooms(rooms);
         } catch (error) {
           console.error("Failed to fetch available physical rooms", error);

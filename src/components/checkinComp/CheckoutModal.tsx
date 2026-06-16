@@ -31,9 +31,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
     damageFound: checkIn.checkoutVerification?.damageFound || false,
     damageAmount: checkIn.checkoutVerification?.damageAmount || "",
     damageRemarks: checkIn.checkoutVerification?.damageRemarks || "",
-    staffNotes: checkIn.checkoutVerification?.staffNotes || "",
-    noAdditionalCharges: checkIn.checkoutVerification?.noAdditionalCharges || false,
-    departmentsVerified: checkIn.checkoutVerification?.departmentsVerified || false
+    staffNotes: checkIn.checkoutVerification?.staffNotes || ""
   });
 
   const [step, setStep] = useState(checkIn.checkoutVerification?.step || 1);
@@ -205,8 +203,6 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
         damageAmount: Number(verification.damageAmount) || 0,
         damageRemarks: verification.damageRemarks,
         staffNotes: verification.staffNotes,
-        noAdditionalCharges: verification.noAdditionalCharges,
-        departmentsVerified: verification.departmentsVerified,
         step: step,
       },
  };
@@ -463,21 +459,6 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
               <p className="text-sm text-gray-500 font-semibold italic text-center py-4">No additional department charges.</p>
             )}
             
-            <label className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors mt-4">
-               <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${verification.noAdditionalCharges ? "bg-blue-500 border-blue-500 text-white" : "border-blue-300 bg-white"}`}>
-                 {verification.noAdditionalCharges && <span className="text-xs">✓</span>}
-               </div>
-               <input type="checkbox" className="hidden" checked={!!verification.noAdditionalCharges} onChange={(e) => setVerification({ ...verification, noAdditionalCharges: e.target.checked })} />
-               <span className="font-bold text-blue-800 text-sm">No additional department charges</span>
-            </label>
-            
-            <label className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors mt-4">
-               <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${verification.departmentsVerified ? "bg-blue-500 border-blue-500 text-white" : "border-blue-300 bg-white"}`}>
-                 {verification.departmentsVerified && <span className="text-xs">✓</span>}
-               </div>
-               <input type="checkbox" className="hidden" checked={!!verification.departmentsVerified} onChange={(e) => setVerification({ ...verification, departmentsVerified: e.target.checked })} />
-               <span className="font-bold text-blue-800 text-sm">All department charges are verified</span>
-            </label>
           </div>
         </Section>
 
@@ -488,8 +469,8 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
      <button onClick={onClose} className="px-6 py-3 border-2 border-gray-200 text-gray-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">Cancel</button>
       <button
         onClick={handleContinueToSettlement}
-        disabled={!(verification.guestVacated && verification.keyReturned && verification.roomChecked && verification.noAdditionalCharges && verification.departmentsVerified)}
-        className={`px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${verification.guestVacated && verification.keyReturned && verification.roomChecked && verification.noAdditionalCharges && verification.departmentsVerified ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-100" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+        disabled={!(verification.guestVacated && verification.keyReturned && verification.roomChecked)}
+        className={`px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${verification.guestVacated && verification.keyReturned && verification.roomChecked ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-100" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
       >
         Continue to Settlement <span>→</span>
       </button>

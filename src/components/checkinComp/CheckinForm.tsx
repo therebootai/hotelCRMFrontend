@@ -385,25 +385,32 @@ const CheckInForm = ({
  };
 
  const getInitialCheckOutTime = () => {
- if (isDayAccess && bookingData?.accessPackageId) {
- const pkg = bookingData.accessPackageId;
- const today = new Date();
- const entryStr = pkg.entry_time || "09:00";
- const exitStr = pkg.exit_time || "18:00";
- const [entryH, entryM] = entryStr.split(":").map(Number);
- const [exitH, exitM] = exitStr.split(":").map(Number);
- const checkOutDate = new Date(today);
- checkOutDate.setHours(exitH, exitM, 0, 0);
- if (exitH < entryH || (exitH === entryH && exitM < entryM)) {
- checkOutDate.setDate(checkOutDate.getDate() + 1);
- }
- return checkOutDate;
- }
- if (bookingData?.rooms?.[0]?.checkOutDate) {
- return new Date(bookingData.rooms[0].checkOutDate);
- }
- return addDays(new Date(), 1);
- };
+    if (isDayAccess && bookingData?.accessPackageId) {
+      const pkg = bookingData.accessPackageId;
+      const today = new Date();
+      const entryStr = pkg.entry_time || "09:00";
+      const exitStr = pkg.exit_time || "18:00";
+      const [entryH, entryM] = entryStr.split(":").map(Number);
+      const [exitH, exitM] = exitStr.split(":").map(Number);
+      const checkOutDate = new Date(today);
+      checkOutDate.setHours(exitH, exitM, 0, 0);
+      if (exitH < entryH || (exitH === entryH && exitM < entryM)) {
+        checkOutDate.setDate(checkOutDate.getDate() + 1);
+      }
+      return checkOutDate;
+    }
+    if (bookingData?.rooms?.[0]?.checkOutDate) {
+      const originalCheckOut = new Date(bookingData.rooms[0].checkOutDate);
+      const now = new Date();
+      if (originalCheckOut <= now) {
+        // Auto-fix: add original totalNights to now
+        const nights = bookingData.totalNights || 1;
+        return addDays(now, nights);
+      }
+      return originalCheckOut;
+    }
+    return addDays(new Date(), 1);
+  };
 
  const [stayFormData, setStayFormData] = useState({
  checkInTime: getInitialCheckInTime(),
@@ -946,6 +953,9 @@ const CheckInForm = ({
  const canProceed = (step: number): boolean => {
  switch (step) {
  case 1: {
+ if (stayFormData.expectedCheckOutTime <= stayFormData.checkInTime) {
+   return false;
+ }
  if (partyType === "Corporate" && (!corporateDetails.companyName.trim() || !corporateDetails.contactPersonName?.trim() || !corporateDetails.contactMobile?.trim())) {
    return false;
  }
@@ -997,6 +1007,9 @@ const CheckInForm = ({
  const getProceedError = (step: number): string => {
    switch (step) {
      case 1:
+       if (stayFormData.expectedCheckOutTime <= stayFormData.checkInTime) {
+         return "Check-out time must be after check-in time.";
+       }
        if (partyType === "Corporate" && (!corporateDetails.companyName.trim() || !corporateDetails.contactPersonName?.trim() || !corporateDetails.contactMobile?.trim())) {
            return "Company Name, Contact Person, and Mobile are required.";
        }
@@ -2020,8 +2033,10 @@ const CheckInForm = ({
  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Visit Date *</label>
  <DatePicker
  selected={stayFormData.checkInTime}
- onChange={(date: Date | null) => date && setStayFormData({ ...stayFormData, checkInTime: date })}
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
+ onChange={() => {}}
+ readOnly
+ disabled
+ className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none opacity-70 cursor-not-allowed"
  dateFormat="dd MMM yyyy"
  />
  </div>
@@ -2029,8 +2044,10 @@ const CheckInForm = ({
  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Entry Time *</label>
  <DatePicker
  selected={stayFormData.checkInTime}
- onChange={(date: Date | null) => date && setStayFormData({ ...stayFormData, checkInTime: date })}
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
+ onChange={() => {}}
+ readOnly
+ disabled
+ className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none opacity-70 cursor-not-allowed"
  showTimeSelect
  showTimeSelectOnly
  timeIntervals={30}
@@ -2043,6 +2060,7 @@ const CheckInForm = ({
  <DatePicker
  selected={stayFormData.expectedCheckOutTime}
  onChange={(date: Date | null) => date && setStayFormData({ ...stayFormData, expectedCheckOutTime: date })}
+ minDate={stayFormData.checkInTime}
  className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
  showTimeSelect
  showTimeSelectOnly
@@ -2190,8 +2208,10 @@ const CheckInForm = ({
  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">Check-in Date & Time *</label>
  <DatePicker
  selected={stayFormData.checkInTime}
- onChange={(date: Date | null) => date && setStayFormData({ ...stayFormData, checkInTime: date })}
- className="w-full p-2 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none"
+ onChange={() => {}}
+ readOnly
+ disabled
+ className="w-full p-2 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none opacity-70 cursor-not-allowed"
  dateFormat="dd MMM yyyy, hh:mm a"
  showTimeSelect
  />
@@ -2201,6 +2221,7 @@ const CheckInForm = ({
  <DatePicker
  selected={stayFormData.expectedCheckOutTime}
  onChange={(date: Date | null) => date && setStayFormData({ ...stayFormData, expectedCheckOutTime: date })}
+ minDate={stayFormData.checkInTime}
  className="w-full p-2 bg-gray-50 border border-border rounded-lg text-[10px] font-bold outline-none"
  dateFormat="dd MMM yyyy, hh:mm a"
  showTimeSelect

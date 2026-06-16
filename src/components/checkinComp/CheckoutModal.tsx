@@ -149,8 +149,10 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  // 👉 Round tax (no decimals)
  const taxAmount = Math.round((subTotal * taxPercentage) / 100);
 
+ const damageAmount = Number(verification.damageAmount) || 0;
+
  // 👉 Round grand total
- const grandTotal = Math.round(subTotal + taxAmount - Number(discount));
+ const grandTotal = Math.round(subTotal + taxAmount + damageAmount - Number(discount));
 
  const advancePaid = Math.round(billData?.advanceDeducted || 0);
 
@@ -785,6 +787,14 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  value={taxAmount}
  color="text-gray-500"
  />
+
+ {Number(verification.damageAmount) > 0 && (
+    <LineItem
+      label="Damage Charges"
+      value={Number(verification.damageAmount)}
+      color="text-red-500"
+    />
+  )}
 
  {/* Discount input inline */}
  <div className="flex items-center justify-between">

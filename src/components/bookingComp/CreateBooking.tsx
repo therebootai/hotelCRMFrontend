@@ -1860,7 +1860,6 @@ const CreateBooking = ({
  >
  <option value="Tentative">Tentative</option>
  <option value="Confirmed">Confirmed</option>
- <option value="Cancelled">Cancelled</option>
  </select>
  </div>
 
@@ -1997,29 +1996,13 @@ const CreateBooking = ({
  {booking ? "Update Booking" : "Preview & Confirm Booking"}
  </button>
 
- <div className="grid grid-cols-2 gap-2">
- <button
- type="button"
- onClick={async () => {
- // Quick tentative save - sets advance to 0
- setPaymentForm({ ...paymentForm, advanceAmount: 0 });
- setTimeout(() => {
- submitBooking();
- }, 100);
- }}
- disabled={loading}
- className="py-2.5 bg-slate-100 hover:bg-slate-200 text-text-primary rounded-xl font-bold text-sm transition-all"
- >
- {booking ? "Save Booking" : "Save as Tentative"}
- </button>
  <button
  type="button"
  onClick={onClose}
- className="py-2.5 border border-border hover:bg-slate-50 text-text-secondary rounded-xl font-bold text-sm transition-all text-center"
+ className="w-full py-2.5 border border-border hover:bg-slate-50 text-text-secondary rounded-xl font-bold text-sm transition-all text-center"
  >
  Back to List
  </button>
- </div>
  </div>
  </div>
  </div>

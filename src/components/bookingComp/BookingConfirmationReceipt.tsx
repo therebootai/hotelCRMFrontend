@@ -163,7 +163,7 @@ const BookingConfirmationReceipt = ({
                 !isSaved ? "bg-slate-100 text-slate-700" :
                 advancePaid > 0 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
               }`}>
-                {!isSaved ? "Preview" : advancePaid > 0 ? "Advance Paid" : booking?.status || "Pending"}
+                {!isSaved ? "Preview" : advancePaid > 0 ? "Advance Paid" : booking?.status || "Tentative"}
               </span>
             </div>
           </div>

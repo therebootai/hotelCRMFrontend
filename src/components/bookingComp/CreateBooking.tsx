@@ -204,7 +204,7 @@ const CreateBooking = ({
  const [purposeOfVisit, setPurposeOfVisit] = useState("Leisure / Holiday");
 
  // Booking Status (Section F)
- const [bookingStatus, setBookingStatus] = useState("Pending");
+ const [bookingStatus, setBookingStatus] = useState("Tentative");
  const [holdTillDate, setHoldTillDate] = useState<Date | null>(null);
  const [remarks, setRemarks] = useState("");
 
@@ -285,7 +285,7 @@ const CreateBooking = ({
 
  setPurposeOfVisit(booking.purposeOfVisit || "Leisure / Holiday");
  setRemarks(booking.notes || booking.remarks || "");
- setBookingStatus(booking.status || "Pending");
+ setBookingStatus(booking.status || "Tentative");
  if (booking.expiresAt) {
  setHoldTillDate(new Date(booking.expiresAt));
  }
@@ -624,7 +624,7 @@ const CreateBooking = ({
  children: childrenFilter,
  addons: selectedAddons,
  expiresAt:
- bookingStatus === "Hold" && holdTillDate
+ bookingStatus === "Tentative" && holdTillDate
  ? holdTillDate.toISOString()
  : undefined,
  };
@@ -1858,18 +1858,16 @@ const CreateBooking = ({
  onChange={(e) => setBookingStatus(e.target.value)}
  className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none font-bold"
  >
- <option value="Pending">Pending</option>
+ <option value="Tentative">Tentative</option>
  <option value="Confirmed">Confirmed</option>
- <option value="Hold">Hold / Tentative</option>
- <option value="Checked-In">Checked-In</option>
  <option value="Cancelled">Cancelled</option>
  </select>
  </div>
 
- {bookingStatus === "Hold" && (
+ {bookingStatus === "Tentative" && (
  <div className="animate-fade-in">
  <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">
- Hold Till (If Hold)
+ Expires At (Optional)
  </label>
  <DatePicker
  selected={holdTillDate}

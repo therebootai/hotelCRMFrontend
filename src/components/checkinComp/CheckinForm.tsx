@@ -197,6 +197,7 @@ const CheckInForm = ({
  const [extraServices, setExtraServices] = useState<any[]>([]);
  const [selectedAddons, setSelectedAddons] = useState<any[]>([]);
  const [roomSearchQuery, setRoomSearchQuery] = useState("");
+ const [showEarlyCheckInWarning, setShowEarlyCheckInWarning] = useState<boolean>(false);
 
   const handleAddCoGuest = (roomId: string) => {
     const newGuest = {
@@ -216,6 +217,21 @@ const CheckInForm = ({
     };
     setGuests(prev => [...prev, newGuest as any]);
   };
+
+  useEffect(() => {
+    if (bookingData && !editMode && !existingCheckIn) {
+      const scheduledCheckIn = bookingData.overallCheckInDate ? new Date(bookingData.overallCheckInDate) : null;
+      if (scheduledCheckIn) {
+        const now = new Date();
+        const startOfScheduled = new Date(scheduledCheckIn.getFullYear(), scheduledCheckIn.getMonth(), scheduledCheckIn.getDate());
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        if (startOfScheduled > startOfToday) {
+          setShowEarlyCheckInWarning(true);
+        }
+      }
+    }
+  }, [bookingData, editMode, existingCheckIn]);
 
 
  // Initialize from edit mode data
@@ -1526,7 +1542,33 @@ const CheckInForm = ({
  );
  }
 
- return (
+  if (showEarlyCheckInWarning && bookingData?.overallCheckInDate) {
+    return (
+      <div className={inline ? "w-full flex flex-col checkin-modal-container relative" : "fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto checkin-modal-container"}>
+        <div className="max-w-md w-full bg-white rounded-2xl p-6 border border-gray-100 shadow-xl text-center">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-black text-gray-800 mb-2">Early Check-In Detected</h2>
+          <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+            The scheduled check-in date for this booking is <strong className="text-gray-800">{new Date(bookingData.overallCheckInDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>. Do you want to proceed with an early check-in?
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button onClick={() => { if(onClose) onClose(); else navigate(-1); }} className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-all flex-1">
+              No, Go Back
+            </button>
+            <button onClick={() => setShowEarlyCheckInWarning(false)} className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 text-white font-bold hover:from-orange-600 hover:to-orange-500 shadow-lg shadow-orange-100 transition-all flex-1">
+              Yes, Proceed
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
  <div className={inline ? "w-full flex flex-col checkin-modal-container relative" : "fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto checkin-modal-container"}>
  <style>{`
  /* Scoped styles for the check-in modal to scale for larger screens */

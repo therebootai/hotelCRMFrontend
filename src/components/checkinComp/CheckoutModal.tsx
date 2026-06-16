@@ -42,8 +42,6 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
   const [discount, setDiscount] = useState<number>(0);
   const [notes, setNotes] = useState("");
 
-  const [taxOptions, setTaxOptions] = useState<any[]>([]);
-  const [selectedTaxId, setSelectedTaxId] = useState("");
   const [taxPercentage, setTaxPercentage] = useState(12); // Default to 12% if none chosen
 
   const [paymentMethod, setPaymentMethod] = useState("Cash");
@@ -63,9 +61,8 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [billRes, taxRes] = await Promise.all([
+        const [billRes] = await Promise.all([
           api.get(`/billing/preview/${checkIn._id}`),
-          api.get(`/tax-gst`, { params: { activeOnly: "true" } }),
         ]);
  if (billRes.data.success) {
  const d = billRes.data.data;
@@ -79,16 +76,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  setNotes(d.notes || "");
  const storedPct = d.taxPercentage ?? 12;
  setTaxPercentage(storedPct);
- setTaxOptions(taxRes.data.data || []);
 
- // Restore the booking's tax GST record for display
- if (d.taxGstId) {
- const match = (taxRes.data.data || []).find((t: any) => t._id === d.taxGstId);
- setSelectedTaxId(match ? match._id : "");
- } else {
- const match = (taxRes.data.data || []).find((t: any) => t.percentage === storedPct);
- setSelectedTaxId(match ? match._id : "");
- }
 
  const lastPayment =
  d.payments?.length > 0 ? d.payments[d.payments.length - 1] : null;

@@ -550,50 +550,74 @@ const CreateBooking = ({
     let roomTotal = 0;
     let roomTaxAmount = 0;
     const roomBreakdown: { name: string; price: number }[] = [];
-    const roomTaxBreakdown: { name: string; taxPercentage: number; taxAmount: number }[] = [];
+    const roomTaxBreakdown: {
+      name: string;
+      taxPercentage: number;
+      taxAmount: number;
+    }[] = [];
 
     if (bookingCategory === "Day Access") {
       const pkg = accessPackages.find((p) => p._id === selectedPackageId);
       const rate = pkg ? pkg.adult_price : 0;
       const count = Number(adultsFilter) + Number(childrenFilter);
       roomTotal = rate * count;
-      roomBreakdown.push({ name: `Day Access (${count} Pax)`, price: roomTotal });
+      roomBreakdown.push({
+        name: `Day Access (${count} Pax)`,
+        price: roomTotal,
+      });
 
       const taxAmt = roomTotal * globalTaxRate;
       roomTaxAmount += taxAmt;
-      roomTaxBreakdown.push({ name: `Day Access Tax`, taxPercentage: selectedTax?.percentage || 0, taxAmount: taxAmt });
+      roomTaxBreakdown.push({
+        name: `Day Access Tax`,
+        taxPercentage: selectedTax?.percentage || 0,
+        taxAmount: taxAmt,
+      });
     } else {
       if (isAssignSpecificRoom) {
         Object.values(selectedSpecificRooms).forEach((room: any) => {
           const rTotal = room.basePrice * totalNights;
           roomTotal += rTotal;
-          roomBreakdown.push({ name: `Room ${room.roomNumber}`, price: rTotal });
+          roomBreakdown.push({
+            name: `Room ${room.roomNumber}`,
+            price: rTotal,
+          });
 
           const rt = roomTypes.find((r) => r._id === room.roomTypeId);
           const taxPercentage = rt?.gstId?.percentage || 0;
           const taxAmt = rTotal * (taxPercentage / 100);
           roomTaxAmount += taxAmt;
           if (taxAmt > 0 || taxPercentage > 0) {
-            roomTaxBreakdown.push({ name: `Room ${room.roomNumber} Tax`, taxPercentage, taxAmount: taxAmt });
+            roomTaxBreakdown.push({
+              name: `Room ${room.roomNumber} Tax`,
+              taxPercentage,
+              taxAmount: taxAmt,
+            });
           }
         });
       } else {
         selectedRoomTypesList.forEach((entry) => {
           const rTotal = entry.basePrice * entry.count * totalNights;
           roomTotal += rTotal;
-          roomBreakdown.push({ name: `${entry.roomTypeName} (${entry.count} Rooms)`, price: rTotal });
+          roomBreakdown.push({
+            name: `${entry.roomTypeName} (${entry.count} Rooms)`,
+            price: rTotal,
+          });
 
           const rt = roomTypes.find((r) => r._id === entry.roomTypeId);
           const taxPercentage = rt?.gstId?.percentage || 0;
           const taxAmt = rTotal * (taxPercentage / 100);
           roomTaxAmount += taxAmt;
           if (taxAmt > 0 || taxPercentage > 0) {
-            roomTaxBreakdown.push({ name: `${entry.roomTypeName} Tax`, taxPercentage, taxAmount: taxAmt });
+            roomTaxBreakdown.push({
+              name: `${entry.roomTypeName} Tax`,
+              taxPercentage,
+              taxAmount: taxAmt,
+            });
           }
         });
       }
     }
-
 
     let addonsTotal = 0;
     let addonsTaxAmount = 0;
@@ -638,7 +662,8 @@ const CreateBooking = ({
     selectedSpecificRooms,
   ]);
 
-  const { roomBreakdown, roomTaxBreakdown, taxAmount, grandTotal } = calculateTotals();
+  const { roomBreakdown, roomTaxBreakdown, taxAmount, grandTotal } =
+    calculateTotals();
 
   // Submit booking
   const submitBooking = async () => {
@@ -1572,7 +1597,12 @@ const CreateBooking = ({
                             <td className="py-3 text-right font-bold text-text-primary">
                               ₹{rt.basePrice.toLocaleString()}
                               <p className="text-[8px] text-text-secondary font-normal block">
-                                + ₹{Math.round(rt.basePrice * ((rt.gstId?.percentage || 0) / 100))} Taxes
+                                + ₹
+                                {Math.round(
+                                  rt.basePrice *
+                                    ((rt.gstId?.percentage || 0) / 100),
+                                )}{" "}
+                                Taxes
                               </p>
                             </td>
 
@@ -2053,7 +2083,10 @@ const CreateBooking = ({
 
                 <div className="space-y-3">
                   {roomBreakdown.map((item, idx) => (
-                    <div key={`rb-${idx}`} className="flex justify-between items-center text-sm text-text-secondary">
+                    <div
+                      key={`rb-${idx}`}
+                      className="flex justify-between items-center text-sm text-text-secondary"
+                    >
                       <span>{item.name}</span>
                       <span className="font-bold text-text-primary">
                         ₹{item.price.toLocaleString()}
@@ -2062,8 +2095,13 @@ const CreateBooking = ({
                   ))}
 
                   {selectedAddons.map((addon, idx) => (
-                    <div key={`ab-${idx}`} className="flex justify-between items-center text-sm text-text-secondary">
-                      <span>{addon.serviceName} (Qty: {addon.quantity})</span>
+                    <div
+                      key={`ab-${idx}`}
+                      className="flex justify-between items-center text-sm text-text-secondary"
+                    >
+                      <span>
+                        {addon.serviceName} (Qty: {addon.quantity})
+                      </span>
                       <span className="font-bold text-text-primary">
                         ₹{addon.total.toLocaleString()}
                       </span>
@@ -2084,8 +2122,13 @@ const CreateBooking = ({
                   </div>
 
                   {roomTaxBreakdown.map((tax, idx) => (
-                    <div key={`rtb-${idx}`} className="flex justify-between items-center text-xs 3xl:text-[14px] text-text-secondary">
-                      <span>{tax.name} ({tax.taxPercentage}%)</span>
+                    <div
+                      key={`rtb-${idx}`}
+                      className="flex justify-between items-center text-xs 3xl:text-[14px] text-text-secondary"
+                    >
+                      <span>
+                        {tax.name} ({tax.taxPercentage}%)
+                      </span>
                       <span className="font-bold text-text-primary">
                         ₹{Math.round(tax.taxAmount).toLocaleString()}
                       </span>

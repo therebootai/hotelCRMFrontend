@@ -78,7 +78,7 @@ const ActiveGuests = () => {
  };
 
  return (
- <div className="p-8 max-w-7xl mx-auto animate-fade-in">
+ <div className="py-8 page-container max-w-500 mx-auto animate-fade-in">
  {/* Header Panel */}
  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
  <div>

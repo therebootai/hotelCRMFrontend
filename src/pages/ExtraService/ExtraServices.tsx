@@ -120,7 +120,7 @@ export default function ExtraServiceMaster() {
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen p-8 max-w-300 mx-auto relative page-container animate-fade-in">
+  <div className="flex flex-col w-full min-h-screen py-8 max-w-500 mx-auto relative page-container animate-fade-in">
       {/* Page Header (Added for standalone page context) */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -152,19 +152,19 @@ export default function ExtraServiceMaster() {
             {/* Removed sticky positioning since the whole page will scroll now */}
             <thead className="bg-background/50 border-b border-border">
               <tr>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-[40%]">
+                <th className="px-10 py-4 text-[11px] 3xl:text-[14px] font-semibold text-text-secondary uppercase tracking-wider w-[40%]">
                   Service Name
                 </th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+                <th className="px-10 py-4 text-[11px] 3xl:text-[14px] font-semibold text-text-secondary uppercase tracking-wider">
                   Price
                 </th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+                <th className="px-10 py-4 text-[11px] 3xl:text-[14px] font-semibold text-text-secondary uppercase tracking-wider">
                   Tax Slab
                 </th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+                <th className="px-10 py-4 text-[11px] 3xl:text-[14px] font-semibold text-text-secondary uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right w-32">
+                <th className="px-10 py-4 text-[11px] 3xl:text-[14px] font-semibold text-text-secondary uppercase tracking-wider text-right w-32">
                   Actions
                 </th>
               </tr>
@@ -174,7 +174,7 @@ export default function ExtraServiceMaster() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-6 py-12 text-center text-text-secondary"
+                    className="px-10 py-12 text-center text-text-secondary"
                   >
                     <div className="flex flex-col items-center justify-center gap-2">
                       <FiLoader className="w-6 h-6 animate-spin text-primary" />
@@ -190,7 +190,7 @@ export default function ExtraServiceMaster() {
                     key={service._id}
                     className={`hover:bg-background/50 transition-colors group ${!service.isActive ? "opacity-60" : ""}`}
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-10 py-4">
                       <span className="font-bold text-text-primary text-base">
                         {service.name}
                       </span>
@@ -200,17 +200,17 @@ export default function ExtraServiceMaster() {
                         </p>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-10 py-4">
                       <span className="text-base text-text-primary font-medium">
                         ₹{(service.price ?? 0).toLocaleString()}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-10 py-4">
                       <span className="text-sm font-medium text-text-secondary">
                         {service.taxPercentage}%
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-left">
+                    <td className="px-10 py-4 text-left">
                       <button
                         onClick={() =>
                           handleToggleStatus(service._id, service.isActive)
@@ -222,7 +222,7 @@ export default function ExtraServiceMaster() {
                         />
                       </button>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-10 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEditClick(service)}
@@ -244,7 +244,7 @@ export default function ExtraServiceMaster() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-6 py-12 text-center text-text-secondary"
+                    className="px-10 py-12 text-center text-text-secondary"
                   >
                     No extra services registered yet.
                   </td>

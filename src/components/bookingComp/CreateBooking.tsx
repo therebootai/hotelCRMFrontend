@@ -1356,22 +1356,20 @@ const CreateBooking = ({
                     <label className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase block mb-1">
                       Check-in Date *
                     </label>
-                    <div className="relative">
-                      <DatePicker
-                        selected={checkInDate}
-                        onChange={(d: Date | null) => {
-                          const newDate = d || new Date();
-                          setCheckInDate(newDate);
-                          if (checkOutDate <= newDate) {
-                            setCheckOutDate(addDays(newDate, 1));
-                          }
-                        }}
-                        className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"
-                        dateFormat="dd MMM yyyy, hh:mm a"
-                        showTimeSelect
-                        minDate={new Date()}
-                      />
-                    </div>
+                    <DatePicker
+                      selected={checkInDate}
+                      onChange={(d: Date | null) => {
+                        const newDate = d || new Date();
+                        setCheckInDate(newDate);
+                        if (checkOutDate <= newDate) {
+                          setCheckOutDate(addDays(newDate, 1));
+                        }
+                      }}
+                      className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"
+                      dateFormat="dd MMM yyyy, hh:mm a"
+                      showTimeSelect
+                      minDate={new Date()}
+                    />
                   </div>
 
                   <div className="col-span-2">

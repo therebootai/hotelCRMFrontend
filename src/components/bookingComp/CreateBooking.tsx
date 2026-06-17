@@ -1369,6 +1369,7 @@ const CreateBooking = ({
                         className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"
                         dateFormat="dd MMM yyyy, hh:mm a"
                         showTimeSelect
+                        minDate={new Date()}
                       />
                     </div>
                   </div>

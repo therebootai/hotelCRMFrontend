@@ -123,16 +123,16 @@ export default function AmenitiesMaster({ isAddModalOpen, setIsAddModalOpen }: A
  <table className="w-full text-left border-collapse">
  <thead className="bg-background/50 border-b border-border">
  <tr>
- <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-24 text-center">Icon Preview</th>
- <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-[30%]">Amenity Name</th>
- <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">Status</th>
- <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right w-32">Actions</th>
+ <th className="px-10 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-24 text-center">Icon Preview</th>
+ <th className="px-10 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-[30%]">Amenity Name</th>
+ <th className="px-10 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">Status</th>
+ <th className="px-10 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right w-32">Actions</th>
  </tr>
  </thead>
  <tbody className="divide-y divide-border">
  {isLoading ? (
  <tr>
- <td colSpan={4} className="px-6 py-12 text-center text-text-secondary">
+ <td colSpan={4} className="px-10 py-12 text-center text-text-secondary">
  <div className="flex flex-col items-center justify-center gap-2">
  <FiLoader className="w-6 h-6 animate-spin text-primary" />
  <span className="text-base">Loading amenities...</span>
@@ -145,15 +145,15 @@ export default function AmenitiesMaster({ isAddModalOpen, setIsAddModalOpen }: A
  
  return (
  <tr key={amenity._id} className={`hover:bg-background/50 transition-colors group ${!amenity.isActive ? 'opacity-60' : ''}`}>
- <td className="px-6 py-4 text-center">
+ <td className="px-10 py-4 text-center">
  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary mx-auto flex items-center justify-center shrink-0">
  <IconComponent size={18} />
  </div>
  </td>
- <td className="px-6 py-4">
+ <td className="px-10 py-4">
  <span className="font-bold text-text-primary text-base">{amenity.name}</span>
  </td>
- <td className="px-6 py-4 text-left">
+ <td className="px-10 py-4 text-left">
  <button 
  onClick={() => handleToggleStatus(amenity._id, amenity.isActive)}
  className={`w-10 h-5 rounded-full relative transition-colors duration-200 ${amenity.isActive ? 'bg-primary' : 'bg-border'}`}
@@ -161,7 +161,7 @@ export default function AmenitiesMaster({ isAddModalOpen, setIsAddModalOpen }: A
  <span className={`absolute top-0.5 left-0.5 bg-card w-4 h-4 rounded-full transition-transform duration-200 ${amenity.isActive ? 'translate-x-5' : 'translate-x-0'}`} />
  </button>
  </td>
- <td className="px-6 py-4">
+ <td className="px-10 py-4">
  <div className="flex items-center justify-end gap-2">
  <button 
  onClick={() => handleEditClick(amenity)}
@@ -182,7 +182,7 @@ export default function AmenitiesMaster({ isAddModalOpen, setIsAddModalOpen }: A
  })
  ) : (
  <tr>
- <td colSpan={4} className="px-6 py-12 text-center text-text-secondary">
+ <td colSpan={4} className="px-10 py-12 text-center text-text-secondary">
  No amenities registered yet.
  </td>
  </tr>

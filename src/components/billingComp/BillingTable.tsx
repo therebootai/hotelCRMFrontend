@@ -27,7 +27,7 @@ const BillingTable: React.FC<BillingTableProps> = ({
  {/* DATA TABLE */}
  <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
  {/* Table Header */}
- <div className="flex items-center bg-gray-50/70 border-b border-gray-100 px-6 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest">
+ <div className="flex items-center bg-gray-50/70 border-b border-gray-100 px-6 py-3 text-[9px] 3xl:text-[14px] font-black text-gray-700 uppercase tracking-widest">
  <div className="w-32">Invoice No</div>
  <div className="flex-1">Guest details</div>
  <div className="w-36 text-center">Grand Total</div>

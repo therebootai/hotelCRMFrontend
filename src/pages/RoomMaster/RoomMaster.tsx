@@ -17,258 +17,258 @@ import AmenitiesMaster from "./components/AmenitiesMaster";
 import DeleteModal from "../StaffMaster/Components/DeleteModal";
 
 const TABS = [
- { id: "room-master", label: "Room Master" },
- { id: "room-type-master", label: "Room Type Master" },
- { id: "amenities-master", label: "Amenities Master" },
+  { id: "room-master", label: "Room Master" },
+  { id: "room-type-master", label: "Room Type Master" },
+  { id: "amenities-master", label: "Amenities Master" },
 ] as const;
-type TabId = typeof TABS[number]["id"];
+type TabId = (typeof TABS)[number]["id"];
 
 export default function RoomMaster() {
- const { getParam, updateFilters, setMultipleParams } = useQueryParams();
+  const { getParam, updateFilters, setMultipleParams } = useQueryParams();
 
- const tabId = (getParam("tab") as TabId) ?? "room-master";
- const activeTab = TABS.find((t) => t.id === tabId)?.label ?? "Room Master";
- const currentPage = Number(getParam("page") ?? "1");
- const filters = {
- roomType: getParam("roomType") ?? "",
- status: getParam("status") ?? "",
- };
+  const tabId = (getParam("tab") as TabId) ?? "room-master";
+  const activeTab = TABS.find((t) => t.id === tabId)?.label ?? "Room Master";
+  const currentPage = Number(getParam("page") ?? "1");
+  const filters = {
+    roomType: getParam("roomType") ?? "",
+    status: getParam("status") ?? "",
+  };
 
- const setActiveTabId = (id: TabId) => updateFilters("tab", id);
+  const setActiveTabId = (id: TabId) => updateFilters("tab", id);
 
- const [view, setView] = useState<"list" | "add">("list");
+  const [view, setView] = useState<"list" | "add">("list");
 
- // Real Data State
- const [rooms, setRooms] = useState<Room[]>([]);
- const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+  // Real Data State
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
 
- // Backend Pagination State
- const [totalPages, setTotalPages] = useState(1);
- const [totalItems, setTotalItems] = useState(0);
- const itemsPerPage = 40;
+  // Backend Pagination State
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 40;
 
- // Edit/Delete State
- const [editingRoom, setEditingRoom] = useState<Room | null>(null);
- const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
- const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
- const [isDeleting, setIsDeleting] = useState(false);
+  // Edit/Delete State
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
- // Settings Modals State
- const [isRoomTypeModalOpen, setIsRoomTypeModalOpen] = useState(false);
- const [isAmenityModalOpen, setIsAmenityModalOpen] = useState(false);
+  // Settings Modals State
+  const [isRoomTypeModalOpen, setIsRoomTypeModalOpen] = useState(false);
+  const [isAmenityModalOpen, setIsAmenityModalOpen] = useState(false);
 
- const fetchRooms = async () => {
- try {
- setIsLoadingRooms(true);
- const queryParams = new URLSearchParams({
- page: currentPage.toString(),
- limit: itemsPerPage.toString(),
- ...(filters.status && { status: filters.status }),
- ...(filters.roomType && { roomType: filters.roomType }),
- });
- const res = await api.get(`/rooms?${queryParams.toString()}`);
+  const fetchRooms = async () => {
+    try {
+      setIsLoadingRooms(true);
+      const queryParams = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.roomType && { roomType: filters.roomType }),
+      });
+      const res = await api.get(`/rooms?${queryParams.toString()}`);
 
- const payload = res.data?.data;
+      const payload = res.data?.data;
 
- const fetchedRooms = payload.rooms || [];
- const pagination = payload.pagination || {
- totalPages: 1,
- totalItems: fetchedRooms.length,
- };
+      const fetchedRooms = payload.rooms || [];
+      const pagination = payload.pagination || {
+        totalPages: 1,
+        totalItems: fetchedRooms.length,
+      };
 
- setRooms(Array.isArray(fetchedRooms) ? fetchedRooms : []);
- setTotalPages(pagination.totalPages);
- setTotalItems(pagination.totalItems);
- } catch (error: unknown) {
- let errorMsg = "Failed to fetch rooms";
- if (error instanceof AxiosError)
- errorMsg = error.response?.data?.message || error.message;
- toast.error(errorMsg);
- } finally {
- setIsLoadingRooms(false);
- }
- };
+      setRooms(Array.isArray(fetchedRooms) ? fetchedRooms : []);
+      setTotalPages(pagination.totalPages);
+      setTotalItems(pagination.totalItems);
+    } catch (error: unknown) {
+      let errorMsg = "Failed to fetch rooms";
+      if (error instanceof AxiosError)
+        errorMsg = error.response?.data?.message || error.message;
+      toast.error(errorMsg);
+    } finally {
+      setIsLoadingRooms(false);
+    }
+  };
 
- useEffect(() => {
- if (tabId === "room-master") {
- fetchRooms();
- }
- // eslint-disable-next-line react-hooks/exhaustive-deps
- }, [tabId, currentPage, filters.roomType, filters.status]);
+  useEffect(() => {
+    if (tabId === "room-master") {
+      fetchRooms();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabId, currentPage, filters.roomType, filters.status]);
 
- const handlePageChange = (newPage: number) => {
- updateFilters("page", String(newPage));
- };
+  const handlePageChange = (newPage: number) => {
+    updateFilters("page", String(newPage));
+  };
 
- const handleEditRoom = (room: Room) => {
- setEditingRoom(room);
- setView("add");
- };
+  const handleEditRoom = (room: Room) => {
+    setEditingRoom(room);
+    setView("add");
+  };
 
- const handleDeleteClick = (room: Room) => {
- setRoomToDelete(room);
- setIsDeleteModalOpen(true);
- };
+  const handleDeleteClick = (room: Room) => {
+    setRoomToDelete(room);
+    setIsDeleteModalOpen(true);
+  };
 
- const confirmDeleteRoom = async () => {
- if (!roomToDelete) return;
- try {
- setIsDeleting(true);
- await api.delete(`/rooms/${roomToDelete._id}`);
- toast.success(`Room ${roomToDelete.roomNumber} deleted successfully`);
- setIsDeleteModalOpen(false);
- setRoomToDelete(null);
+  const confirmDeleteRoom = async () => {
+    if (!roomToDelete) return;
+    try {
+      setIsDeleting(true);
+      await api.delete(`/rooms/${roomToDelete._id}`);
+      toast.success(`Room ${roomToDelete.roomNumber} deleted successfully`);
+      setIsDeleteModalOpen(false);
+      setRoomToDelete(null);
 
- if (rooms.length === 1 && currentPage > 1) {
- updateFilters("page", String(currentPage - 1));
- } else {
- fetchRooms();
- }
- } catch (error: unknown) {
- let errorMsg = "Failed to delete room";
- if (error instanceof AxiosError)
- errorMsg = error.response?.data?.message || error.message;
- toast.error(errorMsg);
- } finally {
- setIsDeleting(false);
- }
- };
+      if (rooms.length === 1 && currentPage > 1) {
+        updateFilters("page", String(currentPage - 1));
+      } else {
+        fetchRooms();
+      }
+    } catch (error: unknown) {
+      let errorMsg = "Failed to delete room";
+      if (error instanceof AxiosError)
+        errorMsg = error.response?.data?.message || error.message;
+      toast.error(errorMsg);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
- const handleOpenAddForm = () => {
- setEditingRoom(null);
- setView("add");
- };
+  const handleOpenAddForm = () => {
+    setEditingRoom(null);
+    setView("add");
+  };
 
- const handleCloseForm = () => {
- setView("list");
- setEditingRoom(null);
- };
+  const handleCloseForm = () => {
+    setView("list");
+    setEditingRoom(null);
+  };
 
- const handleFormSuccess = () => {
- handleCloseForm();
- fetchRooms();
- };
+  const handleFormSuccess = () => {
+    handleCloseForm();
+    fetchRooms();
+  };
 
- return (
- <div className="p-8 bg-background min-h-full">
- <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
- {view === "add" ? (
- <div className="flex items-center gap-4 animate-fade-in">
- <button
- onClick={handleCloseForm}
- className="p-2 bg-card border border-border text-text-secondary hover:text-text-primary rounded-lg transition-colors"
- >
- <FiArrowLeft size={18} />
- </button>
- <h1 className="text-xl font-bold text-text-primary">
- {editingRoom
- ? `Edit Room #${editingRoom.roomNumber}`
- : "Add New Room"}
- </h1>
- </div>
- ) : (
- <RoomTabs activeTabId={tabId} onTabChange={setActiveTabId} />
- )}
+  return (
+    <div className="py-8 page-container max-w-500 mx-auto min-h-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {view === "add" ? (
+          <div className="flex items-center gap-4 animate-fade-in">
+            <button
+              onClick={handleCloseForm}
+              className="p-2 bg-card border border-border text-text-secondary hover:text-text-primary rounded-lg transition-colors"
+            >
+              <FiArrowLeft size={18} />
+            </button>
+            <h1 className="text-xl font-bold text-text-primary">
+              {editingRoom
+                ? `Edit Room #${editingRoom.roomNumber}`
+                : "Add New Room"}
+            </h1>
+          </div>
+        ) : (
+          <RoomTabs activeTabId={tabId} onTabChange={setActiveTabId} />
+        )}
 
- {view === "list" && (
- <div className="flex items-center gap-3 animate-fade-in">
- {tabId === "room-master" && (
- <>
- <Link
- to="/master/rooms/rates"
- className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-base transition-colors border bg-card border-border text-text-primary hover:bg-background"
- >
- <FiCalendar size={16} /> Manage Rates
- </Link>
- <button
- onClick={handleOpenAddForm}
- className="btn-primary flex items-center gap-2 px-5 py-2.5"
- >
- <FiPlus size={18} /> Add Room
- </button>
- </>
- )}
- {tabId === "room-type-master" && (
- <button
- onClick={() => setIsRoomTypeModalOpen(true)}
- className="btn-primary flex items-center gap-2 px-5 py-2.5"
- >
- <FiPlus size={18} /> Add Room Type
- </button>
- )}
- {tabId === "amenities-master" && (
- <button
- onClick={() => setIsAmenityModalOpen(true)}
- className="btn-primary flex items-center gap-2 px-5 py-2.5"
- >
- <FiPlus size={18} /> Add Amenities
- </button>
- )}
- </div>
- )}
- </div>
+        {view === "list" && (
+          <div className="flex items-center gap-3 animate-fade-in">
+            {tabId === "room-master" && (
+              <>
+                <Link
+                  to="/master/rooms/rates"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-base transition-colors border bg-card border-border text-text-primary hover:bg-background"
+                >
+                  <FiCalendar size={16} /> Manage Rates
+                </Link>
+                <button
+                  onClick={handleOpenAddForm}
+                  className="btn-primary flex items-center gap-2 px-5 py-2.5"
+                >
+                  <FiPlus size={18} /> Add Room
+                </button>
+              </>
+            )}
+            {tabId === "room-type-master" && (
+              <button
+                onClick={() => setIsRoomTypeModalOpen(true)}
+                className="btn-primary flex items-center gap-2 px-5 py-2.5"
+              >
+                <FiPlus size={18} /> Add Room Type
+              </button>
+            )}
+            {tabId === "amenities-master" && (
+              <button
+                onClick={() => setIsAmenityModalOpen(true)}
+                className="btn-primary flex items-center gap-2 px-5 py-2.5"
+              >
+                <FiPlus size={18} /> Add Amenities
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
- {view === "add" ? (
- <AddRoomForm
- onCancel={handleCloseForm}
- onSuccess={handleFormSuccess}
- initialData={editingRoom}
- />
- ) : tabId === "room-master" ? (
- <>
- <RoomFilters
- filters={filters}
- onFilterChange={(key, value) => {
- setMultipleParams({ [key]: value, page: "1" });
- }}
- />
- <div className="mt-4 flex flex-col lg:flex-row items-start gap-6">
- <div className="flex-1 min-w-0 transition-all duration-300 w-full">
- {isLoadingRooms ? (
- <div className="bg-card border border-border rounded-xl p-12 flex flex-col items-center justify-center text-text-secondary">
- <FiLoader className="w-8 h-8 animate-spin text-primary mb-3" />
- <p className="font-medium">Loading rooms...</p>
- </div>
- ) : (
- <RoomTable
- rooms={rooms}
- selectedRoomIds={[]}
- onSelectionChange={() => {}}
- isSelectionMode={false}
- onEdit={handleEditRoom}
- onDelete={handleDeleteClick}
- currentPage={currentPage}
- totalPages={totalPages}
- totalItems={totalItems}
- itemsPerPage={itemsPerPage}
- onPageChange={handlePageChange}
- />
- )}
- </div>
- </div>
- </>
- ) : tabId === "room-type-master" ? (
- <RoomTypeMaster
- isAddModalOpen={isRoomTypeModalOpen}
- setIsAddModalOpen={setIsRoomTypeModalOpen}
- />
- ) : tabId === "amenities-master" ? (
- <AmenitiesMaster
- isAddModalOpen={isAmenityModalOpen}
- setIsAddModalOpen={setIsAmenityModalOpen}
- />
- ) : (
- <ComingSoon moduleName={activeTab} />
- )}
+      {view === "add" ? (
+        <AddRoomForm
+          onCancel={handleCloseForm}
+          onSuccess={handleFormSuccess}
+          initialData={editingRoom}
+        />
+      ) : tabId === "room-master" ? (
+        <>
+          <RoomFilters
+            filters={filters}
+            onFilterChange={(key, value) => {
+              setMultipleParams({ [key]: value, page: "1" });
+            }}
+          />
+          <div className="mt-4 flex flex-col lg:flex-row items-start gap-6">
+            <div className="flex-1 min-w-0 transition-all duration-300 w-full">
+              {isLoadingRooms ? (
+                <div className="bg-card border border-border rounded-xl p-12 flex flex-col items-center justify-center text-text-secondary">
+                  <FiLoader className="w-8 h-8 animate-spin text-primary mb-3" />
+                  <p className="font-medium">Loading rooms...</p>
+                </div>
+              ) : (
+                <RoomTable
+                  rooms={rooms}
+                  selectedRoomIds={[]}
+                  onSelectionChange={() => {}}
+                  isSelectionMode={false}
+                  onEdit={handleEditRoom}
+                  onDelete={handleDeleteClick}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </div>
+          </div>
+        </>
+      ) : tabId === "room-type-master" ? (
+        <RoomTypeMaster
+          isAddModalOpen={isRoomTypeModalOpen}
+          setIsAddModalOpen={setIsRoomTypeModalOpen}
+        />
+      ) : tabId === "amenities-master" ? (
+        <AmenitiesMaster
+          isAddModalOpen={isAmenityModalOpen}
+          setIsAddModalOpen={setIsAmenityModalOpen}
+        />
+      ) : (
+        <ComingSoon moduleName={activeTab} />
+      )}
 
- <DeleteModal
- isOpen={isDeleteModalOpen}
- onClose={() => setIsDeleteModalOpen(false)}
- onConfirm={confirmDeleteRoom}
- title="Delete Room"
- message={`Are you sure you want to delete Room #${roomToDelete?.roomNumber}? This action cannot be undone.`}
- isLoading={isDeleting}
- />
- </div>
- );
+      <DeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteRoom}
+        title="Delete Room"
+        message={`Are you sure you want to delete Room #${roomToDelete?.roomNumber}? This action cannot be undone.`}
+        isLoading={isDeleting}
+      />
+    </div>
+  );
 }

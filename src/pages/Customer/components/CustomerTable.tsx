@@ -45,12 +45,12 @@ const CustomerTable = ({
         <table className="w-full text-left border-collapse min-w-[800px]">
           <thead className="bg-slate-50 sticky top-0 z-10 border-b border-border">
             <tr>
-              <th className="px-5 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider">Customer</th>
-              <th className="px-5 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider">Loyalty Tier</th>
-              <th className="px-5 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider">Last Stay Date</th>
-              <th className="px-5 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider">Last Stay Type</th>
-              <th className="px-5 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider text-right">Total Revenue</th>
-              <th className="px-5 py-4 text-xs font-bold text-text-secondary uppercase tracking-wider text-center">Actions</th>
+              <th className="px-5 py-4 text-xs 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider">Customer</th>
+              <th className="px-5 py-4 text-xs 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider">Loyalty Tier</th>
+              <th className="px-5 py-4 text-xs 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider">Last Stay Date</th>
+              <th className="px-5 py-4 text-xs 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider">Last Stay Type</th>
+              <th className="px-5 py-4 text-xs 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider text-right">Total Revenue</th>
+              <th className="px-5 py-4 text-xs 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">

@@ -36,22 +36,22 @@ const StaffTable = ({
  <table className="table-container w-full min-w-200">
  <thead>
  <tr className="bg-gray-50/50">
- <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
+ <th className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-10">
  Name
  </th>
- <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
+ <th className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-8">
  Role
  </th>
- <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
+ <th className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-8">
  Mobile
  </th>
- <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
+ <th className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-8">
  Login ID
  </th>
- <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-4">
+ <th className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider text-left py-3 px-8">
  Status
  </th>
- <th className="text-[10px] font-bold text-text-secondary uppercase tracking-wider text-right py-3 px-4 pr-8">
+ <th className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase tracking-wider text-right py-3 px-8 pr-10">
  Actions
  </th>
  </tr>
@@ -83,7 +83,7 @@ const StaffTable = ({
  key={staff._id}
  className="group hover:bg-gray-50/50 border-b border-border last:border-none"
  >
- <td className="py-4 px-4">
+ <td className="py-4 px-8">
  <div className="flex items-center gap-3">
  <img
  src={`https://api.dicebear.com/7.x/notionists/svg?seed=${staff.fullName}&backgroundColor=e2e8f0`}
@@ -100,24 +100,24 @@ const StaffTable = ({
  </div>
  </div>
  </td>
- <td className="py-4 px-4">
+ <td className="py-4 px-8">
  <span
  className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${getRoleBadgeStyle(staff.role)}`}
  >
  {staff.role}
  </span>
  </td>
- <td className="py-4 px-4">
+ <td className="py-4 px-8">
  <span className="text-base text-text-secondary">
  {staff.mobile || "N/A"}
  </span>
  </td>
- <td className="py-4 px-4">
+ <td className="py-4 px-8">
  <span className="text-base text-text-secondary max-w-25 block wrap-break-word">
  {staff.loginId || "N/A"}
  </span>
  </td>
- <td className="py-4 px-4">
+ <td className="py-4 px-8">
  <div className="flex items-center gap-2">
  <ToggleSwitch
  isActive={staff.isActive}
@@ -125,7 +125,7 @@ const StaffTable = ({
  />
  </div>
  </td>
- <td className="py-4 px-4 pr-8">
+ <td className="py-4 px-8 pr-8">
  <div className="flex items-center justify-end gap-4">
  <button
  onClick={() => onEdit(staff)}

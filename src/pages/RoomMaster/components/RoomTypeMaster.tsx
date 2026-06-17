@@ -144,19 +144,19 @@ export default function RoomTypeMaster({
  <table className="w-full text-left border-collapse">
  <thead className="bg-background/50 border-b border-border">
  <tr>
- <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-1/4">
+ <th className="px-10 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-1/4">
  Type Name
  </th>
- <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-1/3">
+ <th className="px-10 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider w-1/3">
  Description
  </th>
- <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+ <th className="px-10 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
  Base Price
  </th>
- <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+ <th className="px-10 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
  GST %
  </th>
- <th className="px-6 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right">
+ <th className="px-10 py-4 text-[11px] font-semibold text-text-secondary uppercase tracking-wider text-right">
  Actions
  </th>
  </tr>
@@ -166,7 +166,7 @@ export default function RoomTypeMaster({
  <tr>
  <td
  colSpan={5}
- className="px-6 py-12 text-center text-text-secondary"
+ className="px-10 py-12 text-center text-text-secondary"
  >
  <div className="flex flex-col items-center justify-center gap-2">
  <FiLoader className="w-6 h-6 animate-spin text-primary" />
@@ -180,7 +180,7 @@ export default function RoomTypeMaster({
  key={rt._id}
  className="hover:bg-background/50 transition-colors group"
  >
- <td className="px-6 py-5">
+ <td className="px-10 py-5">
  <div className="flex items-center gap-3">
  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
  <FiCoffee size={18} />
@@ -190,7 +190,7 @@ export default function RoomTypeMaster({
  </span>
  </div>
  </td>
- <td className="px-6 py-5">
+ <td className="px-10 py-5">
  <p className="text-base text-text-secondary leading-relaxed max-w-[60%]">
  {rt.description || (
  <span className="italic text-text-secondary/50">
@@ -199,17 +199,17 @@ export default function RoomTypeMaster({
  )}
  </p>
  </td>
- <td className="px-6 py-5">
+ <td className="px-10 py-5">
  <span className="text-base text-text-primary font-medium">
  ₹{rt.basePrice?.toLocaleString() ?? "—"}
  </span>
  </td>
- <td className="px-6 py-5">
+ <td className="px-10 py-5">
  <span className="text-base text-text-secondary">
  {rt.gstId ? `${rt.gstId.percentage}%` : "—"}
  </span>
  </td>
- <td className="px-6 py-5">
+ <td className="px-10 py-5">
  <div className="flex items-center justify-end gap-2">
  <button
  onClick={() => handleEditClick(rt)}
@@ -231,7 +231,7 @@ export default function RoomTypeMaster({
  <tr>
  <td
  colSpan={5}
- className="px-6 py-12 text-center text-text-secondary"
+ className="px-10 py-12 text-center text-text-secondary"
  >
  {searchQuery
  ? `No room types found matching "${searchQuery}"`

@@ -1546,7 +1546,7 @@ const CreateBooking = ({
                             <td className="py-3 text-right font-bold text-text-primary">
                               ₹{rt.basePrice.toLocaleString()}
                               <p className="text-[8px] text-text-secondary font-normal block">
-                                + ₹{Math.round(rt.basePrice * 0.12)} Taxes
+                                + ₹{Math.round(rt.basePrice * ((rt.gstId?.percentage || 0) / 100))} Taxes
                               </p>
                             </td>
 

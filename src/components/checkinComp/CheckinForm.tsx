@@ -3432,97 +3432,72 @@ const CheckInForm = ({
                                     <p>Loading rooms...</p>
                                   </td>
                                 </tr>
-                              ) : (
-                                availableRooms
-                                  .filter((room: any) => {
-                                    // Type Filter
-                                    if (roomTypeFilterId) {
-                                      const roomTypeId =
-                                        typeof room.roomType === "object"
-                                          ? room.roomType?._id
-                                          : room.roomType;
-                                      if (
-                                        String(roomTypeId) !==
-                                        String(roomTypeFilterId)
-                                      )
-                                        return false;
-                                    }
-                                    // Text Filter
-                                    if (roomSearchQuery) {
-                                      const q = roomSearchQuery.toLowerCase();
-                                      const matchNo = String(
-                                        room.roomNumber || "",
-                                      )
-                                        .toLowerCase()
-                                        .includes(q);
-                                      const matchType = String(
-                                        room.roomType?.name || "",
-                                      )
-                                        .toLowerCase()
-                                        .includes(q);
-                                      return matchNo || matchType;
-                                    }
-                                    return true;
-                                  })
-                                  .map((room: any) => {
-                                    const isOccupied = occupiedRoomIds.has(
-                                      room._id?.toString(),
-                                    );
-                                    const isSelected = selectedRooms.some(
-                                      (r) => r.roomId === room._id,
-                                    );
-                                    const roomTypeName =
-                                      room.roomType?.name || "";
-                                    return (
-                                      <tr
-                                        key={room._id}
-                                        className={`border-b border-border transition-all ${
-                                          isOccupied
-                                            ? "opacity-50 cursor-not-allowed bg-red-50/30"
-                                            : isSelected
-                                              ? "bg-orange-50/50 cursor-pointer"
-                                              : "hover:bg-gray-50/50 cursor-pointer"
-                                        }`}
-                                        onClick={() =>
-                                          !isOccupied && toggleRoom(room)
-                                        }
-                                      >
-                                        <td className="p-2">
-                                          <input
-                                            type="checkbox"
-                                            checked={isSelected}
-                                            disabled={isOccupied}
-                                            onChange={() => {}}
-                                            className="accent-orange-500"
-                                          />
-                                        </td>
-                                        <td className="p-2 font-bold text-gray-800">
-                                          {room.roomNumber}
-                                        </td>
-                                        <td className="p-2 text-gray-600 truncate max-w-[80px]">
-                                          {roomTypeName}
-                                        </td>
-                                        <td className="p-2 font-bold text-gray-700">
-                                          ₹
-                                          {(
-                                            Number(room.basePrice) || 0
-                                          ).toLocaleString()}
-                                        </td>
-                                        <td className="p-2">
-                                          {isOccupied ? (
-                                            <span className="px-1.5 py-1 bg-red-100 text-red-600 rounded font-bold text-xs uppercase">
-                                              Occupied
-                                            </span>
-                                          ) : (
-                                            <span className="px-1.5 py-1 bg-green-100 text-green-600 rounded font-bold text-xs uppercase">
-                                              Available
-                                            </span>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    );
-                                  })
-                              )}
+                              ) : (() => {
+                                const filteredRooms = availableRooms.filter((room: any) => {
+                                  // Type Filter
+                                  if (roomTypeFilterId) {
+                                    const roomTypeId = typeof room.roomType === "object" ? room.roomType?._id : room.roomType;
+                                    if (String(roomTypeId) !== String(roomTypeFilterId)) return false;
+                                  }
+                                  // Text Filter
+                                  if (roomSearchQuery) {
+                                    const q = roomSearchQuery.toLowerCase();
+                                    const matchNo = String(room.roomNumber || "").toLowerCase().includes(q);
+                                    const matchType = String(room.roomType?.name || "").toLowerCase().includes(q);
+                                    return matchNo || matchType;
+                                  }
+                                  return true;
+                                });
+
+                                if (filteredRooms.length === 0) {
+                                  return (
+                                    <tr>
+                                      <td colSpan={5} className="p-8 text-center text-gray-500 font-medium">
+                                        No rooms available for the selected dates/filters.
+                                      </td>
+                                    </tr>
+                                  );
+                                }
+
+                                return filteredRooms.map((room: any) => {
+                                  const isOccupied = occupiedRoomIds.has(room._id?.toString());
+                                  const isSelected = selectedRooms.some((r) => r.roomId === room._id);
+                                  const roomTypeName = room.roomType?.name || "";
+                                  return (
+                                    <tr
+                                      key={room._id}
+                                      className={`border-b border-border transition-all ${
+                                        isOccupied
+                                          ? "opacity-50 cursor-not-allowed bg-red-50/30"
+                                          : isSelected
+                                            ? "bg-orange-50/50 cursor-pointer"
+                                            : "hover:bg-gray-50/50 cursor-pointer"
+                                      }`}
+                                      onClick={() => !isOccupied && toggleRoom(room)}
+                                    >
+                                      <td className="p-2">
+                                        <input
+                                          type="checkbox"
+                                          checked={isSelected}
+                                          disabled={isOccupied}
+                                          onChange={() => {}}
+                                          className="accent-orange-500"
+                                        />
+                                      </td>
+                                      <td className="p-2 font-bold text-gray-800">{room.roomNumber}</td>
+                                      <td className="p-2 text-gray-600 truncate max-w-[80px]">{roomTypeName}</td>
+                                      <td className="p-2 font-bold text-gray-700">₹{(Number(room.basePrice) || 0).toLocaleString()}</td>
+                                      <td className="p-2">
+                                        {isOccupied ? (
+                                          <span className="px-1.5 py-1 bg-red-100 text-red-600 rounded font-bold text-xs uppercase">Occupied</span>
+                                        ) : (
+                                          <span className="px-1.5 py-1 bg-green-100 text-green-600 rounded font-bold text-xs uppercase">Available</span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                });
+                              })()}
                             </tbody>
                           </table>
                         </div>

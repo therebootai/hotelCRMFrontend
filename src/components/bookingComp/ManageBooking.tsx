@@ -559,40 +559,6 @@ const ManageBooking = ({
                     </button>
 
                     <button
-                      title="Print"
-                      onClick={() => handlePrint(item)}
-                      className="p-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg transition-all "
-                    >
-                      <FiPrinter size={12} className=" " />
-                    </button>
-
-                    <button
-                      title="WhatsApp"
-                      onClick={() => handleWhatsapp(item)}
-                      disabled={sendingWhatsappId === item._id}
-                      className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-all disabled:opacity-50"
-                    >
-                      {sendingWhatsappId === item._id ? (
-                        <FiLoader size={12} className="animate-spin" />
-                      ) : (
-                        <FaWhatsapp size={12} className=" " />
-                      )}
-                    </button>
-
-                    <button
-                      title="Email"
-                      onClick={() => handleEmail(item)}
-                      disabled={sendingEmailId === item._id}
-                      className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all disabled:opacity-50"
-                    >
-                      {sendingEmailId === item._id ? (
-                        <FiLoader size={12} className="animate-spin" />
-                      ) : (
-                        <FiMail size={12} className=" " />
-                      )}
-                    </button>
-
-                    <button
                       title="View"
                       className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-all "
                     >
@@ -614,7 +580,55 @@ const ManageBooking = ({
                       </button>
 
                       {activeDropdown === item._id && (
-                        <div className="absolute right-0 top-full mt-1 w-28 bg-white border border-gray-100 shadow-lg rounded-xl z-50 overflow-hidden flex flex-col ">
+                        <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-100 shadow-lg rounded-xl z-50 overflow-hidden flex flex-col ">
+                          
+                          <button
+                            title="WhatsApp"
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              handleWhatsapp(item);
+                            }}
+                            disabled={sendingWhatsappId === item._id}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors w-full text-left disabled:opacity-50"
+                          >
+                            {sendingWhatsappId === item._id ? (
+                              <FiLoader size={10} className="animate-spin text-green-600" />
+                            ) : (
+                              <FaWhatsapp size={10} className="text-green-600" />
+                            )}
+                            WhatsApp
+                          </button>
+
+                          <button
+                            title="Email"
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              handleEmail(item);
+                            }}
+                            disabled={sendingEmailId === item._id}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors w-full text-left disabled:opacity-50"
+                          >
+                            {sendingEmailId === item._id ? (
+                              <FiLoader size={10} className="animate-spin text-indigo-600" />
+                            ) : (
+                              <FiMail size={10} className="text-indigo-600" />
+                            )}
+                            Email
+                          </button>
+
+                          <button
+                            title="Print"
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              handlePrint(item);
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors w-full text-left"
+                          >
+                            <FiPrinter size={10} className="text-gray-600" /> Print
+                          </button>
+
+                          <div className="border-t border-gray-100 my-1"></div>
+
                           <button
                             onClick={() => {
                               if (!["Tentative", "Confirmed"].includes(item.status)) return;
@@ -631,6 +645,7 @@ const ManageBooking = ({
                           >
                             <FiEdit2 size={10} className=" " /> Edit
                           </button>
+
                           <button
                             onClick={() => {
                               setActiveDropdown(null);
@@ -640,6 +655,7 @@ const ManageBooking = ({
                           >
                             <FiX size={10} className=" " /> Cancel
                           </button>
+
                         </div>
                       )}
                     </div>

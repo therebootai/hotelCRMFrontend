@@ -20,11 +20,14 @@ import {
   FiFilter,
   FiPlus,
   FiCopy,
+  FiMail,
+  FiLoader,
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import Pagination from "../layout/Pagination";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import api from "../../lib/axios";
 
 const ManageBooking = ({
   data,
@@ -43,6 +46,8 @@ const ManageBooking = ({
   );
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+  const [sendingWhatsappId, setSendingWhatsappId] = useState<string | null>(null);
 
   const receiptRef = useRef<PaymentReceiptRef>(null);
   const [printData, setPrintData] = useState<PaymentReceiptData | null>(null);
@@ -131,6 +136,40 @@ const ManageBooking = ({
     setTimeout(() => {
       receiptRef.current?.exportToPDF();
     }, 100);
+  };
+
+  const handleEmail = async (item: any) => {
+    const emailToUse = item.bookingContact?.email || item.customerId?.email || item.customerDetails?.email;
+    if (!emailToUse) {
+      toast.error("No email address found for this guest");
+      return;
+    }
+    setSendingEmailId(item._id);
+    try {
+      await api.post(`/bookings/${item._id}/email-receipt`, { email: emailToUse });
+      toast.success(`Receipt sent to ${emailToUse}`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to send email");
+    } finally {
+      setSendingEmailId(null);
+    }
+  };
+
+  const handleWhatsapp = async (item: any) => {
+    const phoneToUse = item.bookingContact?.mobile || item.customerId?.phone || item.customerDetails?.phone;
+    if (!phoneToUse) {
+      toast.error("No phone number found for this guest");
+      return;
+    }
+    setSendingWhatsappId(item._id);
+    try {
+      await api.post(`/bookings/${item._id}/whatsapp-receipt`, { phone: phoneToUse });
+      toast.success(`WhatsApp receipt sent to ${phoneToUse}`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to send WhatsApp message");
+    } finally {
+      setSendingWhatsappId(null);
+    }
   };
 
   // Status badge helper
@@ -529,9 +568,28 @@ const ManageBooking = ({
 
                     <button
                       title="WhatsApp"
-                      className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-all "
+                      onClick={() => handleWhatsapp(item)}
+                      disabled={sendingWhatsappId === item._id}
+                      className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-all disabled:opacity-50"
                     >
-                      <FaWhatsapp size={12} className=" " />
+                      {sendingWhatsappId === item._id ? (
+                        <FiLoader size={12} className="animate-spin" />
+                      ) : (
+                        <FaWhatsapp size={12} className=" " />
+                      )}
+                    </button>
+
+                    <button
+                      title="Email"
+                      onClick={() => handleEmail(item)}
+                      disabled={sendingEmailId === item._id}
+                      className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all disabled:opacity-50"
+                    >
+                      {sendingEmailId === item._id ? (
+                        <FiLoader size={12} className="animate-spin" />
+                      ) : (
+                        <FiMail size={12} className=" " />
+                      )}
                     </button>
 
                     <button

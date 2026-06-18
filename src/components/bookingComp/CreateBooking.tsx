@@ -259,12 +259,14 @@ const CreateBooking = ({
         setCheckOutDate(new Date(booking.overallCheckOutDate));
       if (booking.visitDate) setVisitDate(new Date(booking.visitDate));
 
-      // Map rooms array to selectedCounts
+      // Map rooms array to selectedCounts and specific rooms
       if (booking.rooms && booking.rooms.length > 0) {
         const counts: Record<
           string,
           { count: number; adults: number; children: number }
         > = {};
+        const specificRooms: Record<string, any> = {};
+
         booking.rooms.forEach((r: any) => {
           const typeId = r.roomType?._id || r.roomType;
           if (counts[typeId]) {
@@ -278,8 +280,21 @@ const CreateBooking = ({
               children: r.children || 0,
             };
           }
+
+          if (r.roomId) {
+            const rId = r.roomId?._id || r.roomId;
+            specificRooms[rId] = {
+              adults: r.adults || 1,
+              children: r.children || 0,
+              roomTypeId: typeId,
+              roomTypeName: r.roomType?.name || "",
+              basePrice: r.pricePerNight || r.roomType?.basePrice || 0,
+              roomNumber: r.roomId?.roomNumber || "",
+            };
+          }
         });
         setSelectedCounts(counts);
+        setSelectedSpecificRooms(specificRooms);
       }
 
       setCustomerForm({
@@ -436,12 +451,14 @@ const CreateBooking = ({
       const fetchPhysicalRooms = async () => {
         setFetchingPhysicalRooms(true);
         try {
-          const res = await api.get("/bookings/available", {
-            params: {
-              checkIn: checkInDate.toISOString(),
-              checkOut: checkOutDate.toISOString(),
-            },
-          });
+          const params: any = {
+            checkIn: checkInDate.toISOString(),
+            checkOut: checkOutDate.toISOString(),
+          };
+          if (booking?._id) {
+            params.excludeBookingId = booking._id;
+          }
+          const res = await api.get("/bookings/available", { params });
           // Filter out unavailable rooms just in case
           const rooms = (res.data.data?.availableRooms || []).filter(
             (r: any) => r.isAvailable,
@@ -493,6 +510,9 @@ const CreateBooking = ({
         checkIn: checkInDate.toISOString(),
         checkOut: checkOutDate.toISOString(),
       };
+      if (booking?._id) {
+        params.excludeBookingId = booking._id;
+      }
       const res = await api.get("/bookings/available", { params });
       setSearchResults(res.data.data?.availableRooms || []);
     } catch (err: any) {
@@ -534,7 +554,7 @@ const CreateBooking = ({
   // Calculate totals
   const calculateTotals = useCallback(() => {
     const selectedTax = taxOptions.find((t) => t._id === selectedTaxId);
-    const taxRate = selectedTax ? selectedTax.percentage / 100 : 0;
+    const globalTaxRate = selectedTax ? selectedTax.percentage / 100 : 0;
 
     const selectedRoomTypesList = roomTypes
       .filter((rt) => selectedCounts[rt._id]?.count > 0)
@@ -548,26 +568,76 @@ const CreateBooking = ({
       }));
 
     let roomTotal = 0;
+    let roomTaxAmount = 0;
+    const roomBreakdown: { name: string; price: number }[] = [];
+    const roomTaxBreakdown: {
+      name: string;
+      taxPercentage: number;
+      taxAmount: number;
+    }[] = [];
+
     if (bookingCategory === "Day Access") {
       const pkg = accessPackages.find((p) => p._id === selectedPackageId);
       const rate = pkg ? pkg.adult_price : 0;
       const count = Number(adultsFilter) + Number(childrenFilter);
       roomTotal = rate * count;
+      roomBreakdown.push({
+        name: `Day Access (${count} Pax)`,
+        price: roomTotal,
+      });
+
+      const taxAmt = roomTotal * globalTaxRate;
+      roomTaxAmount += taxAmt;
+      roomTaxBreakdown.push({
+        name: `Day Access Tax`,
+        taxPercentage: selectedTax?.percentage || 0,
+        taxAmount: taxAmt,
+      });
     } else {
       if (isAssignSpecificRoom) {
-        roomTotal = Object.values(selectedSpecificRooms).reduce(
-          (sum: number, room: any) => sum + room.basePrice * totalNights,
-          0,
-        );
+        Object.values(selectedSpecificRooms).forEach((room: any) => {
+          const rTotal = room.basePrice * totalNights;
+          roomTotal += rTotal;
+          roomBreakdown.push({
+            name: `Room ${room.roomNumber}`,
+            price: rTotal,
+          });
+
+          const rt = roomTypes.find((r) => r._id === room.roomTypeId);
+          const taxPercentage = rt?.gstId?.percentage || 0;
+          const taxAmt = rTotal * (taxPercentage / 100);
+          roomTaxAmount += taxAmt;
+          if (taxAmt > 0 || taxPercentage > 0) {
+            roomTaxBreakdown.push({
+              name: `Room ${room.roomNumber} Tax`,
+              taxPercentage,
+              taxAmount: taxAmt,
+            });
+          }
+        });
       } else {
-        roomTotal = selectedRoomTypesList.reduce(
-          (sum, entry) => sum + entry.basePrice * entry.count * totalNights,
-          0,
-        );
+        selectedRoomTypesList.forEach((entry) => {
+          const rTotal = entry.basePrice * entry.count * totalNights;
+          roomTotal += rTotal;
+          roomBreakdown.push({
+            name: `${entry.roomTypeName} (${entry.count} Rooms)`,
+            price: rTotal,
+          });
+
+          const rt = roomTypes.find((r) => r._id === entry.roomTypeId);
+          const taxPercentage = rt?.gstId?.percentage || 0;
+          const taxAmt = rTotal * (taxPercentage / 100);
+          roomTaxAmount += taxAmt;
+          if (taxAmt > 0 || taxPercentage > 0) {
+            roomTaxBreakdown.push({
+              name: `${entry.roomTypeName} Tax`,
+              taxPercentage,
+              taxAmount: taxAmt,
+            });
+          }
+        });
       }
     }
-
-    const extraBedTotal = 0;
 
     let addonsTotal = 0;
     let addonsTaxAmount = 0;
@@ -578,8 +648,7 @@ const CreateBooking = ({
       addonsTaxAmount += aTaxAmt;
     });
 
-    const subtotal = roomTotal + extraBedTotal + addonsTotal;
-    const roomTaxAmount = (roomTotal + extraBedTotal) * taxRate;
+    const subtotal = roomTotal + addonsTotal;
     const taxAmount = Math.round(roomTaxAmount + addonsTaxAmount);
 
     const grandTotal = subtotal + taxAmount;
@@ -588,7 +657,8 @@ const CreateBooking = ({
 
     return {
       roomTotal,
-      extraBedTotal,
+      roomBreakdown,
+      roomTaxBreakdown,
       subtotal,
       taxAmount,
       grandTotal,
@@ -612,7 +682,8 @@ const CreateBooking = ({
     selectedSpecificRooms,
   ]);
 
-  const { roomTotal, taxAmount, grandTotal } = calculateTotals();
+  const { roomBreakdown, roomTaxBreakdown, taxAmount, grandTotal } =
+    calculateTotals();
 
   // Submit booking
   const submitBooking = async () => {
@@ -1305,21 +1376,20 @@ const CreateBooking = ({
                     <label className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase block mb-1">
                       Check-in Date *
                     </label>
-                    <div className="relative">
-                      <DatePicker
-                        selected={checkInDate}
-                        onChange={(d: Date | null) => {
-                          const newDate = d || new Date();
-                          setCheckInDate(newDate);
-                          if (checkOutDate <= newDate) {
-                            setCheckOutDate(addDays(newDate, 1));
-                          }
-                        }}
-                        className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"
-                        dateFormat="dd MMM yyyy, hh:mm a"
-                        showTimeSelect
-                      />
-                    </div>
+                    <DatePicker
+                      selected={checkInDate}
+                      onChange={(d: Date | null) => {
+                        const newDate = d || new Date();
+                        setCheckInDate(newDate);
+                        if (checkOutDate <= newDate) {
+                          setCheckOutDate(addDays(newDate, 1));
+                        }
+                      }}
+                      className="w-full border border-border rounded-lg p-2 text-sm bg-white outline-none focus:border-primary"
+                      dateFormat="dd MMM yyyy, hh:mm a"
+                      showTimeSelect
+                      minDate={new Date()}
+                    />
                   </div>
 
                   <div className="col-span-2">
@@ -1546,7 +1616,12 @@ const CreateBooking = ({
                             <td className="py-3 text-right font-bold text-text-primary">
                               ₹{rt.basePrice.toLocaleString()}
                               <p className="text-[8px] text-text-secondary font-normal block">
-                                + ₹{Math.round(rt.basePrice * 0.12)} Taxes
+                                + ₹
+                                {Math.round(
+                                  rt.basePrice *
+                                    ((rt.gstId?.percentage || 0) / 100),
+                                )}{" "}
+                                Taxes
                               </p>
                             </td>
 
@@ -1741,7 +1816,7 @@ const CreateBooking = ({
                     Selected Rooms: {Object.keys(selectedSpecificRooms).length}
                   </span>
                   <span className="text-sm font-black text-text-primary">
-                    Total Rooms: {Object.keys(selectedSpecificRooms).length}
+                    Total Rooms: {totalRoomsNeeded}
                   </span>
                 </div>
               </div>
@@ -2026,25 +2101,31 @@ const CreateBooking = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center text-sm text-text-secondary">
-                    <span>
-                      Room Charges ({totalRoomsNeeded} Rooms x {totalNights}{" "}
-                      Nights)
-                    </span>
-                    <span className="font-bold text-text-primary">
-                      ₹{roomTotal.toLocaleString()}
-                    </span>
-                  </div>
+                  {roomBreakdown.map((item, idx) => (
+                    <div
+                      key={`rb-${idx}`}
+                      className="flex justify-between items-center text-sm text-text-secondary"
+                    >
+                      <span>{item.name}</span>
+                      <span className="font-bold text-text-primary">
+                        ₹{item.price.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
 
-                  <div className="flex justify-between items-center text-sm text-text-secondary">
-                    <span>Add-on Services</span>
-                    <span className="font-bold text-text-primary">
-                      ₹
-                      {selectedAddons
-                        .reduce((sum, a) => sum + a.total, 0)
-                        .toLocaleString()}
-                    </span>
-                  </div>
+                  {selectedAddons.map((addon, idx) => (
+                    <div
+                      key={`ab-${idx}`}
+                      className="flex justify-between items-center text-sm text-text-secondary"
+                    >
+                      <span>
+                        {addon.serviceName} (Qty: {addon.quantity})
+                      </span>
+                      <span className="font-bold text-text-primary">
+                        ₹{addon.total.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
 
                   <div className="flex justify-between items-center text-sm text-text-secondary">
                     <span>Taxes & Charges</span>
@@ -2059,30 +2140,26 @@ const CreateBooking = ({
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-center text-xs 3xl:text-[14px] text-text-secondary">
-                    <span>
-                      Room Tax (
-                      {taxOptions.find((t) => t._id === selectedTaxId)
-                        ?.percentage ?? 12}
-                      %)
-                    </span>
-                    <span className="font-bold text-text-primary">
-                      ₹
-                      {Math.round(
-                        ((roomTotal + 0) *
-                          (taxOptions.find((t) => t._id === selectedTaxId)
-                            ?.percentage ?? 12)) /
-                          100,
-                      ).toLocaleString()}
-                    </span>
-                  </div>
+                  {roomTaxBreakdown.map((tax, idx) => (
+                    <div
+                      key={`rtb-${idx}`}
+                      className="flex justify-between items-center text-xs 3xl:text-[14px] text-text-secondary"
+                    >
+                      <span>
+                        {tax.name} ({tax.taxPercentage}%)
+                      </span>
+                      <span className="font-bold text-text-primary">
+                        ₹{Math.round(tax.taxAmount).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
 
                   {selectedAddons
                     .filter((a) => a.taxAmount > 0)
                     .map((addon, idx) => (
                       <div
                         key={idx}
-                        className="flex justify-between items-center text-xs text-text-secondary"
+                        className="flex justify-between items-center text-xs 3xl:text-[14px] text-text-secondary"
                       >
                         <span>
                           {addon.serviceName} Tax ({addon.taxPercentage}%)

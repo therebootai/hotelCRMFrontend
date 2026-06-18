@@ -28,6 +28,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
     guestVacated: checkIn.checkoutVerification?.guestVacated || false,
     keyReturned: checkIn.checkoutVerification?.keyReturned || false,
     roomChecked: checkIn.checkoutVerification?.roomChecked || false,
+    noDamage: checkIn.checkoutVerification?.noDamage || false,
     damageFound: checkIn.checkoutVerification?.damageFound || false,
     damageAmount: checkIn.checkoutVerification?.damageAmount || "",
     damageRemarks: checkIn.checkoutVerification?.damageRemarks || "",
@@ -42,7 +43,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
   const [discount, setDiscount] = useState<number>(0);
   const [notes, setNotes] = useState("");
 
-  const [taxPercentage, setTaxPercentage] = useState(12); // Default to 12% if none chosen
+  const [taxAmount, setTaxAmount] = useState<number>(0);
 
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [receivedAmount, setReceivedAmount] = useState<string | number>("");
@@ -74,8 +75,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  setRestaurantCharges(d.restaurantCharges || 0);
  setDiscount(d.discount || 0);
  setNotes(d.notes || "");
- const storedPct = d.taxPercentage ?? 12;
- setTaxPercentage(storedPct);
+ setTaxAmount(d.taxAmount || 0);
 
 
  const lastPayment =
@@ -134,8 +134,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  roomTotal + servicesTotal + Number(restaurantCharges),
  );
 
- // 👉 Round tax (no decimals)
- const taxAmount = Math.round((subTotal * taxPercentage) / 100);
+
 
  const damageAmount = Number(verification.damageAmount) || 0;
 
@@ -172,7 +171,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  restaurantCharges: Number(restaurantCharges),
  facilityCharges: [],
  discount: Number(discount),
- taxPercentage: Number(taxPercentage),
+ taxAmount: Number(taxAmount),
  notes,
  isCheckout,
  payment:
@@ -189,6 +188,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
         guestVacated: verification.guestVacated,
         keyReturned: verification.keyReturned,
         roomChecked: verification.roomChecked,
+        noDamage: verification.noDamage,
         damageFound: verification.damageFound,
         damageAmount: Number(verification.damageAmount) || 0,
         damageRemarks: verification.damageRemarks,
@@ -386,14 +386,14 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
              <div>
                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Damage Found?</label>
                <div className="flex gap-4">
-                 <label className="flex items-center gap-2 cursor-pointer">
-                   <input type="radio" name="damageFound" checked={!verification.damageFound} onChange={() => setVerification({ ...verification, damageFound: false })} className="accent-red-500" />
-                   <span className="text-sm font-bold text-gray-700">No</span>
-                 </label>
-                 <label className="flex items-center gap-2 cursor-pointer">
-                   <input type="radio" name="damageFound" checked={verification.damageFound} onChange={() => setVerification({ ...verification, damageFound: true })} className="accent-red-500" />
-                   <span className="text-sm font-bold text-gray-700">Yes</span>
-                 </label>
+                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all">
+                   <input type="radio" name="damageFound" checked={!verification.damageFound} onChange={() => setVerification({ ...verification, damageFound: false, noDamage: true })} className="accent-red-500" />
+                   <span className="text-sm font-medium text-gray-700">No Damage</span>
+                   </label>
+                   <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all">
+                   <input type="radio" name="damageFound" checked={verification.damageFound} onChange={() => setVerification({ ...verification, damageFound: true, noDamage: false })} className="accent-red-500" />
+                   <span className="text-sm font-medium text-gray-700">Damage Found</span>
+                   </label>
                </div>
              </div>
              {verification.damageFound && (
@@ -771,7 +771,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  <div className="border-t border-dashed border-gray-200 pt-3 space-y-3">
  <LineItem label={`Subtotal`} value={subTotal} bold />
  <LineItem
- label={`Tax (${taxPercentage}%)`}
+ label={`Taxes & Charges`}
  value={taxAmount}
  color="text-gray-500"
  />

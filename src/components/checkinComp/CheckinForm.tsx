@@ -613,6 +613,33 @@ const CheckInForm = ({
     }
   }, [bookingData]);
 
+  // Validate selected rooms against currently available rooms
+  useEffect(() => {
+    if (loadingRooms) return;
+    
+    setSelectedRooms((prev) => {
+      let hasChanges = false;
+      const updated = prev.map(room => {
+        if (!room.roomId) return room;
+        
+        const isAvailable = availableRooms.some(ar => ar._id === room.roomId);
+        const isOccupied = occupiedRoomIds.has(room.roomId);
+        
+        if (!isAvailable || isOccupied) {
+          hasChanges = true;
+          return {
+            ...room,
+            roomId: "",
+            roomNumber: "TBD"
+          };
+        }
+        return room;
+      });
+      return hasChanges ? updated : prev;
+    });
+  }, [availableRooms, occupiedRoomIds, loadingRooms]);
+
+
   // Auto-filter room grid by preferred room type on open
   useEffect(() => {
     if (!editMode && preferredRoomTypeId) {
@@ -635,9 +662,18 @@ const CheckInForm = ({
     const fetchAllRooms = async () => {
       try {
         setLoadingRooms(true);
-        const res = await api.get(
-          "/rooms?status=Active&availableOnly=true&limit=500",
-        );
+        const params = new URLSearchParams({
+          status: "Active",
+          availableOnly: "true",
+          limit: "500",
+          checkIn: stayFormData.checkInTime instanceof Date ? stayFormData.checkInTime.toISOString() : String(stayFormData.checkInTime),
+          checkOut: stayFormData.expectedCheckOutTime instanceof Date ? stayFormData.expectedCheckOutTime.toISOString() : String(stayFormData.expectedCheckOutTime)
+        });
+        if (bookingData?._id) {
+          params.append("excludeBookingId", bookingData._id);
+        }
+
+        const res = await api.get(`/rooms?${params.toString()}`);
         setAvailableRooms(res.data.data?.rooms || []);
       } catch (err) {
         console.error("Error fetching rooms:", err);
@@ -686,16 +722,21 @@ const CheckInForm = ({
   const fetchRoomsByType = async (typeId?: string) => {
     try {
       setLoadingRooms(true);
-      let res;
+      const params = new URLSearchParams({
+        status: "Active",
+        availableOnly: "true",
+        limit: "500",
+        checkIn: stayFormData.checkInTime instanceof Date ? stayFormData.checkInTime.toISOString() : String(stayFormData.checkInTime),
+        checkOut: stayFormData.expectedCheckOutTime instanceof Date ? stayFormData.expectedCheckOutTime.toISOString() : String(stayFormData.expectedCheckOutTime)
+      });
       if (typeId) {
-        res = await api.get(
-          `/rooms?status=Active&availableOnly=true&roomType=${typeId}&limit=500`,
-        );
-      } else {
-        res = await api.get(
-          "/rooms?status=Active&availableOnly=true&limit=500",
-        );
+        params.append("roomType", typeId);
       }
+      if (bookingData?._id) {
+        params.append("excludeBookingId", bookingData._id);
+      }
+
+      const res = await api.get(`/rooms?${params.toString()}`);
       setAvailableRooms(res.data.data?.rooms || []);
     } catch (err) {
       console.error("Error fetching rooms:", err);
@@ -703,6 +744,12 @@ const CheckInForm = ({
       setLoadingRooms(false);
     }
   };
+
+  // Refetch rooms when dates change
+  useEffect(() => {
+    fetchRoomsByType(roomTypeFilterId === "all" || roomTypeFilterId === "" ? undefined : roomTypeFilterId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stayFormData.checkInTime, stayFormData.expectedCheckOutTime]);
 
   // Calculate totals
   // Package price for Day Access
@@ -739,10 +786,24 @@ const CheckInForm = ({
   });
 
   const subTotal = roomTotal + addonsTotal;
-  const taxRate = bookingData?.pricingSummary?.taxPercentage
-    ? bookingData.pricingSummary.taxPercentage / 100
-    : 0.12;
-  const roomTaxAmount = roomTotal * taxRate;
+  
+  let roomTaxAmount = 0;
+  if (isDayAccess) {
+    roomTaxAmount = roomTotal * 0.12; // Default 18% for day access
+  } else {
+    selectedRooms.forEach((room: RoomEntry) => {
+      const basePrice = Number(room.basePrice) || 0;
+      const extraBedPrice = room.hasExtraBed
+        ? (Number(room.extraBedCharge) || 0) * nights
+        : 0;
+      const rTotal = basePrice * nights + extraBedPrice;
+      
+      const rt = roomTypes.find((r: any) => String(r._id) === String(room.requiredRoomTypeId));
+      const taxPercentage = rt?.gstId?.percentage || 0;
+      roomTaxAmount += rTotal * (taxPercentage / 100);
+    });
+  }
+
   const taxAmount = Math.round(roomTaxAmount + addonsTaxAmount);
   const grandTotal = subTotal + taxAmount;
 
@@ -3412,97 +3473,72 @@ const CheckInForm = ({
                                     <p>Loading rooms...</p>
                                   </td>
                                 </tr>
-                              ) : (
-                                availableRooms
-                                  .filter((room: any) => {
-                                    // Type Filter
-                                    if (roomTypeFilterId) {
-                                      const roomTypeId =
-                                        typeof room.roomType === "object"
-                                          ? room.roomType?._id
-                                          : room.roomType;
-                                      if (
-                                        String(roomTypeId) !==
-                                        String(roomTypeFilterId)
-                                      )
-                                        return false;
-                                    }
-                                    // Text Filter
-                                    if (roomSearchQuery) {
-                                      const q = roomSearchQuery.toLowerCase();
-                                      const matchNo = String(
-                                        room.roomNumber || "",
-                                      )
-                                        .toLowerCase()
-                                        .includes(q);
-                                      const matchType = String(
-                                        room.roomType?.name || "",
-                                      )
-                                        .toLowerCase()
-                                        .includes(q);
-                                      return matchNo || matchType;
-                                    }
-                                    return true;
-                                  })
-                                  .map((room: any) => {
-                                    const isOccupied = occupiedRoomIds.has(
-                                      room._id?.toString(),
-                                    );
-                                    const isSelected = selectedRooms.some(
-                                      (r) => r.roomId === room._id,
-                                    );
-                                    const roomTypeName =
-                                      room.roomType?.name || "";
-                                    return (
-                                      <tr
-                                        key={room._id}
-                                        className={`border-b border-border transition-all ${
-                                          isOccupied
-                                            ? "opacity-50 cursor-not-allowed bg-red-50/30"
-                                            : isSelected
-                                              ? "bg-orange-50/50 cursor-pointer"
-                                              : "hover:bg-gray-50/50 cursor-pointer"
-                                        }`}
-                                        onClick={() =>
-                                          !isOccupied && toggleRoom(room)
-                                        }
-                                      >
-                                        <td className="p-2">
-                                          <input
-                                            type="checkbox"
-                                            checked={isSelected}
-                                            disabled={isOccupied}
-                                            onChange={() => {}}
-                                            className="accent-orange-500"
-                                          />
-                                        </td>
-                                        <td className="p-2 font-bold text-gray-800">
-                                          {room.roomNumber}
-                                        </td>
-                                        <td className="p-2 text-gray-600 truncate max-w-[80px]">
-                                          {roomTypeName}
-                                        </td>
-                                        <td className="p-2 font-bold text-gray-700">
-                                          ₹
-                                          {(
-                                            Number(room.basePrice) || 0
-                                          ).toLocaleString()}
-                                        </td>
-                                        <td className="p-2">
-                                          {isOccupied ? (
-                                            <span className="px-1.5 py-1 bg-red-100 text-red-600 rounded font-bold text-xs uppercase">
-                                              Occupied
-                                            </span>
-                                          ) : (
-                                            <span className="px-1.5 py-1 bg-green-100 text-green-600 rounded font-bold text-xs uppercase">
-                                              Available
-                                            </span>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    );
-                                  })
-                              )}
+                              ) : (() => {
+                                const filteredRooms = availableRooms.filter((room: any) => {
+                                  // Type Filter
+                                  if (roomTypeFilterId) {
+                                    const roomTypeId = typeof room.roomType === "object" ? room.roomType?._id : room.roomType;
+                                    if (String(roomTypeId) !== String(roomTypeFilterId)) return false;
+                                  }
+                                  // Text Filter
+                                  if (roomSearchQuery) {
+                                    const q = roomSearchQuery.toLowerCase();
+                                    const matchNo = String(room.roomNumber || "").toLowerCase().includes(q);
+                                    const matchType = String(room.roomType?.name || "").toLowerCase().includes(q);
+                                    return matchNo || matchType;
+                                  }
+                                  return true;
+                                });
+
+                                if (filteredRooms.length === 0) {
+                                  return (
+                                    <tr>
+                                      <td colSpan={5} className="p-8 text-center text-gray-500 font-medium">
+                                        No rooms available for the selected dates/filters.
+                                      </td>
+                                    </tr>
+                                  );
+                                }
+
+                                return filteredRooms.map((room: any) => {
+                                  const isOccupied = occupiedRoomIds.has(room._id?.toString());
+                                  const isSelected = selectedRooms.some((r) => r.roomId === room._id);
+                                  const roomTypeName = room.roomType?.name || "";
+                                  return (
+                                    <tr
+                                      key={room._id}
+                                      className={`border-b border-border transition-all ${
+                                        isOccupied
+                                          ? "opacity-50 cursor-not-allowed bg-red-50/30"
+                                          : isSelected
+                                            ? "bg-orange-50/50 cursor-pointer"
+                                            : "hover:bg-gray-50/50 cursor-pointer"
+                                      }`}
+                                      onClick={() => !isOccupied && toggleRoom(room)}
+                                    >
+                                      <td className="p-2">
+                                        <input
+                                          type="checkbox"
+                                          checked={isSelected}
+                                          disabled={isOccupied}
+                                          onChange={() => {}}
+                                          className="accent-orange-500"
+                                        />
+                                      </td>
+                                      <td className="p-2 font-bold text-gray-800">{room.roomNumber}</td>
+                                      <td className="p-2 text-gray-600 truncate max-w-[80px]">{roomTypeName}</td>
+                                      <td className="p-2 font-bold text-gray-700">₹{(Number(room.basePrice) || 0).toLocaleString()}</td>
+                                      <td className="p-2">
+                                        {isOccupied ? (
+                                          <span className="px-1.5 py-1 bg-red-100 text-red-600 rounded font-bold text-xs uppercase">Occupied</span>
+                                        ) : (
+                                          <span className="px-1.5 py-1 bg-green-100 text-green-600 rounded font-bold text-xs uppercase">Available</span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                });
+                              })()}
                             </tbody>
                           </table>
                         </div>
@@ -3631,7 +3667,7 @@ const CheckInForm = ({
                       </div>
                       <div>
                         <p className="text-[9px] 3xl:text-[12px] text-gray-400 uppercase font-black mb-1">
-                          Estimated Room Rent
+                          Estimated Total Amount
                         </p>
                         <p className="font-bold text-orange-600 text-base">
                           ₹{grandTotal.toLocaleString()}

@@ -20,11 +20,14 @@ import {
   FiFilter,
   FiPlus,
   FiCopy,
+  FiMail,
+  FiLoader,
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import Pagination from "../layout/Pagination";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import api from "../../lib/axios";
 
 const ManageBooking = ({
   data,
@@ -43,6 +46,8 @@ const ManageBooking = ({
   );
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+  const [sendingWhatsappId, setSendingWhatsappId] = useState<string | null>(null);
 
   const receiptRef = useRef<PaymentReceiptRef>(null);
   const [printData, setPrintData] = useState<PaymentReceiptData | null>(null);
@@ -131,6 +136,56 @@ const ManageBooking = ({
     setTimeout(() => {
       receiptRef.current?.exportToPDF();
     }, 100);
+  };
+
+  const handleEmail = async (item: any) => {
+    const emailToUse = item.bookingContact?.email || item.customerId?.email || item.customerDetails?.email;
+    if (!emailToUse) {
+      toast.error("No email address found for this guest");
+      return;
+    }
+    setSendingEmailId(item._id);
+    
+    const promise = api.post(`/bookings/${item._id}/email-receipt`, { email: emailToUse });
+    
+    toast.promise(promise, {
+      loading: 'Sending Email...',
+      success: `Receipt sent to ${emailToUse}`,
+      error: (err: any) => err.response?.data?.message || "Failed to send email"
+    });
+
+    try {
+      await promise;
+    } catch (err) {
+      // Handled by toast.promise
+    } finally {
+      setSendingEmailId(null);
+    }
+  };
+
+  const handleWhatsapp = async (item: any) => {
+    const phoneToUse = item.bookingContact?.mobile || item.customerId?.phone || item.customerDetails?.phone;
+    if (!phoneToUse) {
+      toast.error("No phone number found for this guest");
+      return;
+    }
+    setSendingWhatsappId(item._id);
+    
+    const promise = api.post(`/bookings/${item._id}/whatsapp-receipt`, { phone: phoneToUse });
+    
+    toast.promise(promise, {
+      loading: 'Sending WhatsApp message...',
+      success: `WhatsApp receipt sent to ${phoneToUse}`,
+      error: (err: any) => err.response?.data?.message || "Failed to send WhatsApp message"
+    });
+
+    try {
+      await promise;
+    } catch (err) {
+      // Handled by toast.promise
+    } finally {
+      setSendingWhatsappId(null);
+    }
   };
 
   // Status badge helper
@@ -367,6 +422,7 @@ const ManageBooking = ({
           ) : (
             data.map((item: any) => {
               const statusBadge = getStatusBadge(item.status);
+              const canAction = ["Tentative", "Confirmed"].includes(item.status);
               const guestName =
                 item.bookingContact?.name || item.customerId?.name || "Guest";
               const guestPhone =
@@ -512,26 +568,16 @@ const ManageBooking = ({
                   {/* Actions */}
                   <div className="flex-1 flex items-center justify-center gap-1.5 ">
                     <button
-                      onClick={() => onCheckIn(item)}
-                      title="Check-in"
-                      className="p-1.5 bg-orange-50 text-orange-600 hover:bg-orange-100 rounded-lg transition-all "
+                      onClick={() => canAction && onCheckIn(item)}
+                      title={canAction ? "Check-in" : "Check-in disabled for this status"}
+                      disabled={!canAction}
+                      className={`p-1.5 rounded-lg transition-all ${
+                        canAction
+                          ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
+                          : "bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
+                      }`}
                     >
                       <FiLogIn size={12} className=" " />
-                    </button>
-
-                    <button
-                      title="Print"
-                      onClick={() => handlePrint(item)}
-                      className="p-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg transition-all "
-                    >
-                      <FiPrinter size={12} className=" " />
-                    </button>
-
-                    <button
-                      title="WhatsApp"
-                      className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-all "
-                    >
-                      <FaWhatsapp size={12} className=" " />
                     </button>
 
                     <button
@@ -556,25 +602,105 @@ const ManageBooking = ({
                       </button>
 
                       {activeDropdown === item._id && (
-                        <div className="absolute right-0 top-full mt-1 w-28 bg-white border border-gray-100 shadow-lg rounded-xl z-50 overflow-hidden flex flex-col ">
+                        <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-100 shadow-lg rounded-xl z-50 overflow-hidden flex flex-col ">
+                          
+                          <button
+                            title={canAction ? "WhatsApp" : "Disabled"}
+                            onClick={() => {
+                              if (!canAction) return;
+                              setActiveDropdown(null);
+                              handleWhatsapp(item);
+                            }}
+                            disabled={!canAction || sendingWhatsappId === item._id}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-bold w-full text-left transition-colors ${
+                              !canAction
+                                ? "text-gray-400 bg-gray-100 cursor-not-allowed opacity-70"
+                                : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            }`}
+                          >
+                            {sendingWhatsappId === item._id ? (
+                              <FiLoader size={10} className="animate-spin text-green-600" />
+                            ) : (
+                              <FaWhatsapp size={10} className={canAction ? "text-green-600" : "text-gray-400"} />
+                            )}
+                            WhatsApp
+                          </button>
+
+                          <button
+                            title={canAction ? "Email" : "Disabled"}
+                            onClick={() => {
+                              if (!canAction) return;
+                              setActiveDropdown(null);
+                              handleEmail(item);
+                            }}
+                            disabled={!canAction || sendingEmailId === item._id}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-bold w-full text-left transition-colors ${
+                              !canAction
+                                ? "text-gray-400 bg-gray-100 cursor-not-allowed opacity-70"
+                                : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            }`}
+                          >
+                            {sendingEmailId === item._id ? (
+                              <FiLoader size={10} className="animate-spin text-indigo-600" />
+                            ) : (
+                              <FiMail size={10} className={canAction ? "text-indigo-600" : "text-gray-400"} />
+                            )}
+                            Email
+                          </button>
+
+                          <button
+                            title={canAction ? "Print" : "Disabled"}
+                            onClick={() => {
+                              if (!canAction) return;
+                              setActiveDropdown(null);
+                              handlePrint(item);
+                            }}
+                            disabled={!canAction}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-bold w-full text-left transition-colors ${
+                              !canAction
+                                ? "text-gray-400 bg-gray-100 cursor-not-allowed opacity-70"
+                                : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            }`}
+                          >
+                            <FiPrinter size={10} className={canAction ? "text-gray-600" : "text-gray-400"} /> Print
+                          </button>
+
+                          <div className="border-t border-gray-100 my-1"></div>
+
                           <button
                             onClick={() => {
+                              if (!["Tentative", "Confirmed"].includes(item.status)) return;
                               setActiveDropdown(null);
                               onEdit(item);
                             }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors w-full text-left "
+                            disabled={!["Tentative", "Confirmed"].includes(item.status)}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-bold w-full text-left transition-colors ${
+                              !["Tentative", "Confirmed"].includes(item.status)
+                                ? "text-gray-400 bg-gray-100 cursor-not-allowed opacity-70"
+                                : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            }`}
+                            title={!["Tentative", "Confirmed"].includes(item.status) ? "Cannot edit a booking in this status" : "Edit Booking"}
                           >
                             <FiEdit2 size={10} className=" " /> Edit
                           </button>
+
                           <button
                             onClick={() => {
+                              if (!canAction) return;
                               setActiveDropdown(null);
                               onCancel(item);
                             }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors w-full text-left border-t border-gray-50"
+                            disabled={!canAction}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-bold w-full text-left border-t border-gray-50 transition-colors ${
+                              !canAction
+                                ? "text-gray-400 bg-gray-100 cursor-not-allowed opacity-70"
+                                : "text-red-600 hover:bg-red-50 cursor-pointer"
+                            }`}
+                            title={!canAction ? "Cannot cancel a booking in this status" : "Cancel Booking"}
                           >
                             <FiX size={10} className=" " /> Cancel
                           </button>
+
                         </div>
                       )}
                     </div>

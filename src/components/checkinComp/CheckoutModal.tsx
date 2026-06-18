@@ -42,7 +42,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
   const [discount, setDiscount] = useState<number>(0);
   const [notes, setNotes] = useState("");
 
-  const [taxPercentage, setTaxPercentage] = useState(12); // Default to 12% if none chosen
+  const [taxAmount, setTaxAmount] = useState<number>(0);
 
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [receivedAmount, setReceivedAmount] = useState<string | number>("");
@@ -74,8 +74,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  setRestaurantCharges(d.restaurantCharges || 0);
  setDiscount(d.discount || 0);
  setNotes(d.notes || "");
- const storedPct = d.taxPercentage ?? 12;
- setTaxPercentage(storedPct);
+ setTaxAmount(d.taxAmount || 0);
 
 
  const lastPayment =
@@ -134,8 +133,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  roomTotal + servicesTotal + Number(restaurantCharges),
  );
 
- // 👉 Round tax (no decimals)
- const taxAmount = Math.round((subTotal * taxPercentage) / 100);
+
 
  const damageAmount = Number(verification.damageAmount) || 0;
 
@@ -172,7 +170,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  restaurantCharges: Number(restaurantCharges),
  facilityCharges: [],
  discount: Number(discount),
- taxPercentage: Number(taxPercentage),
+ taxAmount: Number(taxAmount),
  notes,
  isCheckout,
  payment:
@@ -771,7 +769,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
  <div className="border-t border-dashed border-gray-200 pt-3 space-y-3">
  <LineItem label={`Subtotal`} value={subTotal} bold />
  <LineItem
- label={`Tax (${taxPercentage}%)`}
+ label={`Taxes & Charges`}
  value={taxAmount}
  color="text-gray-500"
  />

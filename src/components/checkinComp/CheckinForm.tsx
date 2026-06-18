@@ -635,9 +635,18 @@ const CheckInForm = ({
     const fetchAllRooms = async () => {
       try {
         setLoadingRooms(true);
-        const res = await api.get(
-          "/rooms?status=Active&availableOnly=true&limit=500",
-        );
+        const params = new URLSearchParams({
+          status: "Active",
+          availableOnly: "true",
+          limit: "500",
+          checkIn: stayFormData.checkInTime instanceof Date ? stayFormData.checkInTime.toISOString() : String(stayFormData.checkInTime),
+          checkOut: stayFormData.expectedCheckOutTime instanceof Date ? stayFormData.expectedCheckOutTime.toISOString() : String(stayFormData.expectedCheckOutTime)
+        });
+        if (bookingData?._id) {
+          params.append("excludeBookingId", bookingData._id);
+        }
+
+        const res = await api.get(`/rooms?${params.toString()}`);
         setAvailableRooms(res.data.data?.rooms || []);
       } catch (err) {
         console.error("Error fetching rooms:", err);
@@ -686,16 +695,21 @@ const CheckInForm = ({
   const fetchRoomsByType = async (typeId?: string) => {
     try {
       setLoadingRooms(true);
-      let res;
+      const params = new URLSearchParams({
+        status: "Active",
+        availableOnly: "true",
+        limit: "500",
+        checkIn: stayFormData.checkInTime instanceof Date ? stayFormData.checkInTime.toISOString() : String(stayFormData.checkInTime),
+        checkOut: stayFormData.expectedCheckOutTime instanceof Date ? stayFormData.expectedCheckOutTime.toISOString() : String(stayFormData.expectedCheckOutTime)
+      });
       if (typeId) {
-        res = await api.get(
-          `/rooms?status=Active&availableOnly=true&roomType=${typeId}&limit=500`,
-        );
-      } else {
-        res = await api.get(
-          "/rooms?status=Active&availableOnly=true&limit=500",
-        );
+        params.append("roomType", typeId);
       }
+      if (bookingData?._id) {
+        params.append("excludeBookingId", bookingData._id);
+      }
+
+      const res = await api.get(`/rooms?${params.toString()}`);
       setAvailableRooms(res.data.data?.rooms || []);
     } catch (err) {
       console.error("Error fetching rooms:", err);
@@ -703,6 +717,12 @@ const CheckInForm = ({
       setLoadingRooms(false);
     }
   };
+
+  // Refetch rooms when dates change
+  useEffect(() => {
+    fetchRoomsByType(roomTypeFilterId === "all" || roomTypeFilterId === "" ? undefined : roomTypeFilterId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stayFormData.checkInTime, stayFormData.expectedCheckOutTime]);
 
   // Calculate totals
   // Package price for Day Access

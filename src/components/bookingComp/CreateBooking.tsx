@@ -259,12 +259,14 @@ const CreateBooking = ({
         setCheckOutDate(new Date(booking.overallCheckOutDate));
       if (booking.visitDate) setVisitDate(new Date(booking.visitDate));
 
-      // Map rooms array to selectedCounts
+      // Map rooms array to selectedCounts and specific rooms
       if (booking.rooms && booking.rooms.length > 0) {
         const counts: Record<
           string,
           { count: number; adults: number; children: number }
         > = {};
+        const specificRooms: Record<string, any> = {};
+
         booking.rooms.forEach((r: any) => {
           const typeId = r.roomType?._id || r.roomType;
           if (counts[typeId]) {
@@ -278,8 +280,21 @@ const CreateBooking = ({
               children: r.children || 0,
             };
           }
+
+          if (r.roomId) {
+            const rId = r.roomId?._id || r.roomId;
+            specificRooms[rId] = {
+              adults: r.adults || 1,
+              children: r.children || 0,
+              roomTypeId: typeId,
+              roomTypeName: r.roomType?.name || "",
+              basePrice: r.pricePerNight || r.roomType?.basePrice || 0,
+              roomNumber: r.roomId?.roomNumber || "",
+            };
+          }
         });
         setSelectedCounts(counts);
+        setSelectedSpecificRooms(specificRooms);
       }
 
       setCustomerForm({
@@ -436,12 +451,14 @@ const CreateBooking = ({
       const fetchPhysicalRooms = async () => {
         setFetchingPhysicalRooms(true);
         try {
-          const res = await api.get("/bookings/available", {
-            params: {
-              checkIn: checkInDate.toISOString(),
-              checkOut: checkOutDate.toISOString(),
-            },
-          });
+          const params: any = {
+            checkIn: checkInDate.toISOString(),
+            checkOut: checkOutDate.toISOString(),
+          };
+          if (booking?._id) {
+            params.excludeBookingId = booking._id;
+          }
+          const res = await api.get("/bookings/available", { params });
           // Filter out unavailable rooms just in case
           const rooms = (res.data.data?.availableRooms || []).filter(
             (r: any) => r.isAvailable,
@@ -1799,7 +1816,7 @@ const CreateBooking = ({
                     Selected Rooms: {Object.keys(selectedSpecificRooms).length}
                   </span>
                   <span className="text-sm font-black text-text-primary">
-                    Total Rooms: {Object.keys(selectedSpecificRooms).length}
+                    Total Rooms: {totalRoomsNeeded}
                   </span>
                 </div>
               </div>

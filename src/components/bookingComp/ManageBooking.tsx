@@ -617,10 +617,17 @@ const ManageBooking = ({
                         <div className="absolute right-0 top-full mt-1 w-28 bg-white border border-gray-100 shadow-lg rounded-xl z-50 overflow-hidden flex flex-col ">
                           <button
                             onClick={() => {
+                              if (!["Tentative", "Confirmed"].includes(item.status)) return;
                               setActiveDropdown(null);
                               onEdit(item);
                             }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors w-full text-left "
+                            disabled={!["Tentative", "Confirmed"].includes(item.status)}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-bold w-full text-left transition-colors ${
+                              !["Tentative", "Confirmed"].includes(item.status)
+                                ? "text-gray-400 bg-gray-100 cursor-not-allowed opacity-70"
+                                : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            }`}
+                            title={!["Tentative", "Confirmed"].includes(item.status) ? "Cannot edit a booking in this status" : "Edit Booking"}
                           >
                             <FiEdit2 size={10} className=" " /> Edit
                           </button>

@@ -534,7 +534,12 @@ const CheckInFullPage = () => {
                             setEditCheckInData(item);
                             setIsEditMode(true);
                           }}
-                          className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all border border-indigo-100 "
+                          disabled={item.status !== "Active"}
+                          className={`p-1.5 rounded-lg transition-all border ${
+                            item.status === "Active"
+                              ? "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-indigo-100"
+                              : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                          }`}
                           title="Edit"
                         >
                           <FiEdit2 size={12} className=" " />
@@ -544,7 +549,12 @@ const CheckInFullPage = () => {
                             setSelectedItem(item);
                             setIsExtendModalOpen(true);
                           }}
-                          className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all "
+                          disabled={item.status !== "Active"}
+                          className={`p-1.5 rounded-lg transition-all ${
+                            item.status === "Active"
+                              ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                              : "bg-gray-50 text-gray-300 cursor-not-allowed"
+                          }`}
                           title="Extend"
                         >
                           <FiCalendar size={12} className=" " />

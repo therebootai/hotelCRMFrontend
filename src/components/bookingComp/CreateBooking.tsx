@@ -493,6 +493,9 @@ const CreateBooking = ({
         checkIn: checkInDate.toISOString(),
         checkOut: checkOutDate.toISOString(),
       };
+      if (booking?._id) {
+        params.excludeBookingId = booking._id;
+      }
       const res = await api.get("/bookings/available", { params });
       setSearchResults(res.data.data?.availableRooms || []);
     } catch (err: any) {

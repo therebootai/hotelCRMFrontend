@@ -786,10 +786,24 @@ const CheckInForm = ({
   });
 
   const subTotal = roomTotal + addonsTotal;
-  const taxRate = bookingData?.pricingSummary?.taxPercentage
-    ? bookingData.pricingSummary.taxPercentage / 100
-    : 0.12;
-  const roomTaxAmount = roomTotal * taxRate;
+  
+  let roomTaxAmount = 0;
+  if (isDayAccess) {
+    roomTaxAmount = roomTotal * 0.12; // Default 18% for day access
+  } else {
+    selectedRooms.forEach((room: RoomEntry) => {
+      const basePrice = Number(room.basePrice) || 0;
+      const extraBedPrice = room.hasExtraBed
+        ? (Number(room.extraBedCharge) || 0) * nights
+        : 0;
+      const rTotal = basePrice * nights + extraBedPrice;
+      
+      const rt = roomTypes.find((r: any) => String(r._id) === String(room.requiredRoomTypeId));
+      const taxPercentage = rt?.gstId?.percentage || 0;
+      roomTaxAmount += rTotal * (taxPercentage / 100);
+    });
+  }
+
   const taxAmount = Math.round(roomTaxAmount + addonsTaxAmount);
   const grandTotal = subTotal + taxAmount;
 
@@ -3653,7 +3667,7 @@ const CheckInForm = ({
                       </div>
                       <div>
                         <p className="text-[9px] 3xl:text-[12px] text-gray-400 uppercase font-black mb-1">
-                          Estimated Room Rent
+                          Estimated Total Amount
                         </p>
                         <p className="font-bold text-orange-600 text-base">
                           ₹{grandTotal.toLocaleString()}

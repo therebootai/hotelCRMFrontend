@@ -187,6 +187,7 @@ const CheckoutModal = ({ checkIn, onClose, onSuccess }: { checkIn: any; onClose:
         guestVacated: verification.guestVacated,
         keyReturned: verification.keyReturned,
         roomChecked: verification.roomChecked,
+        noDamage: verification.noDamage,
         damageFound: verification.damageFound,
         damageAmount: Number(verification.damageAmount) || 0,
         damageRemarks: verification.damageRemarks,

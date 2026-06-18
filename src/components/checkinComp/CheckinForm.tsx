@@ -613,6 +613,33 @@ const CheckInForm = ({
     }
   }, [bookingData]);
 
+  // Validate selected rooms against currently available rooms
+  useEffect(() => {
+    if (loadingRooms) return;
+    
+    setSelectedRooms((prev) => {
+      let hasChanges = false;
+      const updated = prev.map(room => {
+        if (!room.roomId) return room;
+        
+        const isAvailable = availableRooms.some(ar => ar._id === room.roomId);
+        const isOccupied = occupiedRoomIds.has(room.roomId);
+        
+        if (!isAvailable || isOccupied) {
+          hasChanges = true;
+          return {
+            ...room,
+            roomId: "",
+            roomNumber: "TBD"
+          };
+        }
+        return room;
+      });
+      return hasChanges ? updated : prev;
+    });
+  }, [availableRooms, occupiedRoomIds, loadingRooms]);
+
+
   // Auto-filter room grid by preferred room type on open
   useEffect(() => {
     if (!editMode && preferredRoomTypeId) {

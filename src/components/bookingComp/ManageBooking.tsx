@@ -422,6 +422,7 @@ const ManageBooking = ({
           ) : (
             data.map((item: any) => {
               const statusBadge = getStatusBadge(item.status);
+              const canAction = ["Tentative", "Confirmed"].includes(item.status);
               const guestName =
                 item.bookingContact?.name || item.customerId?.name || "Guest";
               const guestPhone =
@@ -567,9 +568,14 @@ const ManageBooking = ({
                   {/* Actions */}
                   <div className="flex-1 flex items-center justify-center gap-1.5 ">
                     <button
-                      onClick={() => onCheckIn(item)}
-                      title="Check-in"
-                      className="p-1.5 bg-orange-50 text-orange-600 hover:bg-orange-100 rounded-lg transition-all "
+                      onClick={() => canAction && onCheckIn(item)}
+                      title={canAction ? "Check-in" : "Check-in disabled for this status"}
+                      disabled={!canAction}
+                      className={`p-1.5 rounded-lg transition-all ${
+                        canAction
+                          ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
+                          : "bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
+                      }`}
                     >
                       <FiLogIn size={12} className=" " />
                     </button>
@@ -599,48 +605,64 @@ const ManageBooking = ({
                         <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-100 shadow-lg rounded-xl z-50 overflow-hidden flex flex-col ">
                           
                           <button
-                            title="WhatsApp"
+                            title={canAction ? "WhatsApp" : "Disabled"}
                             onClick={() => {
+                              if (!canAction) return;
                               setActiveDropdown(null);
                               handleWhatsapp(item);
                             }}
-                            disabled={sendingWhatsappId === item._id}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors w-full text-left disabled:opacity-50"
+                            disabled={!canAction || sendingWhatsappId === item._id}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-bold w-full text-left transition-colors ${
+                              !canAction
+                                ? "text-gray-400 bg-gray-100 cursor-not-allowed opacity-70"
+                                : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            }`}
                           >
                             {sendingWhatsappId === item._id ? (
                               <FiLoader size={10} className="animate-spin text-green-600" />
                             ) : (
-                              <FaWhatsapp size={10} className="text-green-600" />
+                              <FaWhatsapp size={10} className={canAction ? "text-green-600" : "text-gray-400"} />
                             )}
                             WhatsApp
                           </button>
 
                           <button
-                            title="Email"
+                            title={canAction ? "Email" : "Disabled"}
                             onClick={() => {
+                              if (!canAction) return;
                               setActiveDropdown(null);
                               handleEmail(item);
                             }}
-                            disabled={sendingEmailId === item._id}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors w-full text-left disabled:opacity-50"
+                            disabled={!canAction || sendingEmailId === item._id}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-bold w-full text-left transition-colors ${
+                              !canAction
+                                ? "text-gray-400 bg-gray-100 cursor-not-allowed opacity-70"
+                                : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            }`}
                           >
                             {sendingEmailId === item._id ? (
                               <FiLoader size={10} className="animate-spin text-indigo-600" />
                             ) : (
-                              <FiMail size={10} className="text-indigo-600" />
+                              <FiMail size={10} className={canAction ? "text-indigo-600" : "text-gray-400"} />
                             )}
                             Email
                           </button>
 
                           <button
-                            title="Print"
+                            title={canAction ? "Print" : "Disabled"}
                             onClick={() => {
+                              if (!canAction) return;
                               setActiveDropdown(null);
                               handlePrint(item);
                             }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors w-full text-left"
+                            disabled={!canAction}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-bold w-full text-left transition-colors ${
+                              !canAction
+                                ? "text-gray-400 bg-gray-100 cursor-not-allowed opacity-70"
+                                : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                            }`}
                           >
-                            <FiPrinter size={10} className="text-gray-600" /> Print
+                            <FiPrinter size={10} className={canAction ? "text-gray-600" : "text-gray-400"} /> Print
                           </button>
 
                           <div className="border-t border-gray-100 my-1"></div>
@@ -664,10 +686,17 @@ const ManageBooking = ({
 
                           <button
                             onClick={() => {
+                              if (!canAction) return;
                               setActiveDropdown(null);
                               onCancel(item);
                             }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors w-full text-left border-t border-gray-50"
+                            disabled={!canAction}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm font-bold w-full text-left border-t border-gray-50 transition-colors ${
+                              !canAction
+                                ? "text-gray-400 bg-gray-100 cursor-not-allowed opacity-70"
+                                : "text-red-600 hover:bg-red-50 cursor-pointer"
+                            }`}
+                            title={!canAction ? "Cannot cancel a booking in this status" : "Cancel Booking"}
                           >
                             <FiX size={10} className=" " /> Cancel
                           </button>

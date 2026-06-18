@@ -145,11 +145,19 @@ const ManageBooking = ({
       return;
     }
     setSendingEmailId(item._id);
+    
+    const promise = api.post(`/bookings/${item._id}/email-receipt`, { email: emailToUse });
+    
+    toast.promise(promise, {
+      loading: 'Sending Email...',
+      success: `Receipt sent to ${emailToUse}`,
+      error: (err: any) => err.response?.data?.message || "Failed to send email"
+    });
+
     try {
-      await api.post(`/bookings/${item._id}/email-receipt`, { email: emailToUse });
-      toast.success(`Receipt sent to ${emailToUse}`);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send email");
+      await promise;
+    } catch (err) {
+      // Handled by toast.promise
     } finally {
       setSendingEmailId(null);
     }
@@ -162,11 +170,19 @@ const ManageBooking = ({
       return;
     }
     setSendingWhatsappId(item._id);
+    
+    const promise = api.post(`/bookings/${item._id}/whatsapp-receipt`, { phone: phoneToUse });
+    
+    toast.promise(promise, {
+      loading: 'Sending WhatsApp message...',
+      success: `WhatsApp receipt sent to ${phoneToUse}`,
+      error: (err: any) => err.response?.data?.message || "Failed to send WhatsApp message"
+    });
+
     try {
-      await api.post(`/bookings/${item._id}/whatsapp-receipt`, { phone: phoneToUse });
-      toast.success(`WhatsApp receipt sent to ${phoneToUse}`);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send WhatsApp message");
+      await promise;
+    } catch (err) {
+      // Handled by toast.promise
     } finally {
       setSendingWhatsappId(null);
     }

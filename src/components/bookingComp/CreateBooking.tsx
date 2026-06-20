@@ -290,6 +290,7 @@ const CreateBooking = ({
               roomTypeId: typeId,
               roomTypeName: r.roomType?.name || "",
               basePrice: r.pricePerNight || r.roomType?.basePrice || 0,
+              discountPercentage: r.discountPercentage || r.roomId?.discountPercentage || 0,
               roomNumber: r.roomId?.roomNumber || "",
             };
           }
@@ -597,7 +598,9 @@ const CreateBooking = ({
     } else {
       if (isAssignSpecificRoom) {
         Object.values(selectedSpecificRooms).forEach((room: any) => {
-          const rTotal = room.basePrice * totalNights;
+          const discount = room.discountPercentage || 0;
+          const discountedRate = room.basePrice * (1 - discount / 100);
+          const rTotal = discountedRate * totalNights;
           roomTotal += rTotal;
           roomBreakdown.push({
             name: `Room ${room.roomNumber}`,
@@ -1782,8 +1785,19 @@ const CreateBooking = ({
                               <td className="py-3 text-center text-text-secondary text-xs font-bold">
                                 👤 {r.maxAdults} Adults, {r.maxChildren} Kids
                               </td>
-                              <td className="py-3 text-right font-bold text-text-primary text-sm">
-                                ₹{r.basePrice.toLocaleString()}
+                              <td className="py-3 text-right font-bold text-text-primary text-sm flex flex-col items-end">
+                                {r.discountPercentage > 0 ? (
+                                  <>
+                                    <span className="text-xs text-text-secondary line-through">
+                                      ₹{r.basePrice.toLocaleString()}
+                                    </span>
+                                    <span>
+                                      ₹{(r.basePrice * (1 - r.discountPercentage / 100)).toLocaleString()}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span>₹{r.basePrice.toLocaleString()}</span>
+                                )}
                               </td>
                               <td className="py-3 text-right pr-2">
                                 <input
@@ -1799,6 +1813,7 @@ const CreateBooking = ({
                                           roomTypeId: rt?._id,
                                           roomTypeName: rt?.name,
                                           basePrice: r.basePrice,
+                                          discountPercentage: r.discountPercentage || 0,
                                           roomNumber: r.roomNumber,
                                         },
                                       }));

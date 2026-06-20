@@ -806,7 +806,8 @@ const CheckInForm = ({
         : 0;
       const rTotal = basePrice * nights + extraBedPrice;
       
-      const rt = roomTypes.find((r: any) => String(r._id) === String(room.requiredRoomTypeId));
+      const rtId = room.requiredRoomTypeId || room.roomType?._id || room.roomType;
+      const rt = roomTypes.find((r: any) => String(r._id) === String(rtId));
       const taxPercentage = rt?.gstId?.percentage || 0;
       roomTaxAmount += rTotal * (taxPercentage / 100);
     });
@@ -900,7 +901,7 @@ const CheckInForm = ({
           ...updated[unassignedIndex],
           roomId: room._id,
           roomNumber: room.roomNumber,
-          basePrice: Number(room.basePrice) || 0,
+          basePrice: (Number(room.basePrice) || 0) * (1 - (room.discountPercentage || 0) / 100),
           roomType: roomTypeObj,
           roomTypeName: roomTypeObj?.name || "",
           hasExtraBed: false,
@@ -917,7 +918,7 @@ const CheckInForm = ({
           {
             roomId: room._id,
             roomNumber: room.roomNumber,
-            basePrice: Number(room.basePrice) || 0,
+            basePrice: (Number(room.basePrice) || 0) * (1 - (room.discountPercentage || 0) / 100),
             roomType: roomTypeObj,
             roomTypeName: roomTypeObj?.name || "",
             hasExtraBed: false,
@@ -1328,12 +1329,29 @@ const CheckInForm = ({
           : undefined,
       rooms: selectedRooms.map((room) => {
         const roomGuests = roomGuestMap[room.roomId] || [];
+        const basePrice = Number(room.basePrice) || 0;
+        
+        const extraBedCharge = room.hasExtraBed ? Number(room.extraBedCharge) || 0 : 0;
+        const totalNightlyBase = basePrice + extraBedCharge;
+
+        let taxPercentage = 0;
+        if (isDayAccess) {
+          taxPercentage = 12; // Default 12% for day access as per main calculation
+        } else {
+          const rtId = room.requiredRoomTypeId || room.roomType?._id || room.roomType;
+          const rt = roomTypes.find((r: any) => String(r._id) === String(rtId));
+          taxPercentage = rt?.gstId?.percentage || 0;
+        }
+        
+        const taxAmountPerNight = totalNightlyBase * (taxPercentage / 100);
+        const tariffWithTax = Math.round(totalNightlyBase + taxAmountPerNight);
+
         return {
           roomNo: room.roomNumber || "TBD",
           roomType: room.roomTypeName || "Standard",
           adults: roomGuests.length > 0 ? roomGuests.length : 2,
           children: room.hasExtraBed ? 1 : 0,
-          tariff: Number(room.basePrice) || 0,
+          tariff: tariffWithTax,
           checkIn: format(stayFormData.checkInTime, "dd MMM yyyy"),
           checkOut: format(stayFormData.expectedCheckOutTime, "dd MMM yyyy"),
           guests: roomGuests,
@@ -1581,7 +1599,7 @@ const CheckInForm = ({
   };
 
   // Function to execute the actual check-in API call
-  const executeFinalCheckIn = async (payload?: any) => {
+  const executeFinalCheckIn = async (_payload?: any) => {
     if (loading) return;
 
     try {
@@ -3476,7 +3494,20 @@ const CheckInForm = ({
                                       </td>
                                       <td className="p-2 font-bold text-gray-800">{room.roomNumber}</td>
                                       <td className="p-2 text-gray-600 truncate max-w-20">{roomTypeName}</td>
-                                      <td className="p-2 font-bold text-gray-700">₹{(Number(room.basePrice) || 0).toLocaleString()}</td>
+                                      <td className="p-2 font-bold text-gray-700 flex flex-col">
+                                        {room.discountPercentage > 0 ? (
+                                          <>
+                                            <span className="text-[10px] text-gray-400 line-through">
+                                              ₹{(Number(room.basePrice) || 0).toLocaleString()}
+                                            </span>
+                                            <span>
+                                              ₹{((Number(room.basePrice) || 0) * (1 - room.discountPercentage / 100)).toLocaleString()}
+                                            </span>
+                                          </>
+                                        ) : (
+                                          <span>₹{(Number(room.basePrice) || 0).toLocaleString()}</span>
+                                        )}
+                                      </td>
                                       <td className="p-2">
                                         {isOccupied ? (
                                           <span className="px-1.5 py-1 bg-red-100 text-red-600 rounded font-bold text-xs uppercase">Occupied</span>

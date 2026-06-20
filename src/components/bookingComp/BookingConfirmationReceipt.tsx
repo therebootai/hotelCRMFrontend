@@ -149,7 +149,7 @@ const BookingConfirmationReceipt = ({
               &times;
             </button>
             <h2 className="text-xl font-bold text-text-primary">
-              {!isSaved ? "Step 2: Preview & Confirm Booking" : "Booking Payment & Receipt"}
+              {!isSaved ? "Step 2: Preview & Confirm Booking" : "Booking Confirmed & Inventory Reserved"}
             </h2>
           </div>
           <div className="flex items-center gap-6">
@@ -204,7 +204,7 @@ const BookingConfirmationReceipt = ({
             <div>
               <p className="text-[10px] text-text-secondary uppercase font-bold tracking-wider mb-1">Rooms</p>
               <p className="font-bold text-text-primary">{roomsCount} Rooms</p>
-              <p className="text-xs text-text-secondary mt-0.5 max-w-[150px] truncate">{roomTypesNames}</p>
+              <p className="text-xs text-text-secondary mt-0.5 max-w-37.5 truncate">{roomTypesNames}</p>
             </div>
             
             <div>
@@ -417,7 +417,7 @@ const BookingConfirmationReceipt = ({
                   + Create Another Booking
                 </button>
                 <button onClick={onBack} className="px-6 py-2.5 rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">
-                  Done & Back to Booking List →
+                  View All Bookings
                 </button>
               </>
             )}

@@ -15,7 +15,7 @@ const StayHistoryTable = ({ bookings }: StayHistoryTableProps) => {
  <div className="border border-border rounded-xl overflow-hidden">
  <table className="w-full border-collapse">
  <thead>
- <tr className="bg-gray-50 border-b border-border text-left text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+   <tr className="bg-gray-50 border-b border-border text-left text-[10px] 3xl:text-[14px] 4xl:text-[16px] font-semibold uppercase tracking-widest text-gray-600">
  <th className="px-4 py-2">Booking ID</th>
  <th className="px-4 py-2">Dates</th>
  <th className="px-4 py-2">Total Amount</th>

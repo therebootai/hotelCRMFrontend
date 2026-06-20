@@ -44,6 +44,10 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [selectedCheckInId, setSelectedCheckInId] = useState("");
+  const [loadingCheckIns, setLoadingCheckIns] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [showPaymentWarningModal, setShowPaymentWarningModal] = useState(false);
+  const [pendingIsCheckoutFlag, setPendingIsCheckoutFlag] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [billPreview, setBillPreview] = useState<any>(null);
@@ -326,6 +330,16 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
 
   // Process Checkout submission
   const handleSubmitBilling = async (isCheckoutFlag: boolean) => {
+    if (finalPaidAmount > netPayableAmount && paymentAmount > 0) {
+      setPendingIsCheckoutFlag(isCheckoutFlag);
+      setShowPaymentWarningModal(true);
+      return;
+    }
+
+    proceedWithBilling(isCheckoutFlag);
+  };
+
+  const proceedWithBilling = async (isCheckoutFlag: boolean) => {
     if (!selectedCheckInId) {
       toast.error("Please select a check-in record.");
       return;
@@ -693,7 +707,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                                         )
                                       }
                                       title="Add this custom service to Master Database"
-                                      className="px-2.5 py-1 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-black text-[9px] uppercase rounded-lg transition-all active:scale-95 shadow-md shadow-orange-100 flex items-center gap-0.5"
+                                      className="px-2.5 py-1 bg-linear-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-black text-[9px] uppercase rounded-lg transition-all active:scale-95 shadow-md shadow-orange-100 flex items-center gap-0.5"
                                     >
                                       <FiPlus size={10} /> Add
                                     </button>
@@ -954,7 +968,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
                       </div>
                     )}
 
-                    <div className="flex justify-between border-t border-gray-200 pt-2 text-base font-black text-gray-800 bg-orange-50/50 p-2 rounded-lg border border-orange-100/30">
+                    <div className="flex justify-between border-t border-gray-200 pt-2 text-base font-black text-gray-800 bg-orange-50/50 p-2 rounded-lg border">
                       <span>Grand Total:</span>
                       <span>₹{calculatedGrandTotal.toLocaleString()}</span>
                     </div>
@@ -1008,7 +1022,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
 
                   {paymentMethod !== "Cash" && (
                     <div className="animate-in slide-in-from-top-1 duration-150">
-                      <label className="text-[9px] uppercase font-black text-red-500 tracking-wider block mb-1 flex items-center gap-1">
+                      <label className="text-[9px] uppercase font-black text-red-500 tracking-wider mb-1 flex items-center gap-1">
                         Transaction Ref ID{" "}
                         <span className="font-bold text-[8px] px-1 bg-red-100 text-red-600 rounded">
                           Required
@@ -1139,6 +1153,40 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
           )}
         </div>
       </div>
+      
+      {/* Payment Warning Modal */}
+      {showPaymentWarningModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="max-w-md w-full bg-white rounded-2xl p-6 border border-gray-100 shadow-xl text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-black text-gray-800 mb-2">Payment Exceeds Total Due</h2>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              The payment amount entered exceeds the total due value. Are you sure you want to proceed?
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setShowPaymentWarningModal(false)}
+                className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-all flex-1"
+              >
+                No, Edit Amount
+              </button>
+              <button
+                onClick={() => {
+                  setShowPaymentWarningModal(false);
+                  proceedWithBilling(pendingIsCheckoutFlag);
+                }}
+                className="px-6 py-2.5 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all flex-1"
+              >
+                Yes, Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

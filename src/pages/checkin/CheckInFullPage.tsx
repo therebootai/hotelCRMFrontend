@@ -262,7 +262,7 @@ const CheckInFullPage = () => {
         </div>
 
         {/* 2. Global Search */}
-        <div className="relative min-w-[200px] flex-1 ">
+        <div className="relative min-w-50 flex-1 ">
           <FiSearch
             className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 "
             size={16}
@@ -349,40 +349,40 @@ const CheckInFullPage = () => {
 
       {/* Table Section */}
       <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden overflow-x-auto w-full ">
-        <table className="w-full text-left border-collapse min-w-[1200px] lg:min-w-0">
+        <table className="w-full text-left border-collapse min-w-300 lg:min-w-0">
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100">
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 whitespace-nowrap ">
                 Check-In ID
               </th>
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 whitespace-nowrap ">
                 Guest / Company
               </th>
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 whitespace-nowrap ">
                 Room(s)
               </th>
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 whitespace-nowrap ">
                 Check-in Date
               </th>
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 whitespace-nowrap ">
                 Expected Checkout
               </th>
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap text-center ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 whitespace-nowrap text-center ">
                 Stay Duration
               </th>
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap text-right ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 whitespace-nowrap text-right ">
                 Total Amount
               </th>
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap text-right ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 whitespace-nowrap text-right ">
                 Paid
               </th>
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap text-right ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 whitespace-nowrap text-right ">
                 Due
               </th>
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap text-center ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 whitespace-nowrap text-center ">
                 Status
               </th>
-              <th className="p-2 text-[9px] 3xl:text-[12px] font-black text-gray-700 uppercase tracking-widest whitespace-nowrap text-center ">
+              <th className="p-2 text-[9px] 3xl:text-[14px] 4xl:text-[16px] text-gray-700 uppercase tracking-widest whitespace-nowrap text-center ">
                 Action
               </th>
             </tr>
@@ -413,10 +413,10 @@ const CheckInFullPage = () => {
                     className="border-b border-gray-100 hover:bg-gray-50/50 transition-all"
                   >
                     <td className="p-2 ">
-                      <span className="text-sm font-bold text-gray-800 block">
+                      <span className="text-sm 3xl:text-[14px] 4xl:text-[16px] font-bold text-gray-800 block">
                         {item.checkInId || "N/A"}
                       </span>
-                      <span className="text-[9px] font-black text-gray-400 uppercase">
+                      <span className="text-[9px] 3xl:text-[14px] 4xl:text-[16px] font-black text-gray-400 uppercase">
                         {typeLabel}
                       </span>
                     </td>
@@ -426,12 +426,12 @@ const CheckInFullPage = () => {
                           <FiUser size={12} />
                         </div>
                         <div>
-                          <span className="text-sm font-bold text-gray-800 block">
+                          <span className="text-sm 3xl:text-[14px] 4xl:text-[16px] font-bold text-gray-800 block">
                             {item.checkInType === "Corporate"
                               ? item.corporateCheckInDetails?.companyName
                               : item.guests[0]?.name}
                           </span>
-                          <span className="text-[10px] text-gray-500 font-bold block">
+                          <span className="text-[10px] 3xl:text-[14px] 4xl:text-[16px] text-gray-500 font-bold block">
                             {item.checkInType === "Corporate"
                               ? item.corporateCheckInDetails?.contactMobile
                               : item.guests[0]?.mobileNo}
@@ -440,45 +440,45 @@ const CheckInFullPage = () => {
                       </div>
                     </td>
                     <td className="p-2 ">
-                      <span className="text-sm font-bold text-gray-800 block">
+                      <span className="text-sm 3xl:text-[14px] 4xl:text-[16px] font-bold text-gray-800 block">
                         {item.roomDetails
                           ?.map((r: any) => r.roomNumber)
                           .join(", ") || (isDayAccess ? "DA-01" : "N/A")}
                       </span>
-                      <span className="text-[10px] text-gray-500 font-bold block">
+                      <span className="text-[10px] 3xl:text-[14px] 4xl:text-[16px] text-gray-500 font-bold block">
                         {item.roomDetails
                           ?.map((r: any) => r.roomType?.name || "Room")
                           .join(", ") || (isDayAccess ? "Day Access" : "")}
                       </span>
                     </td>
                     <td className="p-2 ">
-                      <span className="text-sm font-bold text-gray-800 block">
+                      <span className="text-sm 3xl:text-[14px] 4xl:text-[16px] font-bold text-gray-800 block">
                         {format(new Date(item.checkInTime), "dd MMM yyyy")}
                       </span>
-                      <span className="text-[10px] text-gray-500 font-bold block">
+                      <span className="text-[10px] 3xl:text-[14px] 4xl:text-[16px] text-gray-500 font-bold block">
                         {format(new Date(item.checkInTime), "hh:mm a")}
                       </span>
                     </td>
                     <td className="p-2 ">
-                      <span className="text-sm font-bold text-orange-500 block">
+                      <span className="text-sm 3xl:text-[14px] 4xl:text-[16px] font-bold text-orange-500 block">
                         {format(
                           new Date(item.expectedCheckOutTime),
                           "dd MMM yyyy",
                         )}
                       </span>
-                      <span className="text-[10px] text-orange-400 font-bold block">
+                      <span className="text-[10px] 3xl:text-[14px] 4xl:text-[16px] text-orange-400 font-bold block">
                         {format(new Date(item.expectedCheckOutTime), "hh:mm a")}
                       </span>
                     </td>
                     <td className="p-2 text-center ">
-                      <span className="text-xs font-bold text-gray-800 ">
+                      <span className="text-xs 3xl:text-[14px] 4xl:text-[16px] font-bold text-gray-800 ">
                         {isDayAccess
                           ? "Day Access"
                           : `${Math.max(1, differenceInDays(new Date(item.expectedCheckOutTime), new Date(item.checkInTime)))} Nights`}
                       </span>
                     </td>
                     <td className="p-2 text-right ">
-                      <span className="text-sm font-bold text-gray-800 ">
+                      <span className="text-sm 3xl:text-[14px] 4xl:text-[16px] font-bold text-gray-800 ">
                         ₹{" "}
                         {totalAmt.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
@@ -487,7 +487,7 @@ const CheckInFullPage = () => {
                       </span>
                     </td>
                     <td className="p-2 text-right ">
-                      <span className="text-sm font-bold text-green-500 ">
+                      <span className="text-sm 3xl:text-[14px] 4xl:text-[16px] font-bold text-green-500 ">
                         ₹{" "}
                         {paidAmt.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
@@ -497,7 +497,7 @@ const CheckInFullPage = () => {
                     </td>
                     <td className="p-2 text-right ">
                       <span
-                        className={`text-sm font-bold ${dueAmt > 0 ? "text-red-500" : "text-green-500"}`}
+                        className={`text-sm 3xl:text-[14px] 4xl:text-[16px] font-bold ${dueAmt > 0 ? "text-red-500" : "text-green-500"}`}
                       >
                         ₹{" "}
                         {dueAmt.toLocaleString(undefined, {
@@ -508,7 +508,7 @@ const CheckInFullPage = () => {
                     </td>
                     <td className="p-2 text-center ">
                       <span
-                        className={`inline-flex items-center px-2 py-1 rounded text-[9px] font-black uppercase ${item.status === "Active" ? (dueAmt > 0 ? "bg-red-50 text-red-500 border border-red-100" : "bg-green-50 text-green-500 border border-green-100") : "bg-gray-100 text-gray-500 border border-gray-200"}`}
+                        className={`inline-flex items-center px-2 py-1 rounded text-[9px] 3xl:text-[14px] 4xl:text-[16px] font-black uppercase ${item.status === "Active" ? (dueAmt > 0 ? "bg-red-50 text-red-500 border border-red-100" : "bg-green-50 text-green-500 border border-green-100") : "bg-gray-100 text-gray-500 border border-gray-200"}`}
                       >
                         {item.status === "Active"
                           ? dueAmt > 0
@@ -527,7 +527,7 @@ const CheckInFullPage = () => {
                           className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all border border-blue-100 "
                           title="View"
                         >
-                          <FaEye size={12} className=" " />
+                          <FaEye className="h-3 w-3 3xl:h-5 3xl:w-5 " />
                         </button>
                         <button
                           onClick={() => {
@@ -542,7 +542,7 @@ const CheckInFullPage = () => {
                           }`}
                           title="Edit"
                         >
-                          <FiEdit2 size={12} className=" " />
+                          <FiEdit2 className="h-3 w-3 3xl:h-5 3xl:w-5 " />
                         </button>
                         <button
                           onClick={() => {
@@ -557,7 +557,7 @@ const CheckInFullPage = () => {
                           }`}
                           title="Extend"
                         >
-                          <FiCalendar size={12} className=" " />
+                          <FiCalendar className="h-3 w-3 3xl:h-5 3xl:w-5 " />
                         </button>
                         {item.status === "Active" && (
                           <button

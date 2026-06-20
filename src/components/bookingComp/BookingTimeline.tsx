@@ -262,7 +262,7 @@ const BookingBar: React.FC<BookingBarProps> = ({
  title={`${booking.guest.name} - ${booking.tag.label}`}
  >
  {/* Avatar */}
- <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+ <div className="w-8 h-8 rounded-full bg-linear-to-br from-orange-400 to-orange-500 flex items-center justify-center shrink-0">
  <span className="text-white text-[14px] font-bold">
  {booking.guest.name.charAt(0)}
  </span>
@@ -378,7 +378,7 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({
  {columns.map((col, idx) => (
  <div
  key={idx}
- className={`flex-shrink-0 flex flex-col items-center justify-center py-2 border-r border-gray-100 ${
+ className={`shrink-0 flex flex-col items-center justify-center py-2 border-r border-gray-100 ${
  col.isToday
  ? "bg-red-50"
  : col.isWeekend
@@ -448,9 +448,9 @@ const RoomRow: React.FC<RoomRowProps> = ({
  return (
  <div className="flex border-b border-gray-100 hover:bg-gray-50/30 transition-colors">
  {/* Room Info - Sticky Left */}
- <div className="sticky left-0 z-30 bg-white w-32 lg:w-40 flex-shrink-0 border-r border-gray-100 p-3">
+ <div className="sticky left-0 z-30 bg-white w-32 lg:w-40 shrink-0 border-r border-gray-100 p-3">
  <div className="flex items-center gap-2">
- <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center">
+ <div className="w-10 h-10 rounded-lg bg-linear-to-br from-orange-100 to-orange-50 flex items-center justify-center">
  <FiDollarSign size={18} className="text-orange-500" />
  </div>
  <div>

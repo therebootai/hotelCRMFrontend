@@ -191,3 +191,13 @@ button {
     scrollbar-width: none;  
   }
 }
+
+::selection {
+  background: #FF5A3C;
+  color: #fff;
+}
+
+::-moz-selection {
+  background: #FF5A3C;
+  color: #fff;
+}

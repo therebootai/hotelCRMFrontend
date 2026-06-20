@@ -140,6 +140,7 @@ const CreateBooking = ({
   // State
   const [loading, setLoading] = useState(false);
   const [searchingRooms, setSearchingRooms] = useState(false);
+  const [showPaymentWarning, setShowPaymentWarning] = useState(false);
 
   // Booking Category & Type
   const [bookingCategory, setBookingCategory] = useState<
@@ -685,6 +686,15 @@ const CreateBooking = ({
   const { roomBreakdown, roomTaxBreakdown, taxAmount, grandTotal } =
     calculateTotals();
 
+  const handlePreSubmit = () => {
+    const paidAmount = paymentForm.advanceAmount || 0;
+    if (paidAmount > grandTotal) {
+      setShowPaymentWarning(true);
+    } else {
+      submitBooking();
+    }
+  };
+
   // Submit booking
   const submitBooking = async () => {
     if (!customerForm.name || !customerForm.phone) {
@@ -1100,7 +1110,7 @@ const CreateBooking = ({
  }
  }
  `}</style>
-      <div className="new-booking-modal-card bg-background w-full max-w-[95vw] xl:max-w-[1400px] 2xl:max-w-[1600px] h-[95vh] rounded-2xl shadow-modal overflow-hidden flex flex-col transition-all">
+      <div className="new-booking-modal-card bg-background w-full max-w-[95vw] xl:max-w-350 2xl:max-w-400 h-[95vh] rounded-2xl shadow-modal overflow-hidden flex flex-col transition-all">
         {/* Top Header */}
         <div className="px-6 py-4 border-b border-border bg-white flex justify-between items-center shrink-0">
           <div className="flex items-center gap-6">
@@ -1270,7 +1280,7 @@ const CreateBooking = ({
               {bookingType === "Corporate" && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 p-4 bg-white border border-border rounded-xl mt-3 animate-fade-in">
                   <div>
-                    <label className="text-[10px] font-bold text-text-secondary uppercase">
+                    <label className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase">
                       Company *
                     </label>
                     <input
@@ -1287,7 +1297,7 @@ const CreateBooking = ({
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-text-secondary uppercase">
+                    <label className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase">
                       GST
                     </label>
                     <input
@@ -1304,7 +1314,7 @@ const CreateBooking = ({
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-text-secondary uppercase">
+                    <label className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase">
                       Contact Person *
                     </label>
                     <input
@@ -1321,7 +1331,7 @@ const CreateBooking = ({
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-text-secondary uppercase">
+                    <label className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase">
                       Mobile *
                     </label>
                     <input
@@ -1338,7 +1348,7 @@ const CreateBooking = ({
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-text-secondary uppercase">
+                    <label className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase">
                       Rate/Night
                     </label>
                     <input
@@ -1445,7 +1455,7 @@ const CreateBooking = ({
                 /* Day Access Specific stay details */
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
-                    <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">
+                    <label className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase block mb-1">
                       Visit Date
                     </label>
                     <DatePicker
@@ -1458,7 +1468,7 @@ const CreateBooking = ({
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-text-secondary uppercase block mb-1">
+                    <label className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase block mb-1">
                       Select Package *
                     </label>
                     <select
@@ -1475,7 +1485,7 @@ const CreateBooking = ({
                     </select>
                   </div>
                   <div>
-                    <span className="block text-[10px] font-bold text-text-secondary uppercase mb-1">
+                    <span className="block text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase mb-1">
                       Adults
                     </span>
                     <Counter
@@ -1486,7 +1496,7 @@ const CreateBooking = ({
                     />
                   </div>
                   <div>
-                    <span className="block text-[10px] font-bold text-text-secondary uppercase mb-1">
+                    <span className="block text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase mb-1">
                       Children
                     </span>
                     <Counter
@@ -1588,7 +1598,7 @@ const CreateBooking = ({
                                 </div>
                               ) : availableCount > 0 ? (
                                 <span
-                                  className={`px-2 py-0.5 border rounded-md text-[10px] font-bold ${
+                                  className={`px-2 py-0.5 border rounded-md text-[10px] 3xl:text-[14px] font-bold ${
                                     availableCount - selection.count > 0
                                       ? "bg-green-50 text-green-600 border-green-100"
                                       : "bg-slate-50 text-slate-500 border-slate-200"
@@ -1606,7 +1616,7 @@ const CreateBooking = ({
                                     : "Rooms"}
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 bg-red-50 text-red-500 border border-red-100 rounded-md text-[10px] font-bold">
+                                <span className="px-2 py-0.5 bg-red-50 text-red-500 border border-red-100 rounded-md text-[10px] 3xl:text-[14px] font-bold">
                                   Sold Out
                                 </span>
                               )}
@@ -1615,7 +1625,7 @@ const CreateBooking = ({
                             {/* Rate per night */}
                             <td className="py-3 text-right font-bold text-text-primary">
                               ₹{rt.basePrice.toLocaleString()}
-                              <p className="text-[8px] text-text-secondary font-normal block">
+                              <p className="text-[8px] 3xl:text-[12px] text-text-secondary font-normal block">
                                 + ₹
                                 {Math.round(
                                   rt.basePrice *
@@ -2006,7 +2016,7 @@ const CreateBooking = ({
                             <span className="font-bold text-sm text-text-primary block">
                               {service.name}
                             </span>
-                            <span className="text-[10px] text-text-secondary">
+                            <span className="text-[10px] 3xl:text-[12px] text-text-secondary">
                               ₹{(service.price ?? 0).toLocaleString()} / unit
                             </span>
                           </div>
@@ -2340,7 +2350,7 @@ const CreateBooking = ({
             <div className="mt-6 pt-4 border-t border-border flex flex-col gap-2">
               <button
                 type="button"
-                onClick={submitBooking}
+                onClick={handlePreSubmit}
                 disabled={loading}
                 className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-100 disabled:opacity-50"
               >
@@ -2363,6 +2373,39 @@ const CreateBooking = ({
           </div>
         </div>
       </div>
+      {/* Payment Warning Popup */}
+      {showPaymentWarning && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="max-w-md w-full bg-white rounded-2xl p-6 border border-gray-100 shadow-xl text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-black text-gray-800 mb-2">Payment Exceeds Total Due</h2>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              The payment amount entered exceeds the total due value. Are you sure you want to proceed?
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setShowPaymentWarning(false)}
+                className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-all flex-1"
+              >
+                No, Edit Amount
+              </button>
+              <button
+                onClick={() => {
+                  setShowPaymentWarning(false);
+                  submitBooking();
+                }}
+                className="px-6 py-2.5 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all flex-1"
+              >
+                Yes, Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

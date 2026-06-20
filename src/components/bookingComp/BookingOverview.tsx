@@ -122,7 +122,7 @@ const BookingBar: React.FC<BookingBarProps> = ({
       title={`${booking.guest.name} - ${format(new Date(booking.checkIn), "dd MMM")} to ${format(new Date(booking.checkOut), "dd MMM")} (${totalNights} nights)`}
     >
       {/* Avatar */}
-      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-orange-400 to-orange-50 flex items-center justify-center flex-shrink-0 ">
+      <div className="w-5 h-5 rounded-full bg-linear-to-br from-orange-400 to-orange-50 flex items-center justify-center shrink-0 ">
         <span className="text-white text-[7px] font-bold ">
           {booking.guest.name?.charAt(0)?.toUpperCase() || "?"}
         </span>
@@ -181,10 +181,10 @@ const RoomRow: React.FC<RoomRowProps> = ({
   const columnsCount = columns.length;
 
   return (
-    <div className="flex border-b border-gray-100 hover:bg-gray-50/30 transition-colors h-[52px] ">
+    <div className="flex border-b border-gray-100 hover:bg-gray-50/30 transition-colors h-13 ">
       {/* Room Info - Sticky Left */}
-      <div className="sticky left-0 z-20 bg-white flex-shrink-0 border-r border-gray-100 p-2 flex items-center gap-2 shadow-[2px_0_4px_rgba(0,0,0,0.05)] w-[140px] min-w-[140px] ">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center flex-shrink-0 ">
+      <div className="sticky left-0 z-20 bg-white shrink-0 border-r border-gray-100 p-2 flex items-center gap-2 shadow-[2px_0_4px_rgba(0,0,0,0.05)] w-35 min-w-35 ">
+        <div className="w-7 h-7 rounded-lg bg-linear-to-br from-orange-100 to-orange-50 flex items-center justify-center shrink-0 ">
           <FiDollarSign size={12} className="text-orange-500 " />
         </div>
         <div className="min-w-0">
@@ -340,7 +340,7 @@ const BookingTimeline: React.FC<BookingTimelineProps> = ({
       {/* Date Header - inside scroll container for sync */}
       <div
         ref={headerScrollRef}
-        className="flex-shrink-0 overflow-x-auto overflow-y-hidden w-full scrollbar-hide"
+        className="shrink-0 overflow-x-auto overflow-y-hidden w-full scrollbar-hide"
       >
         {/* Header Row */}
         <div
@@ -348,17 +348,17 @@ const BookingTimeline: React.FC<BookingTimelineProps> = ({
           style={{ minWidth: `max(100%, ${minWidthPx}px)` }}
         >
           {/* Room column header */}
-          <div className="flex-shrink-0 sticky left-0 z-20 bg-white border-r border-gray-100 px-3 py-2 shadow-[2px_0_4px_rgba(0,0,0,0.05)] flex items-center w-[140px] min-w-[140px] ">
+          <div className="shrink-0 sticky left-0 z-20 bg-white border-r border-gray-100 px-3 py-2 shadow-[2px_0_4px_rgba(0,0,0,0.05)] flex items-center w-35 min-w-35 ">
             <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider ">
               Rooms
             </span>
           </div>
           {/* Date columns */}
-          <div className="flex flex-grow flex-1">
+          <div className="flex grow flex-1">
             {columns.map((col, idx) => (
               <div
                 key={idx}
-                className={`flex-grow flex-1 min-w-0 flex flex-col items-center justify-center py-2 border-r border-gray-100/60 ${
+                className={`grow flex-1 min-w-0 flex flex-col items-center justify-center py-2 border-r border-gray-100/60 ${
                   col.isToday
                     ? "bg-red-50"
                     : col.isWeekend
@@ -445,7 +445,7 @@ const BookingTimeline: React.FC<BookingTimelineProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="flex-shrink-0 px-4 py-2 bg-white border-t border-gray-100 w-full ">
+      <div className="shrink-0 py-2 bg-white border-t border-gray-100 w-full ">
         <div className="flex items-center gap-4 flex-wrap ">
           <span className="text-[10px] font-bold text-gray-400 uppercase ">
             Legend:
@@ -511,7 +511,7 @@ const BookingOverview: React.FC = () => {
   return (
     <div className="flex flex-col h-full w-full">
       {/* Stats & Controls Bar */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-3 ">
+      <div className="shrink-0 bg-white border-b border-gray-100 px-4 py-3 ">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 ">
           {/* Stats */}
           <div className="flex items-center gap-2 flex-wrap ">
@@ -562,7 +562,7 @@ const BookingOverview: React.FC = () => {
               </span>
               <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden ">
                 <div
-                  className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all"
+                  className="h-full bg-linear-to-r from-orange-400 to-orange-500 rounded-full transition-all"
                   style={{ width: `${occupancyPercent}%` }}
                 />
               </div>

@@ -129,7 +129,7 @@ const BillingPage = () => {
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="h-[2.8rem] px-6 flex justify-center items-center bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 transition-all rounded-xl text-white font-bold gap-2 shadow-lg shadow-orange-100 active:scale-95"
+          className="h-[2.8rem] px-6 flex justify-center items-center bg-linear-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 transition-all rounded-xl text-white font-bold gap-2 shadow-lg shadow-orange-100 active:scale-95"
         >
           <FiPlus size={16} /> Process Billing / Checkout
         </button>
@@ -167,7 +167,7 @@ const BillingPage = () => {
 
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] uppercase font-bold text-yellow-500 tracking-wider">
+            <span className="text-[10px] uppercase font-bold text-yellow-700 tracking-wider">
               Partial Dues
             </span>
             <h3 className="text-xl font-black text-yellow-600 mt-1">
@@ -199,7 +199,7 @@ const BillingPage = () => {
 
       {/* FILTER & SEARCH */}
       <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-wrap items-center justify-between gap-3">
-        <div className="relative flex-1 min-w-[280px]">
+        <div className="relative flex-1 min-w-70">
           <FiSearch
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             size={14}

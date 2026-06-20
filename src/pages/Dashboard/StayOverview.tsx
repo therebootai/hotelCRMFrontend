@@ -321,7 +321,7 @@ const StayOverview = () => {
  };
 
  return (
- <div className="page-container flex flex-col py-[32px] gap-[24px] w-full pb-10">
+ <div className="page-container flex flex-col py-8 gap-6 w-full pb-10">
  {/* Header */}
  <div className="flex items-center justify-between">
  <h2 className="text-[22px] font-bold text-text-primary">
@@ -378,7 +378,7 @@ const StayOverview = () => {
  </div>
 
  {/* Summary */}
- <div className="grid grid-cols-3 gap-[24px]">
+ <div className="grid grid-cols-3 gap-6">
  <SummaryCard
  title="TOTAL ROOMS"
  value={summary.total}
@@ -397,7 +397,7 @@ const StayOverview = () => {
  </div>
 
  {/* Timeline */}
- <div className="card !p-0 overflow-hidden">
+ <div className="card p-0! overflow-hidden">
  <div ref={gridRef}>
  {/* Header Row */}
  <div
@@ -439,7 +439,7 @@ const StayOverview = () => {
  {category.rooms.map((room: any) => (
  <div
  key={room.id}
- className="grid border-b min-h-[70px] relative"
+ className="grid border-b min-h-17.5 relative"
  style={{ gridTemplateColumns: gridTemplate }}
  >
  {/* Room Cell */}
@@ -462,7 +462,7 @@ const StayOverview = () => {
  {datesArray.map((_, i) => (
  <div
  key={i}
- className="border-r bg-white hover:bg-orange-50 min-h-[70px] relative z-30"
+ className="border-r bg-white hover:bg-orange-50 min-h-17.5 relative z-30"
  style={{ gridColumn: i + 2 }}
  onDragOver={(e) => {
  e.preventDefault();

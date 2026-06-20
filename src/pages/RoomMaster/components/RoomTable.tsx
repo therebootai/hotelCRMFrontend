@@ -235,18 +235,18 @@ export default function RoomTable({
                       )?.toLocaleString("en-IN") ?? "—"}
                     </td>
                     <td className={cellPadding}>
-                      <div className="flex gap-1.5 flex-wrap max-w-[200px]">
+                      <div className="flex gap-1.5 flex-wrap max-w-50">
                         {room.amenities?.slice(0, 3).map((amenity, idx) => (
                           <span
                             key={idx}
-                            className={`px-2 py-0.5 font-medium bg-background border border-border/50 text-text-secondary rounded ${isSelectionMode ? "text-[9px]" : "text-[10px]"}`}
+                            className={`px-2 py-0.5 font-medium bg-background border border-border/50 text-text-secondary rounded ${isSelectionMode ? "text-[9px] 3xl:text-[14px]" : "text-[10px] 3xl:text-[14px] "}`}
                           >
                             {amenity.name}
                           </span>
                         ))}
                         {(room.amenities?.length || 0) > 3 && (
                           <span
-                            className={`px-2 py-0.5 font-medium bg-background border border-border/50 text-text-secondary rounded ${isSelectionMode ? "text-[9px]" : "text-[10px]"}`}
+                            className={`px-2 py-0.5 font-medium bg-background border border-border/50 text-text-secondary rounded ${isSelectionMode ? "text-[9px] 3xl:text-[14px]" : "text-[10px] 3xl:text-[14px]"}`}
                           >
                             +{room.amenities.length - 3}
                           </span>

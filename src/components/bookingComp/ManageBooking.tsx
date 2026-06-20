@@ -8,7 +8,6 @@ import PaymentReceiptTemplate, {
 import {
   FiSearch,
   FiCalendar,
-  FiPhone,
   FiUser,
   FiLogIn,
   FiBriefcase,
@@ -40,6 +39,7 @@ const ManageBooking = ({
   onEdit,
   onCancel,
   onNewBooking,
+  onView,
 }: any) => {
   const [viewType, setViewType] = useState<"Individual" | "Corporate">(
     "Individual",
@@ -243,7 +243,7 @@ const ManageBooking = ({
             key={idx}
             className="bg-white border border-gray-100 shadow-sm rounded-xl p-3 flex items-center justify-between gap-3 hover:shadow-md transition-all "
           >
-            <span className="text-[10px] 3xl:text-[14px] font-bold text-gray-500 uppercase tracking-wider leading-tight ">
+            <span className="text-[10px] 3xl:text-[14px] 4xl:text-[16px] font-bold text-gray-500 uppercase tracking-wider leading-tight ">
               {kpi.label}
             </span>
             <span className={`text-xl font-black ${kpi.color}`}>
@@ -263,7 +263,7 @@ const ManageBooking = ({
                 setViewType("Individual");
                 setFilters({ ...filters, bookingType: "Individual" });
               }}
-              className={`flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-sm 3xl:text-[18px] font-bold transition-all ${viewType === "Individual" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
+              className={`flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-sm 3xl:text-[18px] font-semibold transition-all ${viewType === "Individual" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
             >
               <FiUser size={12} className=" " /> Individual
             </button>
@@ -272,7 +272,7 @@ const ManageBooking = ({
                 setViewType("Corporate");
                 setFilters({ ...filters, bookingType: "Corporate" });
               }}
-              className={`flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-sm 3xl:text-[18px] font-bold transition-all ${viewType === "Corporate" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`}
+              className={`flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-sm 3xl:text-[18px] font-semibold transition-all ${viewType === "Corporate" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`}
             >
               <FiBriefcase size={12} className=" " /> Corporate
             </button>
@@ -313,7 +313,7 @@ const ManageBooking = ({
 
             {/* Filter Dropdown */}
             {showFilters && (
-              <div className="absolute right-0 top-full mt-2 w-[300px] bg-white border border-gray-100 shadow-xl rounded-2xl z-50 p-4 flex flex-col gap-4 ">
+              <div className="absolute right-0 top-full mt-2 w-75 bg-white border border-gray-100 shadow-xl rounded-2xl z-50 p-4 flex flex-col gap-4 ">
                 <div className="flex flex-col gap-1.5 ">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ">
                     Date Range
@@ -374,7 +374,7 @@ const ManageBooking = ({
           {/* New Booking Button */}
           <button
             onClick={onNewBooking}
-            className="shrink-0 h-[2.5rem] 3xl:h-12 px-5 flex justify-center items-center bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 transition-all rounded-xl text-white font-bold gap-2 shadow-lg shadow-orange-100 active:scale-95 "
+            className="shrink-0 h-10 3xl:h-12 px-5 flex justify-center items-center bg-linear-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 transition-all rounded-xl text-white font-bold gap-2 shadow-lg shadow-orange-100 active:scale-95 "
           >
             <FiPlus className=" " />{" "}
             <span className="hidden md:inline">New Booking</span>
@@ -385,25 +385,27 @@ const ManageBooking = ({
       {/* --- DATA TABLE --- */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto w-full ">
         {/* Table Header */}
-        <div className="flex items-center bg-gray-50/70 border-b border-gray-100 px-4 py-3 text-[9px] font-black text-gray-600 uppercase tracking-widest 3xl:text-[14px] min-w-[1050px] lg:min-w-0 ">
-          <div className="flex-[0.8]">Booking ID</div>
-          <div className="flex-1 text-left leading-tight">
+        <div className="flex items-center bg-gray-50/70 border-b font-semibold border-gray-100 px-4 py-3 text-[10px] 3xl:text-[14px] 4xl:text-[16px] text-gray-600 min-w-262.5 lg:min-w-0">
+          <h1 className="flex-[0.8] 3xl:flex-1 font-bold">Booking ID</h1>
+          <h1 className="flex-1 text-left leading-tight">
             Guest Name <br /> <span className="opacity-70">Mobile No.</span>
-          </div>
-          <div className="flex-1 text-center leading-tight">
-            Check-In <br /> <span className="opacity-70">Check-Out</span>
-          </div>
-          <div className="flex-[0.5] text-center">Nights</div>
-          <div className="flex-1 text-center leading-tight">
+          </h1>
+          <h1 className="flex-1 text-center leading-tight">
+            Check-In
+          </h1>
+          <h1 className="flex-1 text-center leading-tight">
+            Check-Out
+          </h1>
+          <h1 className="flex-[0.5] 3xl:flex-1 text-center">Nights</h1>
+          <h1 className="flex-1 text-center leading-tight">
             Room Type <br /> <span className="opacity-70">Rooms</span>
-          </div>
-          <div className="flex-[0.6] text-center">Source</div>
-          <div className="flex-[0.8] text-center leading-tight">
+          </h1>
+          <h1 className="flex-[0.6] 3xl:flex-1 text-center">Source</h1>
+          <h1 className="flex-[0.8] 3xl:flex-1 text-center leading-tight">
             Adv. Paid <br /> <span className="opacity-70">Total Amount</span>
-          </div>
-          <div className="flex-[0.8] text-center">Status</div>
-          <div className="flex-[0.6] text-center">Held Till</div>
-          <div className="text-center flex-1 ">Actions</div>
+          </h1>
+          <h1 className="flex-[0.8] 3xl:flex-1 text-center">Status</h1>
+          <h1 className="text-center flex-1 ">Actions</h1>
         </div>
 
         {/* Table Body */}
@@ -432,12 +434,12 @@ const ManageBooking = ({
               return (
                 <div
                   key={item._id}
-                  className="flex items-center px-4 py-3 hover:bg-gray-50/50 transition-all min-w-[1050px] lg:min-w-0 "
+                  className="flex items-center px-4 py-3 hover:bg-gray-50/50 transition-all min-w-262.5 lg:min-w-0 "
                 >
                   {/* Booking ID */}
-                  <div className="flex-[0.8] flex items-center gap-2">
+                  <div className="flex-[0.8] 3xl:flex-1 flex items-center gap-2">
                     <span
-                      className={`font-bold text-sm ${viewType === "Corporate" ? "text-blue-600" : "text-orange-500"}`}
+                      className={`font-bold 4xl:text-[16px] text-sm ${viewType === "Corporate" ? "text-blue-600" : "text-orange-500"}`}
                     >
                       {item.bookingId}
                     </span>
@@ -455,11 +457,10 @@ const ManageBooking = ({
 
                   {/* Guest Name / Mobile No. */}
                   <div className="flex-1">
-                    <span className="text-base font-bold text-gray-800 ">
+                    <span className="text-sm 4xl:text-[16px] font-semibold text-gray-800 ">
                       {guestName}
                     </span>
-                    <div className="flex items-center gap-1 text-[10px] text-gray-500 ">
-                      <FiPhone size={8} className=" " />
+                    <div className="flex items-center gap-1 text-[10px] 3xl:text-[12px] 4xl:text-[14px] text-gray-500 ">
                       {guestPhone}
                       {guestPhone && (
                         <button
@@ -470,7 +471,7 @@ const ManageBooking = ({
                           className="text-gray-400 hover:text-gray-600 transition-colors ml-1 p-0.5 rounded hover:bg-gray-100"
                           title="Copy Mobile Number"
                         >
-                          <FiCopy size={10} />
+                          <FiCopy className="w-3 h-3 3xl:w-3.5 3xl:h-3.5" />
                         </button>
                       )}
                     </div>
@@ -483,8 +484,8 @@ const ManageBooking = ({
                   </div>
 
                   {/* Check-In / Check-Out */}
-                  <div className="flex-1 text-center flex flex-col items-center">
-                    <p className="text-sm font-bold text-gray-700 ">
+                  <div className="flex-1 text-left flex flex-col items-center">
+                    <p className="text-sm 3xl:text-[14px] 4xl:text-[16px] font-bold text-gray-700 ">
                       {item.overallCheckInDate || item.rooms?.[0]?.checkInDate
                         ? format(
                             new Date(
@@ -495,7 +496,10 @@ const ManageBooking = ({
                           )
                         : "TBD"}
                     </p>
-                    <p className="text-[10px] font-bold text-gray-400 ">
+                  </div>
+
+                  <div className="flex-1 text-center flex flex-col items-center">
+                    <p className="text-sm 3xl:text-[14px] 4xl:text-[16px] font-bold text-gray-700 ">
                       {item.overallCheckOutDate || item.rooms?.[0]?.checkOutDate
                         ? format(
                             new Date(
@@ -509,7 +513,7 @@ const ManageBooking = ({
                   </div>
 
                   {/* Nights */}
-                  <div className="flex-[0.5] text-center">
+                  <div className="flex-[0.5] 3xl:flex-1 text-center">
                     <p className="text-base font-bold text-gray-700 ">
                       {item.totalNights || 1}
                     </p>
@@ -517,26 +521,26 @@ const ManageBooking = ({
 
                   {/* Room Type / Rooms */}
                   <div className="flex-1 text-center flex flex-col items-center">
-                    <span className="text-[11px] font-bold text-gray-800 truncate w-full px-2">
+                    <span className="text-[11px] 3xl:text-[14px] 4xl:text-[16px] font-bold text-gray-800 truncate w-full px-2">
                       {item.rooms?.[0]?.roomType?.name ||
                         item.bookingCategory ||
                         "Room"}
                     </span>
-                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-bold mt-0.5 ">
+                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] 3xl:text-[12px] 4xl:text-[14px] font-bold mt-0.5 ">
                       {item.totalRooms || item.rooms?.length || 0} Room(s)
                     </span>
                   </div>
 
                   {/* Source */}
-                  <div className="flex-[0.6] text-center">
-                    <span className="px-2 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold ">
+                  <div className="flex-[0.6] 3xl:flex-1 text-center">
+                    <span className="px-2 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] 3xl:text-[14px] 4xl:text-[16px] font-bold ">
                       {item.source || "Walk-In"}
                     </span>
                   </div>
 
                   {/* Advance Paid / Total Amount */}
-                  <div className="flex-[0.8] text-center flex flex-col items-center">
-                    <span className="text-sm font-bold text-green-600 ">
+                  <div className="flex-[0.8] 3xl:flex-1 text-center flex flex-col items-center">
+                    <span className="text-sm 4xl:text-[16px] font-bold text-green-600 ">
                       ₹
                       {(
                         item.advanceAmount ||
@@ -544,26 +548,22 @@ const ManageBooking = ({
                         0
                       ).toLocaleString()}
                     </span>
-                    <span className="text-[9px] font-bold text-gray-400 border-t border-gray-100 mt-0.5 pt-0.5 w-16 text-center">
+                    <span className="text-[9px] 3xl:text-[11px] 4xl:text-[14px] font-bold text-gray-400 border-t border-gray-100 mt-0.5 pt-0.5 w-16 text-center">
                       ₹{grandTotal.toLocaleString()}
                     </span>
                   </div>
 
                   {/* Status */}
-                  <div className="flex-[0.8] text-center">
+                  <div className="flex-[0.8] 3xl:flex-1 text-center">
                     <span
-                      className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase ${statusBadge.bg} ${statusBadge.text}`}
+                      className={`inline-block px-3 py-1 rounded-full text-[10px] 3xl:text-[12px] 4xl:text-[14px] font-black uppercase ${statusBadge.bg} ${statusBadge.text}`}
                     >
                       {item.status}
                     </span>
                   </div>
 
                   {/* Held Till */}
-                  <div className="flex-[0.6] text-center">
-                    <span className="text-base font-bold text-gray-400 ">
-                      —
-                    </span>
-                  </div>
+                  {/*removed held till bcz not show any data */}
 
                   {/* Actions */}
                   <div className="flex-1 flex items-center justify-center gap-1.5 ">
@@ -577,14 +577,15 @@ const ManageBooking = ({
                           : "bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
                       }`}
                     >
-                      <FiLogIn size={12} className=" " />
+                      <FiLogIn className="w-3 h-3 3xl:w-5 3xl:h-5" />
                     </button>
 
                     <button
                       title="View"
+                      onClick={() => onView && onView(item)}
                       className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-all "
                     >
-                      <FiEye size={12} className=" " />
+                      <FiEye className="w-3 h-3 3xl:w-5 3xl:h-5 " />
                     </button>
 
                     <div className="relative">
@@ -598,7 +599,7 @@ const ManageBooking = ({
                         }}
                         className="p-1.5 bg-gray-50 text-gray-600 hover:bg-gray-200 rounded-lg transition-all "
                       >
-                        <FiMoreVertical size={12} className=" " />
+                        <FiMoreVertical className="w-3 h-3 3xl:w-5 3xl:h-5 " />
                       </button>
 
                       {activeDropdown === item._id && (

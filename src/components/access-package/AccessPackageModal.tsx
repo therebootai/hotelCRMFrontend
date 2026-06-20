@@ -270,11 +270,11 @@ export default function AccessPackageModal({
  }
 
  if (initialData?._id) {
- await api.put(`/access-packages/${initialData._id}`, formData);
- toast.success("Access Package updated successfully!");
+ await api.put(`/day-packages/${initialData._id}`, formData);
+ toast.success("Day Package updated successfully!");
  } else {
- await api.post("/access-packages", formData);
- toast.success("Access Package created successfully!");
+ await api.post("/day-packages", formData);
+ toast.success("Day Package created successfully!");
  }
 
  onSuccess();
@@ -568,7 +568,7 @@ export default function AccessPackageModal({
  type="button"
  onClick={handleAddInclusion}
  disabled={isLoading}
- className="btn-secondary px-4 h-[42px] flex items-center justify-center"
+ className="btn-secondary px-4 h-10.5 flex items-center justify-center"
  >
  <FiPlus size={18} />
  </button>

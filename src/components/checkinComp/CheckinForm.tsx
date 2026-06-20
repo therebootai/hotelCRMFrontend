@@ -18,6 +18,7 @@ import {
   FiPlus,
   FiChevronDown,
   FiChevronUp,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -200,6 +201,13 @@ const CheckInForm = ({
   // GRC Modal State
   const [showGRCModal, setShowGRCModal] = useState(false);
   const [grcData, setGrcData] = useState<GRCData | null>(null);
+
+  // Soft Warning Modal State for Room Category Mismatch
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [showPaymentWarningModal, setShowPaymentWarningModal] = useState(false);
+  const [warningMismatches, setWarningMismatches] = useState<
+    Array<{ roomIndex: number; bookedCategory: string; checkinCategory: string }>
+  >([]);
 
   // Signed GRC State
   const [signedGRCFile, setSignedGRCFile] = useState<File | null>(null);
@@ -1420,7 +1428,16 @@ const CheckInForm = ({
   const handleNextStep = () => {
     if (!canProceed(currentStep)) return;
 
+    // Check for category mismatches when transitioning from Step 1 to Step 2
     if (currentStep === 1) {
+      const mismatches = checkCategoryMismatches();
+      if (mismatches.length > 0) {
+        setWarningMismatches(mismatches);
+        setShowWarningModal(true);
+        setPendingStepTransition(true);
+        return; // Stop here, wait for user confirmation
+      }
+
       // Distribute guests to rooms: ensuring exactly 1 Primary Guest per assigned room.
       let updatedGuests = [...guests];
       const rooms = selectedRooms.filter((r) => !!r.roomId);
@@ -1489,8 +1506,82 @@ const CheckInForm = ({
     setCurrentStep(currentStep + 1);
   };
 
-  // Final submit - SINGLE API CALL with FormData
+  // State for pending check-in (when warning is shown but not yet confirmed)
+  const [pendingCheckInData, setPendingCheckInData] = useState<any>(null);
+  const [pendingStepTransition, setPendingStepTransition] = useState<boolean>(false);
+
+  // Function to check for room category mismatches
+  const checkCategoryMismatches = (): Array<{ roomIndex: number; bookedCategory: string; checkinCategory: string }> => {
+    const mismatches: Array<{ roomIndex: number; bookedCategory: string; checkinCategory: string }> = [];
+    const bookingRooms = bookingData?.rooms || [];
+
+    bookingRooms.forEach((bookedRoom: any, index: number) => {
+      const selectedRoom = selectedRooms[index];
+      if (!selectedRoom || !selectedRoom.roomId) return;
+
+      // Get the booked room type
+      const bookedRoomTypeObj = bookedRoom.roomType || (typeof bookedRoom.roomId === "object" ? bookedRoom.roomId?.roomType : null);
+      const bookedCategory = bookedRoomTypeObj?.name || bookedRoom.roomTypeName || "Standard";
+
+      // Get the check-in room type
+      const checkinCategory = selectedRoom.roomTypeName || selectedRoom.roomType?.name || "Standard";
+
+      // Compare (case-insensitive)
+      if (bookedCategory.toLowerCase() !== checkinCategory.toLowerCase()) {
+        mismatches.push({
+          roomIndex: index + 1,
+          bookedCategory: bookedCategory,
+          checkinCategory: checkinCategory,
+        });
+      }
+    });
+
+    return mismatches;
+  };
+
+  // Handler to proceed with check-in after warning confirmation
+  const handleProceedAfterWarning = async () => {
+    setShowWarningModal(false);
+    setWarningMismatches([]);
+
+    // If pending step transition, move to next step
+    if (pendingStepTransition) {
+      setPendingStepTransition(false);
+      setCurrentStep(currentStep + 1);
+      return;
+    }
+
+    // Otherwise proceed with final check-in
+    if (!pendingCheckInData) return;
+    setPendingCheckInData(null);
+    await executeFinalCheckIn(pendingCheckInData);
+  };
+
+  // Final submit - Proceed with check-in
   const handleFinalCheckIn = async () => {
+    if (loading) return;
+    
+    // Check payment amount against due amount
+    if (paymentData.checkInAdvance && paymentData.checkInAdvance > dueAmount) {
+      setShowPaymentWarningModal(true);
+      return;
+    }
+
+    proceedToFinalCheckIn();
+  };
+
+  const proceedToFinalCheckIn = async () => {
+    try {
+      setLoading(true);
+      await executeFinalCheckIn();
+    } catch (err: any) {
+      console.error("Check-in Error:", err);
+      setLoading(false);
+    }
+  };
+
+  // Function to execute the actual check-in API call
+  const executeFinalCheckIn = async (payload?: any) => {
     if (loading) return;
 
     try {
@@ -1556,7 +1647,7 @@ const CheckInForm = ({
       }
 
       // Build final payload (without uploaded URLs - backend will inject them)
-      const payload = {
+      const payloadData = {
         bookingId: editMode
           ? existingCheckIn?.bookingId?._id || existingCheckIn?.bookingId
           : bookingData?._id,
@@ -1636,7 +1727,7 @@ const CheckInForm = ({
       const multipartFormData = new FormData();
 
       // Append JSON payload
-      multipartFormData.append("payload", JSON.stringify(payload));
+      multipartFormData.append("payload", JSON.stringify(payloadData));
 
       // Append dynamic docs
       const validDynamicDocs = dynamicDocs.filter(
@@ -1742,8 +1833,8 @@ const CheckInForm = ({
       <div
         className={
           inline
-            ? "w-full min-w-full h-full min-h-[400px] flex items-center justify-center checkin-modal-container relative p-4"
-            : "fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto checkin-modal-container"
+            ? "w-full min-w-full h-full min-h-100 flex items-center justify-center checkin-modal-container relative p-4"
+            : "fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto checkin-modal-container"
         }
       >
         <div
@@ -1794,7 +1885,7 @@ const CheckInForm = ({
             </button>
             <button
               onClick={() => setShowEarlyCheckInWarning(false)}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 text-white font-bold hover:from-orange-600 hover:to-orange-500 shadow-lg shadow-orange-100 transition-all flex-1"
+              className="px-6 py-2.5 rounded-xl bg-linear-to-r from-orange-500 to-orange-400 text-white font-bold hover:from-orange-600 hover:to-orange-500 shadow-lg shadow-orange-100 transition-all flex-1"
             >
               Yes, Proceed
             </button>
@@ -1809,7 +1900,7 @@ const CheckInForm = ({
       className={
         inline
           ? "w-full flex flex-col checkin-modal-container relative"
-          : "fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto checkin-modal-container"
+          : "fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto checkin-modal-container"
       }
     >
       <style>{`
@@ -1965,7 +2056,7 @@ const CheckInForm = ({
  }
  `}</style>
       <div
-        className={`bg-[var(--color-background)] w-full flex flex-col ${inline ? "h-full bg-transparent" : "max-w-6xl rounded-2xl border border-border max-h-[95vh]"}`}
+        className={`bg-(--color-background) w-full flex flex-col ${inline ? "h-full bg-transparent" : "max-w-6xl rounded-2xl border border-border max-h-[95vh]"}`}
       >
         {/* Header Stepper */}
         <div
@@ -1983,11 +2074,11 @@ const CheckInForm = ({
 
           <div className="w-full relative">
             {/* Background Line */}
-            <div className="absolute top-[11px] sm:top-[15px] left-[15%] right-[15%] h-[3px] bg-gray-100 z-0 rounded-full"></div>
+            <div className="absolute top-2.75 sm:top-3.75 left-[15%] right-[15%] h-0.75 bg-gray-100 z-0 rounded-full"></div>
 
             {/* Active Line */}
             <div
-              className="absolute top-[11px] sm:top-[15px] left-[15%] h-[3px] bg-[#FE5F30] z-0 transition-all duration-500 ease-in-out rounded-full shadow-[0_0_8px_rgba(254,95,48,0.4)]"
+              className="absolute top-2.75 sm:top-3.75 left-[15%] h-0.75 bg-[#FE5F30] z-0 transition-all duration-500 ease-in-out rounded-full shadow-[0_0_8px_rgba(254,95,48,0.4)]"
               style={{ width: `${(Math.max(0, currentStep - 1) / 2) * 70}%` }}
             ></div>
 
@@ -2050,7 +2141,7 @@ const CheckInForm = ({
             <div className="text-center">
               <FiLoader
                 size={40}
-                className="animate-spin text-[var(--color-primary)] mx-auto mb-3"
+                className="animate-spin text-(--color-primary) mx-auto mb-3"
               />
               <p className="text-base font-bold text-gray-700">
                 {loadingStep || "Processing..."}
@@ -2061,149 +2152,7 @@ const CheckInForm = ({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 bg-gray-50/50 space-y-3">
-          {/* Horizontal Summary Bar */}
-          {/* <div className="bg-white rounded-xl border border-border p-3 flex flex-wrap items-center justify-between gap-4 text-sm">
- {isDayAccess ? (
- // Day Access Horizontal Bar
- <>
- <div className="flex items-center gap-2">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiUser size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Check-in Type</p>
- <p className="font-bold text-gray-800">Day Access</p>
- </div>
- </div>
- <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiBriefcase size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Party Type</p>
- <p className="font-bold text-gray-800">
- {partyType === "Corporate" ? "Corporate / Company" : "Individual / Family"}
- </p>
- </div>
- </div>
- <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiCalendar size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Visit Date</p>
- <p className="font-bold text-gray-800">
- {format(stayFormData.checkInTime, "dd MMM yyyy")}
- </p>
- </div>
- </div>
- <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiClock size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Entry Time</p>
- <p className="font-bold text-gray-800">
- {format(stayFormData.checkInTime, "hh:mm a")}
- </p>
- </div>
- </div>
- <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiClock size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Exit Time</p>
- <p className="font-bold text-gray-800">
- {format(stayFormData.expectedCheckOutTime, "hh:mm a")}
- </p>
- </div>
- </div>
- <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiUserCheck size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Total Guests</p>
- <p className="font-bold text-gray-800">
- {guests.length} ({guests.filter(g => Number(g.age) > 12 || !g.age).length} Adults, {guests.filter(g => Number(g.age) <= 12 && g.age).length} Children)
- </p>
- </div>
- </div>
- </>
- ) : (
- // Room Stay Horizontal Bar
- <>
- <div className="flex items-center gap-2">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiUser size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Check-in Type</p>
- <p className="font-bold text-gray-800">Room Stay Booking</p>
- </div>
- </div>
- <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiBriefcase size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Party Type</p>
- <p className="font-bold text-gray-800">
- {partyType === "Corporate" ? "Corporate / Company" : "Individual / Family"}
- </p>
- </div>
- </div>
- <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiHome size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Rooms Selected</p>
- <p className="font-bold text-gray-800">
- {selectedRooms.length > 0
- ? `${selectedRooms.map(r => r.roomNumber || "TBD").join(", ")} (${selectedRooms.length} Room${selectedRooms.length > 1 ? "s" : ""})`
- : "None Selected"}
- </p>
- </div>
- </div>
- <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiUserCheck size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Guests</p>
- <p className="font-bold text-gray-800">
- {guests.length} ({guests.filter(g => Number(g.age) > 12 || !g.age).length} Adults, {guests.filter(g => Number(g.age) <= 12 && g.age).length} Children)
- </p>
- </div>
- </div>
- <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiCalendar size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Stay Duration</p>
- <p className="font-bold text-gray-800">
- {format(stayFormData.checkInTime, "dd MMM")} - {format(stayFormData.expectedCheckOutTime, "dd MMM yyyy")} ({nights} Nights)
- </p>
- </div>
- </div>
- <div className="flex items-center gap-2 border-l border-gray-100 pl-4">
- <div className="p-1.5 bg-orange-50 text-orange-500 rounded-lg">
- <FiUserCheck size={14} />
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase font-black">Total Capacity</p>
- <p className="font-bold text-gray-800">
- {selectedRooms.length * 2 + selectedRooms.filter(r => r.hasExtraBed).length} Guests
- </p>
- </div>
- </div>
- </>
- )}
- </div> */}
-
+          
           {/* STEP 1: Setup */}
           {currentStep === 1 && (
             <div className="space-y-3 animate-fade-in">
@@ -2467,7 +2416,7 @@ const CheckInForm = ({
 
                         {/* Package Details Box */}
                         <div className="flex gap-4 p-3 bg-gray-50 border border-border rounded-xl">
-                          <div className="w-28 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-400">
+                          <div className="w-28 h-20 bg-gray-200 rounded-lg overflow-hidden shrink-0 flex items-center justify-center text-gray-400">
                             <FiImage size={24} />
                           </div>
                           <div>
@@ -2947,7 +2896,7 @@ const CheckInForm = ({
                           <span className="text-[9px] 3xl:text-[12px] font-bold text-gray-400 uppercase mb-1">
                             Extra Bed Configurations
                           </span>
-                          <div className="w-full flex-1 min-h-[58px] bg-gray-50 border border-border rounded-xl p-1.5 shadow-inner">
+                          <div className="w-full flex-1 min-h-14.5 bg-gray-50 border border-border rounded-xl p-1.5 shadow-inner">
                             {selectedRooms.filter((r: any) => r.extraBedAllowed)
                               .length === 0 ? (
                               <div className="text-[10px] 3xl:text-[12px] text-gray-400 text-center py-3 font-bold">
@@ -2960,7 +2909,7 @@ const CheckInForm = ({
                                   .map((r: any) => (
                                     <label
                                       key={r.roomId || r.slotIndex}
-                                      className={`flex items-center justify-between gap-2 text-[10px] font-bold ${!r.roomId ? "text-gray-400 cursor-not-allowed" : "text-gray-700 cursor-pointer"} py-1 border-b border-gray-100 last:border-0`}
+                                      className={`flex items-center justify-between gap-2 text-[10px] 3xl:text-[14px] font-bold ${!r.roomId ? "text-gray-400 cursor-not-allowed" : "text-gray-700 cursor-pointer"} py-1 border-b border-gray-100 last:border-0`}
                                     >
                                       <div className="flex items-center gap-2 truncate">
                                         <input
@@ -2970,7 +2919,7 @@ const CheckInForm = ({
                                           onChange={() =>
                                             toggleExtraBed(r.roomId)
                                           }
-                                          className="accent-orange-500 w-3.5 h-3.5 flex-shrink-0 cursor-pointer"
+                                          className="accent-orange-500 w-3.5 h-3.5 shrink-0 cursor-pointer"
                                         />
                                         <span className="truncate">
                                           {r.roomId
@@ -2979,7 +2928,7 @@ const CheckInForm = ({
                                         </span>
                                       </div>
                                       {r.roomId && r.extraBedCharge > 0 && (
-                                        <span className="text-gray-400 flex-shrink-0 font-bold">
+                                        <span className="text-gray-400 3xl:text-[14px] shrink-0 font-bold">
                                           ₹{r.extraBedCharge}
                                         </span>
                                       )}
@@ -3526,7 +3475,7 @@ const CheckInForm = ({
                                         />
                                       </td>
                                       <td className="p-2 font-bold text-gray-800">{room.roomNumber}</td>
-                                      <td className="p-2 text-gray-600 truncate max-w-[80px]">{roomTypeName}</td>
+                                      <td className="p-2 text-gray-600 truncate max-w-20">{roomTypeName}</td>
                                       <td className="p-2 font-bold text-gray-700">₹{(Number(room.basePrice) || 0).toLocaleString()}</td>
                                       <td className="p-2">
                                         {isOccupied ? (
@@ -3637,7 +3586,7 @@ const CheckInForm = ({
                         <p className="font-bold text-gray-800 text-base">
                           {selectedRooms.length}
                         </p>
-                        <p className="text-[8px] text-gray-400">
+                        <p className="text-[8px] 3xl:text-[12px] text-gray-400">
                           {selectedRooms.map((r) => r.roomNumber).join(", ") ||
                             "None"}
                         </p>
@@ -3863,7 +3812,7 @@ const CheckInForm = ({
                                 </label>
                                 {primaryGuest.pendingDocFile ? (
                                   <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg text-[10px] font-bold">
-                                    <span className="truncate text-green-600 max-w-[100px]">
+                                    <span className="truncate text-green-600 max-w-25">
                                       {primaryGuest.pendingDocFile?.name}
                                     </span>
                                     <button
@@ -3885,7 +3834,7 @@ const CheckInForm = ({
                                         e.target.files[0],
                                       )
                                     }
-                                    className="w-full text-sm text-gray-400 font-bold"
+                                    className="w-full text-sm border border-border bg-gray-50 text-gray-400 font-bold"
                                   />
                                 )}
                               </div>
@@ -3990,7 +3939,7 @@ const CheckInForm = ({
                                             {g.idType !== "Not Required" &&
                                               (g.pendingDocFile ? (
                                                 <div className="flex items-center justify-between p-1 bg-green-50 border border-green-200 rounded text-[8px] font-bold mt-1">
-                                                  <span className="truncate text-green-600 max-w-[80px]">
+                                                  <span className="truncate text-green-600 max-w-20">
                                                     {g.pendingDocFile.name}
                                                   </span>
                                                   <button
@@ -4083,12 +4032,12 @@ const CheckInForm = ({
                                 <span className="w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-[10px]">
                                   {roomIdx + 1}
                                 </span>
-                                <h3 className="text-[11px] font-black text-gray-700 uppercase tracking-wider">
+                                <h3 className="text-[11px] 3xl:text-[14px] font-black text-gray-700 uppercase tracking-wider">
                                   Room {room.roomNumber} - {room.roomTypeName}
                                 </h3>
                               </div>
                               <div className="flex items-center gap-3">
-                                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded font-black text-[8px] uppercase">
+                                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded font-black text-[8px] 3xl:text-[14px] uppercase">
                                   {roomGuests.length} Guest(s)
                                 </span>
                                 {expandedRooms[room.roomId] !== false ? (
@@ -4111,17 +4060,17 @@ const CheckInForm = ({
                                 {primaryGuest && (
                                   <div className="mb-4">
                                     <div className="flex items-center gap-2 mb-3">
-                                      <span className="px-2 py-0.5 bg-orange-100 text-orange-600 border border-orange-200 rounded font-black text-[8px] uppercase">
+                                      <span className="px-2 3xl:text-[14px] py-0.5 bg-orange-100 text-orange-600 border border-orange-200 rounded font-black text-[8px] uppercase">
                                         Primary Guest
                                       </span>
-                                      <span className="text-[10px] font-black text-gray-700">
+                                      <span className="text-[10px] 3xl:text-[14px] font-black text-gray-700">
                                         {primaryGuest.name || "Pending Name"}
                                       </span>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3">
                                       <div className="md:col-span-2">
-                                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                        <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                                           Full Name *
                                         </label>
                                         <input
@@ -4139,7 +4088,7 @@ const CheckInForm = ({
                                         />
                                       </div>
                                       <div>
-                                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                        <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                                           Mobile Number *
                                         </label>
                                         <input
@@ -4157,7 +4106,7 @@ const CheckInForm = ({
                                         />
                                       </div>
                                       <div>
-                                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                        <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                                           Age *
                                         </label>
                                         <input
@@ -4177,7 +4126,7 @@ const CheckInForm = ({
                                         />
                                       </div>
                                       <div>
-                                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                        <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                                           Gender *
                                         </label>
                                         <select
@@ -4201,7 +4150,7 @@ const CheckInForm = ({
 
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
                                       <div>
-                                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                        <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                                           Email (Optional)
                                         </label>
                                         <input
@@ -4219,7 +4168,7 @@ const CheckInForm = ({
                                         />
                                       </div>
                                       <div className="md:col-span-2">
-                                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                        <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                                           Address (Optional)
                                         </label>
                                         <input
@@ -4238,7 +4187,7 @@ const CheckInForm = ({
                                       </div>
                                       {roomIdx === 0 && (
                                         <div>
-                                          <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                          <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                                             Purpose of Visit
                                           </label>
                                           <select
@@ -4275,7 +4224,7 @@ const CheckInForm = ({
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-gray-100">
                                       <div>
-                                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                        <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                                           ID Proof Type *
                                         </label>
                                         <select
@@ -4296,7 +4245,7 @@ const CheckInForm = ({
                                         </select>
                                       </div>
                                       <div>
-                                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                        <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                                           ID Number *
                                         </label>
                                         <input
@@ -4314,12 +4263,12 @@ const CheckInForm = ({
                                         />
                                       </div>
                                       <div>
-                                        <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                        <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                                           Upload ID Proof *
                                         </label>
                                         {primaryGuest.pendingDocFile ? (
                                           <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg text-[10px] font-bold">
-                                            <span className="truncate text-green-600 max-w-[100px]">
+                                            <span className="truncate text-green-600 max-w-25">
                                               {
                                                 primaryGuest.pendingDocFile
                                                   ?.name
@@ -4346,7 +4295,7 @@ const CheckInForm = ({
                                                 e.target.files[0],
                                               )
                                             }
-                                            className="w-full text-sm text-gray-400 font-bold"
+                                            className="w-full text-sm border border-border rounded-lg bg-gray-50 text-gray-400 font-bold"
                                           />
                                         )}
                                       </div>
@@ -4357,11 +4306,11 @@ const CheckInForm = ({
                                 {/* Co-guests Table */}
                                 {coGuests.length > 0 && (
                                   <div className="mt-4 border-t border-gray-100 pt-3">
-                                    <h4 className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                    <h4 className="text-[9px] 3xl:text-[14px] font-bold text-gray-500 uppercase tracking-wider mb-2">
                                       Co-Guests in Room
                                     </h4>
-                                    <div className="overflow-x-auto border border-border rounded-xl">
-                                      <table className="w-full text-left border-collapse text-[10px]">
+                                    <div className="min-w-150 border border-border rounded-xl">
+                                      <table className="w-full text-center border-collapse text-[10px] 3xl:text-[14px]">
                                         <thead>
                                           <tr className="bg-gray-50 border-b border-border">
                                             <th className="p-2 font-black text-gray-400 uppercase tracking-wider">
@@ -4381,7 +4330,7 @@ const CheckInForm = ({
                                             </th>
                                           </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody className="text-center">
                                           {coGuests.map((g) => {
                                             return (
                                               <tr
@@ -4406,7 +4355,7 @@ const CheckInForm = ({
                                                 <td className="p-2">
                                                   <input
                                                     type="text"
-                                                    value={g.age}
+                                                    
                                                     onChange={(e) => {
                                                       const val =
                                                         e.target.value;
@@ -4420,7 +4369,7 @@ const CheckInForm = ({
                                                           val,
                                                         );
                                                     }}
-                                                    className="w-12 bg-transparent border-b border-transparent focus:border-indigo-500 focus:outline-none font-bold text-gray-700"
+                                                    className="w-20 bg-transparent border-b border-transparent focus:border-indigo-500 focus:outline-none font-bold text-gray-700"
                                                     placeholder="Age"
                                                   />
                                                 </td>
@@ -4483,7 +4432,7 @@ const CheckInForm = ({
                                                       "Not Required" &&
                                                       (g.pendingDocFile ? (
                                                         <div className="flex items-center justify-between p-1 bg-green-50 border border-green-200 rounded text-[8px] font-bold mt-1">
-                                                          <span className="truncate text-green-600 max-w-[80px]">
+                                                          <span className="truncate text-green-600 max-w-20">
                                                             {
                                                               g.pendingDocFile
                                                                 .name
@@ -4556,12 +4505,12 @@ const CheckInForm = ({
                   <div className="bg-white rounded-xl border border-border p-4 mb-3">
                     {/* Dynamic Documents Section */}
                     <div className="">
-                      <h4 className="text-[10px] font-black text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <h4 className="text-[10px] 3xl:text-[14px] font-black text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
                         {partyType === "Corporate"
                           ? "Company Documents"
                           : "Other Documents"}{" "}
                         <span
-                          className={`text-[8px] font-bold px-2 py-0.5 rounded ${partyType === "Corporate" ? "text-red-500 bg-red-50" : "text-gray-400 bg-gray-100"}`}
+                          className={`text-[8px] 3xl:text-[14px] font-bold px-2 py-0.5 rounded ${partyType === "Corporate" ? "text-red-500 bg-red-50" : "text-gray-400 bg-gray-100"}`}
                         >
                           {partyType === "Corporate"
                             ? "(Required for Corporate)"
@@ -4597,7 +4546,7 @@ const CheckInForm = ({
                                     setDynamicDocs(newDocs);
                                   }
                                 }}
-                                className="w-full text-xs text-gray-500 font-bold"
+                                className="w-full text-xs border border-border bg-white rounded-lg text-gray-500 font-bold"
                               />
                             </div>
                             <button
@@ -4635,7 +4584,7 @@ const CheckInForm = ({
                         <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">
                           D
                         </span>
-                        <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
+                        <h3 className="text-[10px] 3xl:text-[14px] font-black text-gray-700 uppercase tracking-wider">
                           Vehicle Details (Optional)
                         </h3>
                       </div>
@@ -4662,7 +4611,7 @@ const CheckInForm = ({
                             </button>
                           )}
                           <div>
-                            <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                            <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                               Vehicle Number
                             </label>
                             <input
@@ -4680,7 +4629,7 @@ const CheckInForm = ({
                             />
                           </div>
                           <div>
-                            <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                            <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                               Vehicle Type
                             </label>
                             <select
@@ -4702,7 +4651,7 @@ const CheckInForm = ({
                             </select>
                           </div>
                           <div>
-                            <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                            <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                               Driver Name
                             </label>
                             <input
@@ -4720,7 +4669,7 @@ const CheckInForm = ({
                             />
                           </div>
                           <div>
-                            <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                            <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                               Driver Contact
                             </label>
                             <input
@@ -4751,14 +4700,14 @@ const CheckInForm = ({
                       <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">
                         D
                       </span>
-                      <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
+                      <h3 className="text-[10px] 3xl:text-[14px] font-black text-gray-700 uppercase tracking-wider">
                         Room & Stay Summary
                       </h3>
                     </div>
                     <div className="space-y-2 text-sm font-bold text-gray-600">
                       <div className="flex justify-between">
                         <span>Rooms Selected</span>
-                        <span className="text-gray-800 3xl:text-[12px]">
+                        <span className="text-gray-800 3xl:text-[18px]">
                           {selectedRooms.map((r) => r.roomNumber).join(", ") ||
                             "None"}
                         </span>
@@ -4787,7 +4736,7 @@ const CheckInForm = ({
                       </div>
                       <div className="flex justify-between">
                         <span>Guests</span>
-                        <span className="text-gray-800 3xl:text-[12px]">
+                        <span className="text-gray-800 3xl:text-[16px]">
                           {guests.length} (
                           {
                             guests.filter((g) => Number(g.age) > 12 || !g.age)
@@ -4803,46 +4752,6 @@ const CheckInForm = ({
                       </div>
                     </div>
                   </div>
-
-                  {/* Section E: Guest Insights */}
-                  {/* <div className="bg-white rounded-xl border border-border p-4">
- <div className="flex items-center gap-2 mb-3">
- <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">E</span>
- <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
- Guest Insights
- </h3>
- </div>
- <div className="flex items-center gap-3 p-3 bg-gray-50 border border-border rounded-xl mb-3">
- <div className="w-10 h-10 rounded-full bg-orange-500 text-white font-bold flex items-center justify-center text-base uppercase">
- {getPrimaryGuest()?.name?.substring(0, 2) || "G"}
- </div>
- <div>
- <div className="flex items-center gap-2">
- <h4 className="font-bold text-sm text-gray-800">{getPrimaryGuest()?.name || "Guest"}</h4>
- <span className="px-1.5 py-0.5 bg-green-100 text-green-600 rounded text-[8px] font-black uppercase">Regular Guest</span>
- </div>
- <p className="text-[9px] text-gray-400 mt-0.5">Guest ID: GUEST-68421</p>
- </div>
- </div>
- 
- <div className="grid grid-cols-3 gap-2 text-center text-sm border-t border-gray-100 pt-3 font-bold text-gray-600">
- <div>
- <p className="text-[8px] text-gray-400 uppercase">Previous Stays</p>
- <p className="font-black text-base text-gray-800">7</p>
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase">Total Nights</p>
- <p className="font-black text-base text-gray-800">18</p>
- </div>
- <div>
- <p className="text-[8px] text-gray-400 uppercase">Total Spent</p>
- <p className="font-black text-base text-orange-600">₹48,250</p>
- </div>
- </div>
- <div className="mt-3 text-center">
- <a href="#" className="text-[9px] font-black text-orange-500 uppercase hover:underline">View Guest Profile</a>
- </div>
- </div> */}
                 </div>
               </div>
             </div>
@@ -4858,7 +4767,7 @@ const CheckInForm = ({
                     <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">
                       A
                     </span>
-                    <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
+                    <h3 className="text-[10px] 3xl:text-[16px] font-black text-gray-700 uppercase tracking-wider">
                       Payment Overview
                     </h3>
                   </div>
@@ -4895,7 +4804,7 @@ const CheckInForm = ({
 
                   {/* Collect Payment */}
                   <div className="space-y-3">
-                    <h4 className="font-bold text-[10px] text-gray-500 uppercase">
+                    <h4 className="font-bold text-[10px] 3xl:text-[14px] text-gray-500 uppercase">
                       Collect Payment
                     </h4>
 
@@ -4931,7 +4840,7 @@ const CheckInForm = ({
                     </div>
 
                     <div>
-                      <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                      <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                         Amount Received *
                       </label>
                       <input
@@ -4952,7 +4861,7 @@ const CheckInForm = ({
                     </div>
 
                     <div>
-                      <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                      <label className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                         Transaction / Reference ID
                       </label>
                       <input
@@ -4969,7 +4878,7 @@ const CheckInForm = ({
                       />
                     </div>
 
-                    <div className="p-2.5 bg-green-50 border border-green-200 text-green-700 font-bold rounded-lg text-[9px]">
+                    <div className="p-2.5 3xl:text-[14px] bg-green-50 border border-green-200 text-green-700 font-bold rounded-lg text-[9px]">
                       ✅ Payment will be recorded and reflected in billing.
                     </div>
                   </div>
@@ -4981,25 +4890,25 @@ const CheckInForm = ({
                     <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">
                       B
                     </span>
-                    <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
+                    <h3 className="text-[10px] 3xl:text-[16px] font-black text-gray-700 uppercase tracking-wider">
                       Booking Summary
                     </h3>
                   </div>
 
                   <div className="space-y-3">
                     <div>
-                      <span className="text-[8px] font-bold text-gray-400 uppercase block">
+                      <span className="text-[8px] 3xl:text-[14px] font-bold text-gray-400 uppercase block">
                         Primary Guest
                       </span>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-sm text-gray-800">
+                        <span className="font-bold py-2 text-sm text-gray-800">
                           {getPrimaryGuest()?.name}
                         </span>
-                        <span className="px-1.5 py-0.5 bg-green-100 text-green-600 rounded text-[7px] font-black uppercase">
+                        <span className="px-1.5 py-0.5 3xl:text-[14px] bg-green-100 text-green-600 rounded text-[7px] font-black uppercase">
                           Primary
                         </span>
                       </div>
-                      <p className="text-[9px] text-gray-500 font-medium">
+                      <p className="text-[9px] 3xl:text-[14px] text-gray-500 font-medium">
                         📱 {getPrimaryGuest()?.mobileNo} | 🆔{" "}
                         {getPrimaryGuest()?.idType} (
                         {getPrimaryGuest()?.idNumber})
@@ -5007,28 +4916,28 @@ const CheckInForm = ({
                     </div>
 
                     <div>
-                      <span className="text-[8px] font-bold text-gray-400 uppercase block">
+                      <span className="text-[8px] py-2 3xl:text-[14px] font-bold text-gray-400 uppercase block">
                         Stay & Room Details
                       </span>
-                      <p className="font-bold text-sm text-gray-800">
+                      <p className="font-bold 3xl:text-[14px] text-sm text-gray-800">
                         Rooms:{" "}
                         {selectedRooms.map((r) => r.roomNumber).join(", ")}
                       </p>
-                      <p className="text-[9px] text-gray-500 font-medium">
+                      <p className="text-[9px]  3xl:text-[14px] text-gray-500 font-medium">
                         📅 Check-in:{" "}
                         {format(
                           stayFormData.checkInTime,
                           "dd MMM yyyy, hh:mm a",
                         )}
                       </p>
-                      <p className="text-[9px] text-gray-500 font-medium">
+                      <p className="text-[9px] py-2 3xl:text-[14px] text-gray-500 font-medium">
                         📅 Check-out:{" "}
                         {format(
                           stayFormData.expectedCheckOutTime,
                           "dd MMM yyyy, hh:mm a",
                         )}
                       </p>
-                      <p className="text-[9px] text-gray-500 font-medium">
+                      <p className="text-[9px] 3xl:text-[14px] text-gray-500 font-medium">
                         👤 Guests: {guests.length} (
                         {
                           guests.filter((g) => Number(g.age) > 12 || !g.age)
@@ -5044,10 +4953,10 @@ const CheckInForm = ({
                     </div>
 
                     <div>
-                      <span className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                      <span className="text-[8px] py-2 3xl:text-[14px] font-bold text-gray-400 uppercase block mb-1">
                         Tariff & Charges Summary
                       </span>
-                      <div className="p-2.5 bg-gray-50 border border-border rounded-lg space-y-1.5 text-[10px] font-bold text-gray-500">
+                      <div className="p-2.5 3xl:text-[14px] bg-gray-50 border border-border rounded-lg space-y-1.5 text-[10px] font-bold text-gray-500">
                         {selectedRooms.map((room) => (
                           <div
                             key={room.roomId || room.slotIndex}
@@ -5065,7 +4974,7 @@ const CheckInForm = ({
                           </div>
                         ))}
                         {selectedRooms.some((r) => r.hasExtraBed) && (
-                          <div className="flex justify-between text-orange-500">
+                          <div className="flex 3xl:text-[14px] justify-between text-orange-500">
                             <span>Extra Bed Fee</span>
                             <span>
                               ₹
@@ -5082,7 +4991,7 @@ const CheckInForm = ({
                           </div>
                         )}
                         <div className="h-px bg-gray-200" />
-                        <div className="flex justify-between text-gray-800 font-black">
+                        <div className="flex 3xl:text-[14px] justify-between text-gray-800 font-black">
                           <span>Total Amount</span>
                           <span>₹{roomTotal.toLocaleString()}</span>
                         </div>
@@ -5097,7 +5006,7 @@ const CheckInForm = ({
                     <span className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-[10px]">
                       C
                     </span>
-                    <h3 className="text-[10px] font-black text-gray-700 uppercase tracking-wider">
+                    <h3 className="text-[10px] 3xl:text-[16px] font-black text-gray-700 uppercase tracking-wider">
                       GRC & Checklist
                     </h3>
                   </div>
@@ -5109,7 +5018,7 @@ const CheckInForm = ({
                         <p className="font-bold text-sm text-gray-800">
                           GRC / Registration Card
                         </p>
-                        <p className="text-[8px] text-gray-400 mt-0.5">
+                        <p className="text-[8px] 3xl:text-[12px] text-gray-400 mt-0.5">
                           Download GRC card, take guest signature and upload.
                         </p>
                       </div>
@@ -5130,12 +5039,12 @@ const CheckInForm = ({
                       </div>
 
                       <div className="border-t border-gray-200 pt-2.5">
-                        <label className="text-[8px] font-black text-gray-500 uppercase block mb-1">
+                        <label className="text-[8px] 3xl:text-[12px] font-black text-gray-500 uppercase block mb-1">
                           Upload Signed GRC *
                         </label>
                         {signedGRCFile || signedGRCPreview ? (
                           <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg text-[10px] font-bold">
-                            <span className="truncate text-green-600 max-w-[150px]">
+                            <span className="truncate text-green-600 max-w-37.5">
                               {signedGRCFile?.name || "GRC_Signed.pdf"}
                             </span>
                             <button
@@ -5161,10 +5070,10 @@ const CheckInForm = ({
                     {/* Verified ID documents */}
                     <div className="p-3 bg-gray-50 border border-border rounded-xl">
                       <div className="flex justify-between items-center mb-2">
-                        <p className="font-bold text-[9px] text-gray-400 uppercase mb-2">
+                        <p className="font-bold text-[9px] 3xl:text-[14px] text-gray-400 uppercase mb-2">
                           Government ID Proofs
                         </p>
-                        <span className="text-[8px] text-green-600 font-black uppercase">
+                        <span className="text-[8px] 3xl:text-[14px] text-green-600 font-black uppercase">
                           Uploaded (
                           {
                             guests.filter(
@@ -5188,23 +5097,23 @@ const CheckInForm = ({
                           return (
                             <div
                               key={g.id}
-                              className="flex justify-between items-center text-[10px] font-bold"
+                              className="flex 3xl:text-[14px] justify-between items-center text-[10px] font-bold"
                             >
                               <span className="text-gray-700">
                                 {g.name || "Guest"} ({g.idType})
                               </span>
                               {hasId ? (
                                 isUploaded ? (
-                                  <span className="px-1.5 py-0.5 bg-green-100 text-green-600 rounded text-[7px] uppercase font-black">
+                                  <span className="px-1.5 py-0.5 bg-green-100 text-green-600 rounded text-[7px] 3xl:text-[14px] uppercase font-black">
                                     Verified
                                   </span>
                                 ) : (
-                                  <span className="px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-[7px] uppercase font-black">
+                                  <span className="px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-[7px] 3xl:text-[14px] uppercase font-black">
                                     Pending
                                   </span>
                                 )
                               ) : (
-                                <span className="px-1.5 py-0.5 bg-gray-100 text-gray-400 rounded text-[7px] uppercase font-black">
+                                <span className="px-1.5 py-0.5 bg-gray-100 text-gray-400 rounded text-[7px] 3xl:text[24px] uppercase font-black">
                                   Not Required
                                 </span>
                               )}
@@ -5215,11 +5124,11 @@ const CheckInForm = ({
                     </div>
 
                     {/* Checklist Status */}
-                    <div className="p-3 bg-gray-50 border border-border rounded-xl">
-                      <p className="font-bold text-[9px] text-gray-400 uppercase mb-2">
+                    <div className="p-3 3xl:text-[14px] bg-gray-50 border border-border rounded-xl">
+                      <p className="font-bold text-[9px] 3xl:text-[14px] text-gray-400 uppercase mb-2">
                         Checklist Status
                       </p>
-                      <ul className="space-y-1 text-[10px] font-bold text-gray-600">
+                      <ul className="space-y-1 text-[10px] 3xl:text-[14px] font-bold text-gray-600">
                         <li className="flex items-center gap-1.5 text-green-600">
                           ✅ Primary Guest Details (Completed)
                         </li>
@@ -5262,8 +5171,8 @@ const CheckInForm = ({
         <div className="px-4 sm:px-6 py-3 border-t bg-white flex justify-between items-center rounded-b-2xl">
           {currentStep === 3 ? (
             <div className="flex items-center gap-2 text-[10px] text-green-600 font-bold max-w-[50%]">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-ping flex-shrink-0" />
-              <span>
+              <span className="w-2 h-2  bg-green-500 rounded-full animate-ping shrink-0" />
+              <span className="3xl:text-[14px]">
                 Ready to Check-in. All required information and payment are
                 completed.
               </span>
@@ -5281,7 +5190,7 @@ const CheckInForm = ({
             {!canProceed(currentStep) &&
               currentStep < 3 &&
               getProceedError(currentStep) && (
-                <span className="text-[9px] text-red-500 font-bold mb-1">
+                <span className="text-[9px] 3xl:text-[14px] text-red-500 font-bold mb-1">
                   ⚠️ {getProceedError(currentStep)}
                 </span>
               )}
@@ -5300,7 +5209,7 @@ const CheckInForm = ({
                   disabled={!canProceed(currentStep)}
                   className={`flex items-center gap-1 px-5 sm:px-6 py-2 sm:py-2.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all ${
                     canProceed(currentStep)
-                      ? "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
+                      ? "bg-(--color-primary) text-white hover:bg-(--color-primary-hover)"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   }`}
                 >
@@ -5310,7 +5219,7 @@ const CheckInForm = ({
                 <button
                   onClick={handleFinalCheckIn}
                   disabled={loading}
-                  className="flex items-center gap-2 px-6 sm:px-8 py-2 sm:py-3 bg-[var(--color-primary)] text-white rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg transition-all hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 sm:px-8 py-2 sm:py-3 bg-(--color-primary) text-white rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg transition-all hover:bg-(--color-primary-hover) disabled:opacity-50"
                 >
                   {loading ? (
                     <FiLoader size={14} className="animate-spin" />
@@ -5327,7 +5236,7 @@ const CheckInForm = ({
             </div>
 
             {/* Lock / status subtext */}
-            <span className="text-[8px] text-gray-400 font-bold mt-0.5">
+            <span className="text-[8px] 3xl:text-[14px] text-gray-400 font-bold mt-0.5">
               {currentStep === 3
                 ? "Room will be assigned and status will change to Checked-In."
                 : "🔒 Your data is safe and secure"}
@@ -5338,8 +5247,8 @@ const CheckInForm = ({
 
       {/* Success Actions - Post Check-in */}
       {showSuccessActions && (
-        <div className="fixed inset-0 z-[65] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 animate-fade-in max-w-[20rem] w-full">
+        <div className="fixed inset-0 z-65 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 animate-fade-in max-w-80 w-full">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FiCheckCircle size={32} className="text-green-600" />
@@ -5377,9 +5286,138 @@ const CheckInForm = ({
         </div>
       )}
 
+      {/* Category Mismatch Warning Modal - Responsive */}
+      {showWarningModal && warningMismatches.length > 0 && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 md:p-6 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto min-h-fit">
+            {/* Header */}
+            <div className="bg-linear-to-r from-amber-50 to-orange-50 border-b border-amber-200 px-5 sm:px-8 py-5 sm:py-8 flex items-start gap-4 sm:gap-6">
+              <div className="shrink-0 w-12 h-12 sm:w-16 sm:h-16 bg-amber-100 rounded-full flex items-center justify-center">
+                <FiAlertTriangle className="w-7 h-7 sm:w-9 sm:h-9 text-amber-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900">
+                  Category Mismatch Detected
+                </h2>
+                <p className="text-sm sm:text-base text-gray-600 mt-2">
+                  The room categories differ from the booking
+                </p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="px-5 sm:px-8 py-6 sm:py-8 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-4">
+                {warningMismatches.map((mismatch, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-4 p-4 sm:p-6 bg-linear-to-r from-orange-50 to-yellow-50 rounded-xl border border-orange-200"
+                  >
+                    <div className="shrink-0 mt-1">
+                      <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-500 text-white text-sm sm:text-base font-bold">
+                        {mismatch.roomIndex}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col gap-3 text-sm sm:text-base">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-gray-600 font-semibold">Booked Category:</span>
+                          <span className="font-bold text-gray-900 text-base sm:text-lg">
+                            {mismatch.bookedCategory}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 my-1">
+                          <div className="flex-1 h-px bg-gray-300"></div>
+                          <span className="text-gray-400 text-xs sm:text-sm font-medium">changes to</span>
+                          <div className="flex-1 h-px bg-gray-300"></div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-gray-600 font-semibold">Check-in Category:</span>
+                          <span className="font-bold text-amber-700 text-base sm:text-lg">
+                            {mismatch.checkinCategory}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Warning Message */}
+              <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-blue-50 rounded-xl border border-blue-200">
+                <p className="text-sm sm:text-base text-blue-800 leading-relaxed">
+                  <span className="font-bold">⚠️ Note:</span> The guest will be checked into a different room category than originally booked. Please ensure this change is intentional.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 border-t border-gray-200 px-5 sm:px-8 py-5 sm:py-6 flex flex-col-reverse sm:flex-row gap-3 sm:gap-4">
+              <button
+                onClick={() => {
+                  setShowWarningModal(false);
+                  setWarningMismatches([]);
+                }}
+                className="w-full px-6 py-3 sm:py-4 border-2 border-gray-300 text-gray-700 font-bold text-base rounded-lg hover:bg-gray-100 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleProceedAfterWarning}
+                disabled={loading}
+                className="w-full px-6 py-3 sm:py-4 bg-linear-to-r from-amber-500 to-orange-500 text-white font-bold text-base rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-orange-100 disabled:opacity-50 active:scale-95"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <FiLoader size={16} className="animate-spin" />
+                    Processing...
+                  </span>
+                ) : (
+                  "Proceed Anyway"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Warning Modal */}
+      {showPaymentWarningModal && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="max-w-2xl w-full bg-white rounded-2xl p-6 border border-gray-100 shadow-xl text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-black text-gray-800 mb-2">Payment Exceeds Total Due</h2>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              The payment amount entered exceeds the total due value. Are you sure you want to proceed?
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setShowPaymentWarningModal(false)}
+                className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-all flex-1"
+              >
+                No, Edit Amount
+              </button>
+              <button
+                onClick={() => {
+                  setShowPaymentWarningModal(false);
+                  proceedToFinalCheckIn();
+                }}
+                className="px-6 py-2.5 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all flex-1"
+              >
+                Yes, Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* GRC A4 Print Modal */}
       {showGRCModal && grcData && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/10 backdrop-blur p-2 sm:p-4">
+        <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/10 backdrop-blur p-2 sm:p-4">
           <div className="w-full max-w-4xl h-screen overflow-x-auto no-scrollbar">
             {/* Header */}
             <div className="flex justify-between items-center mt-4 mb-2">

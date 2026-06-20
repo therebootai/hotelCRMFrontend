@@ -900,7 +900,7 @@ const CheckInForm = ({
           ...updated[unassignedIndex],
           roomId: room._id,
           roomNumber: room.roomNumber,
-          basePrice: Number(room.basePrice) || 0,
+          basePrice: (Number(room.basePrice) || 0) * (1 - (room.discountPercentage || 0) / 100),
           roomType: roomTypeObj,
           roomTypeName: roomTypeObj?.name || "",
           hasExtraBed: false,
@@ -917,7 +917,7 @@ const CheckInForm = ({
           {
             roomId: room._id,
             roomNumber: room.roomNumber,
-            basePrice: Number(room.basePrice) || 0,
+            basePrice: (Number(room.basePrice) || 0) * (1 - (room.discountPercentage || 0) / 100),
             roomType: roomTypeObj,
             roomTypeName: roomTypeObj?.name || "",
             hasExtraBed: false,
@@ -1581,7 +1581,7 @@ const CheckInForm = ({
   };
 
   // Function to execute the actual check-in API call
-  const executeFinalCheckIn = async (payload?: any) => {
+  const executeFinalCheckIn = async (_payload?: any) => {
     if (loading) return;
 
     try {
@@ -3476,7 +3476,20 @@ const CheckInForm = ({
                                       </td>
                                       <td className="p-2 font-bold text-gray-800">{room.roomNumber}</td>
                                       <td className="p-2 text-gray-600 truncate max-w-20">{roomTypeName}</td>
-                                      <td className="p-2 font-bold text-gray-700">₹{(Number(room.basePrice) || 0).toLocaleString()}</td>
+                                      <td className="p-2 font-bold text-gray-700 flex flex-col">
+                                        {room.discountPercentage > 0 ? (
+                                          <>
+                                            <span className="text-[10px] text-gray-400 line-through">
+                                              ₹{(Number(room.basePrice) || 0).toLocaleString()}
+                                            </span>
+                                            <span>
+                                              ₹{((Number(room.basePrice) || 0) * (1 - room.discountPercentage / 100)).toLocaleString()}
+                                            </span>
+                                          </>
+                                        ) : (
+                                          <span>₹{(Number(room.basePrice) || 0).toLocaleString()}</span>
+                                        )}
+                                      </td>
                                       <td className="p-2">
                                         {isOccupied ? (
                                           <span className="px-1.5 py-1 bg-red-100 text-red-600 rounded font-bold text-xs uppercase">Occupied</span>

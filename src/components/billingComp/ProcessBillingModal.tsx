@@ -44,8 +44,7 @@ const ProcessBillingModal: React.FC<ProcessBillingModalProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [selectedCheckInId, setSelectedCheckInId] = useState("");
-  const [loadingCheckIns, setLoadingCheckIns] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  // Removed unused loadingCheckIns and submitting state variables
   const [showPaymentWarningModal, setShowPaymentWarningModal] = useState(false);
   const [pendingIsCheckoutFlag, setPendingIsCheckoutFlag] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);

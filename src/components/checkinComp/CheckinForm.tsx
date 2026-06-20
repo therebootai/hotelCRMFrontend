@@ -806,7 +806,8 @@ const CheckInForm = ({
         : 0;
       const rTotal = basePrice * nights + extraBedPrice;
       
-      const rt = roomTypes.find((r: any) => String(r._id) === String(room.requiredRoomTypeId));
+      const rtId = room.requiredRoomTypeId || room.roomType?._id || room.roomType;
+      const rt = roomTypes.find((r: any) => String(r._id) === String(rtId));
       const taxPercentage = rt?.gstId?.percentage || 0;
       roomTaxAmount += rTotal * (taxPercentage / 100);
     });
@@ -1328,12 +1329,29 @@ const CheckInForm = ({
           : undefined,
       rooms: selectedRooms.map((room) => {
         const roomGuests = roomGuestMap[room.roomId] || [];
+        const basePrice = Number(room.basePrice) || 0;
+        
+        const extraBedCharge = room.hasExtraBed ? Number(room.extraBedCharge) || 0 : 0;
+        const totalNightlyBase = basePrice + extraBedCharge;
+
+        let taxPercentage = 0;
+        if (isDayAccess) {
+          taxPercentage = 12; // Default 12% for day access as per main calculation
+        } else {
+          const rtId = room.requiredRoomTypeId || room.roomType?._id || room.roomType;
+          const rt = roomTypes.find((r: any) => String(r._id) === String(rtId));
+          taxPercentage = rt?.gstId?.percentage || 0;
+        }
+        
+        const taxAmountPerNight = totalNightlyBase * (taxPercentage / 100);
+        const tariffWithTax = Math.round(totalNightlyBase + taxAmountPerNight);
+
         return {
           roomNo: room.roomNumber || "TBD",
           roomType: room.roomTypeName || "Standard",
           adults: roomGuests.length > 0 ? roomGuests.length : 2,
           children: room.hasExtraBed ? 1 : 0,
-          tariff: Number(room.basePrice) || 0,
+          tariff: tariffWithTax,
           checkIn: format(stayFormData.checkInTime, "dd MMM yyyy"),
           checkOut: format(stayFormData.expectedCheckOutTime, "dd MMM yyyy"),
           guests: roomGuests,

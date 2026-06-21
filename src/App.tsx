@@ -15,7 +15,7 @@ import CheckInFullPage from "./pages/checkin/CheckInFullPage";
 import DirectCheckInPage from "./pages/checkin/DirectCheckInPage";
 
 import RoomRates from "./pages/RoomMaster/RoomRates";
-import FacilityMaster from "./pages/FacilityMaster/FacilityMaster";
+
 import ExtraServiceMaster from "./pages/ExtraService/ExtraServices";
 import BillingPage from "./pages/billing/BillingPage";
 import AccessPackages from "./pages/AccessPackage/AccessPackages";
@@ -110,7 +110,7 @@ export default function App() {
               <Route index element={<RoomMaster />} />
               <Route path="rates" element={<RoomRates />} />
             </Route>
-            <Route path="facilities" element={<FacilityMaster />} />
+
             <Route path="extra-services" element={<ExtraServiceMaster />} />
             <Route path="day-packages" element={<AccessPackages />} />
             <Route path="tax-gst" element={<TaxGstPage />} />

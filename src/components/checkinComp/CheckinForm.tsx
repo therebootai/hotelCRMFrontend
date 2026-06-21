@@ -130,6 +130,13 @@ interface GuestEntry {
   email?: string;
   address?: string;
   relationship?: string;
+  additionalIds?: {
+    id: string;
+    idType: string;
+    idNumber: string;
+    pendingDocFile: File | null;
+    idDocument: { public_id: string; secure_url: string } | null;
+  }[];
 }
 
 interface RoomEntry {
@@ -1047,6 +1054,104 @@ const CheckInForm = ({
     );
   };
 
+  const handleAddAdditionalId = (guestId: string) => {
+    setGuests(
+      guests.map((g) =>
+        g.id === guestId
+          ? {
+              ...g,
+              additionalIds: [
+                ...(g.additionalIds || []),
+                {
+                  id: Date.now().toString(),
+                  idType: "Aadhar Card",
+                  idNumber: "",
+                  pendingDocFile: null,
+                  idDocument: null,
+                },
+              ],
+            }
+          : g,
+      ),
+    );
+  };
+
+  const handleUpdateAdditionalId = (guestId: string, docId: string, field: string, value: any) => {
+    setGuests(
+      guests.map((g) =>
+        g.id === guestId
+          ? {
+              ...g,
+              additionalIds: g.additionalIds?.map((doc) =>
+                doc.id === docId ? { ...doc, [field]: value } : doc,
+              ),
+            }
+          : g,
+      ),
+    );
+  };
+
+  const handleRemoveAdditionalId = (guestId: string, docId: string) => {
+    setGuests(
+      guests.map((g) =>
+        g.id === guestId
+          ? {
+              ...g,
+              additionalIds: g.additionalIds?.filter((doc) => doc.id !== docId),
+            }
+          : g,
+      ),
+    );
+  };
+
+  const handleUploadAdditionalId = (guestId: string, docId: string, file: File) => {
+    const error = validateDocument(file);
+    if (error) {
+      alert(error);
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setGuests(
+      guests.map((g) =>
+        g.id === guestId
+          ? {
+              ...g,
+              additionalIds: g.additionalIds?.map((doc) =>
+                doc.id === docId
+                  ? {
+                      ...doc,
+                      pendingDocFile: file,
+                      idDocument: { public_id: previewUrl, secure_url: previewUrl },
+                    }
+                  : doc,
+              ),
+            }
+          : g,
+      ),
+    );
+  };
+
+  const handleRemoveUploadedAdditionalId = (guestId: string, docId: string) => {
+    setGuests(
+      guests.map((g) =>
+        g.id === guestId
+          ? {
+              ...g,
+              additionalIds: g.additionalIds?.map((doc) =>
+                doc.id === docId
+                  ? {
+                      ...doc,
+                      pendingDocFile: null,
+                      idDocument: null,
+                    }
+                  : doc,
+              ),
+            }
+          : g,
+      ),
+    );
+  };
+
   // Get file icon
   const getFileIcon = (file: File) => {
     if (file.type.startsWith("image/")) return <FiImage size={16} />;
@@ -1710,6 +1815,11 @@ const CheckInForm = ({
               idDocument: primaryGuests[0].idDocument?.secure_url
                 ? primaryGuests[0].idDocument
                 : null,
+              additionalIds: primaryGuests[0].additionalIds?.map((doc) => ({
+                idType: doc.idType,
+                idNumber: doc.idNumber,
+                idDocument: doc.idDocument?.secure_url ? doc.idDocument : null,
+              })) || [],
             }
           : null,
         guests: guests
@@ -1726,6 +1836,11 @@ const CheckInForm = ({
             isPrimary: g.isPrimary,
             assignedRoomId: g.assignedRoomId,
             idDocument: g.idDocument?.secure_url ? g.idDocument : null,
+            additionalIds: g.additionalIds?.map((doc) => ({
+              idType: doc.idType,
+              idNumber: doc.idNumber,
+              idDocument: doc.idDocument?.secure_url ? doc.idDocument : null,
+            })) || [],
           })),
         vehicleDetails: vehicles.filter(
           (v: any) => v.vehicleNumber && v.vehicleNumber.trim() !== "",
@@ -1787,6 +1902,31 @@ const CheckInForm = ({
         "guestDocIndices",
         JSON.stringify(guestDocIndices),
       );
+
+      // Append guest additional document files with their indices
+      const guestAdditionalDocs: { file: File; guestIdx: number; docIdx: number }[] = [];
+      guests.forEach((g, guestIdx) => {
+        g.additionalIds?.forEach((doc, docIdx) => {
+          if (doc.pendingDocFile) {
+            guestAdditionalDocs.push({
+              file: doc.pendingDocFile,
+              guestIdx,
+              docIdx,
+            });
+          }
+        });
+      });
+
+      guestAdditionalDocs.forEach((doc) => {
+        multipartFormData.append("guestAdditionalDocs", doc.file);
+      });
+
+      if (guestAdditionalDocs.length > 0) {
+        multipartFormData.append(
+          "guestAdditionalDocIndices",
+          JSON.stringify(guestAdditionalDocs.map((doc) => ({ guestIdx: doc.guestIdx, docIdx: doc.docIdx }))),
+        );
+      }
 
       // Append signed GRC file if exists (for both new upload and replacement)
       if (signedGRCFile) {
@@ -3879,6 +4019,74 @@ const CheckInForm = ({
                                 )}
                               </div>
                             </div>
+                            
+                            {/* Additional IDs for Primary Guest */}
+                            {primaryGuest.additionalIds?.map((doc) => (
+                              <div key={doc.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 p-4 border border-dashed border-gray-300 rounded-xl relative">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveAdditionalId(primaryGuest.id, doc.id)}
+                                  className="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-200 font-bold"
+                                >
+                                  ✕
+                                </button>
+                                <div>
+                                  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                    Additional ID Type
+                                  </label>
+                                  <select
+                                    value={doc.idType || ""}
+                                    onChange={(e) => handleUpdateAdditionalId(primaryGuest.id, doc.id, "idType", e.target.value)}
+                                    className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
+                                  >
+                                    <option value="Aadhaar Card">Aadhaar Card</option>
+                                    <option value="Passport">Passport</option>
+                                    <option value="Driving License">Driving License</option>
+                                    <option value="Voter ID">Voter ID</option>
+                                    <option value="Other">Other</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                    ID Number
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={doc.idNumber || ""}
+                                    onChange={(e) => handleUpdateAdditionalId(primaryGuest.id, doc.id, "idNumber", e.target.value)}
+                                    placeholder="ID Number"
+                                    className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                    Upload ID
+                                  </label>
+                                  {doc.pendingDocFile ? (
+                                    <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg text-[10px] font-bold">
+                                      <span className="truncate text-green-600 max-w-25">{doc.pendingDocFile.name}</span>
+                                      <button onClick={() => handleRemoveUploadedAdditionalId(primaryGuest.id, doc.id)} className="text-red-500 hover:text-red-700">🗑️</button>
+                                    </div>
+                                  ) : (
+                                    <input
+                                      type="file"
+                                      onChange={(e) => e.target.files?.[0] && handleUploadAdditionalId(primaryGuest.id, doc.id, e.target.files[0])}
+                                      className="w-full text-sm border border-border bg-gray-50 text-gray-400 font-bold"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                            <div className="mt-2 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleAddAdditionalId(primaryGuest.id)}
+                                className="text-xs text-indigo-600 font-black uppercase tracking-wider hover:text-indigo-800 transition-colors"
+                              >
+                                + Add Another ID
+                              </button>
+                            </div>
+
 
                             {/* Co-Guests Table */}
                             <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
@@ -4004,6 +4212,50 @@ const CheckInForm = ({
                                                   className="w-full mt-1 text-[8px] text-gray-400 font-bold file:mr-1 file:py-0.5 file:px-1 file:rounded file:border-0 file:bg-gray-100 hover:file:bg-gray-200 cursor-pointer"
                                                 />
                                               ))}
+
+                                              {/* Additional IDs for Co-Guest */}
+                                              {g.additionalIds?.map((doc) => (
+                                                <div key={doc.id} className="mt-2 pt-2 border-t border-gray-200 relative">
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveAdditionalId(g.id, doc.id)}
+                                                    className="absolute -top-2 right-0 text-red-500 font-black text-[10px]"
+                                                  >
+                                                    ✕
+                                                  </button>
+                                                  <select
+                                                    value={doc.idType || "Aadhaar Card"}
+                                                    onChange={(e) => handleUpdateAdditionalId(g.id, doc.id, "idType", e.target.value)}
+                                                    className="w-full bg-transparent outline-none font-bold text-gray-500 cursor-pointer text-[9px] mb-1"
+                                                  >
+                                                    <option>Aadhaar Card</option>
+                                                    <option>PAN Card</option>
+                                                    <option>Passport</option>
+                                                    <option>Driving License</option>
+                                                  </select>
+                                                  {doc.pendingDocFile ? (
+                                                    <div className="flex items-center justify-between p-1 bg-green-50 border border-green-200 rounded text-[8px] font-bold">
+                                                      <span className="truncate text-green-600 max-w-20">{doc.pendingDocFile.name}</span>
+                                                      <button onClick={() => handleRemoveUploadedAdditionalId(g.id, doc.id)} className="text-red-500 hover:text-red-700 ml-1 font-black text-xs">×</button>
+                                                    </div>
+                                                  ) : (
+                                                    <input
+                                                      type="file"
+                                                      onChange={(e) => e.target.files?.[0] && handleUploadAdditionalId(g.id, doc.id, e.target.files[0])}
+                                                      className="w-full text-[8px] text-gray-400 font-bold file:mr-1 file:py-0.5 file:px-1 file:rounded file:border-0 file:bg-gray-100 hover:file:bg-gray-200 cursor-pointer"
+                                                    />
+                                                  )}
+                                                </div>
+                                              ))}
+                                              {g.idType !== "Not Required" && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleAddAdditionalId(g.id)}
+                                                  className="text-[9px] text-indigo-600 font-black uppercase hover:text-indigo-800 mt-1 self-start transition-colors"
+                                                >
+                                                  + Add ID
+                                                </button>
+                                              )}
                                           </div>
                                         </td>
                                         <td className="p-2 text-center">
@@ -4340,6 +4592,73 @@ const CheckInForm = ({
                                         )}
                                       </div>
                                     </div>
+
+                                    {/* Additional IDs for Grouped Primary Guest */}
+                                    {primaryGuest.additionalIds?.map((doc) => (
+                                      <div key={doc.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 p-4 border border-dashed border-gray-300 rounded-xl relative">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveAdditionalId(primaryGuest.id, doc.id)}
+                                          className="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-200 font-bold"
+                                        >
+                                          ✕
+                                        </button>
+                                        <div>
+                                          <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                            Additional ID Type
+                                          </label>
+                                          <select
+                                            value={doc.idType || ""}
+                                            onChange={(e) => handleUpdateAdditionalId(primaryGuest.id, doc.id, "idType", e.target.value)}
+                                            className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
+                                          >
+                                            <option value="Aadhaar Card">Aadhaar Card</option>
+                                            <option value="Passport">Passport</option>
+                                            <option value="Driving License">Driving License</option>
+                                            <option value="Voter ID">Voter ID</option>
+                                            <option value="Other">Other</option>
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                            ID Number
+                                          </label>
+                                          <input
+                                            type="text"
+                                            value={doc.idNumber || ""}
+                                            onChange={(e) => handleUpdateAdditionalId(primaryGuest.id, doc.id, "idNumber", e.target.value)}
+                                            placeholder="ID Number"
+                                            className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="text-[8px] font-bold text-gray-400 uppercase block mb-1">
+                                            Upload ID
+                                          </label>
+                                          {doc.pendingDocFile ? (
+                                            <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg text-[10px] font-bold">
+                                              <span className="truncate text-green-600 max-w-25">{doc.pendingDocFile.name}</span>
+                                              <button onClick={() => handleRemoveUploadedAdditionalId(primaryGuest.id, doc.id)} className="text-red-500 hover:text-red-700">🗑️</button>
+                                            </div>
+                                          ) : (
+                                            <input
+                                              type="file"
+                                              onChange={(e) => e.target.files?.[0] && handleUploadAdditionalId(primaryGuest.id, doc.id, e.target.files[0])}
+                                              className="w-full text-sm border border-border bg-gray-50 text-gray-400 font-bold"
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                    <div className="mt-2 text-right">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleAddAdditionalId(primaryGuest.id)}
+                                        className="text-xs text-indigo-600 font-black uppercase tracking-wider hover:text-indigo-800 transition-colors"
+                                      >
+                                        + Add Another ID
+                                      </button>
+                                    </div>
                                   </div>
                                 )}
 
@@ -4490,21 +4809,65 @@ const CheckInForm = ({
                                                           </button>
                                                         </div>
                                                       ) : (
-                                                        <input
-                                                          type="file"
-                                                          onChange={(e) =>
-                                                            e.target
-                                                              .files?.[0] &&
-                                                            handleDocumentUpload(
-                                                              g.id,
-                                                              e.target.files[0],
-                                                            )
-                                                          }
-                                                          className="w-full mt-1 text-[8px] text-gray-400 font-bold file:mr-1 file:py-0.5 file:px-1 file:rounded file:border-0 file:bg-gray-100 hover:file:bg-gray-200 cursor-pointer"
-                                                        />
+                                                          <input
+                                                            type="file"
+                                                            onChange={(e) =>
+                                                              e.target
+                                                                .files?.[0] &&
+                                                              handleDocumentUpload(
+                                                                g.id,
+                                                                e.target.files[0],
+                                                              )
+                                                            }
+                                                            className="w-full mt-1 text-[8px] text-gray-400 font-bold file:mr-1 file:py-0.5 file:px-1 file:rounded file:border-0 file:bg-gray-100 hover:file:bg-gray-200 cursor-pointer"
+                                                          />
+                                                        ))}
+
+                                                      {/* Additional IDs for Co-Guest */}
+                                                      {g.additionalIds?.map((doc) => (
+                                                        <div key={doc.id} className="mt-2 pt-2 border-t border-gray-200 relative">
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveAdditionalId(g.id, doc.id)}
+                                                            className="absolute -top-2 right-0 text-red-500 font-black text-[10px]"
+                                                          >
+                                                            ✕
+                                                          </button>
+                                                          <select
+                                                            value={doc.idType || "Aadhaar Card"}
+                                                            onChange={(e) => handleUpdateAdditionalId(g.id, doc.id, "idType", e.target.value)}
+                                                            className="w-full bg-transparent outline-none font-bold text-gray-500 cursor-pointer text-[9px] mb-1"
+                                                          >
+                                                            <option>Aadhaar Card</option>
+                                                            <option>PAN Card</option>
+                                                            <option>Passport</option>
+                                                            <option>Driving License</option>
+                                                          </select>
+                                                          {doc.pendingDocFile ? (
+                                                            <div className="flex items-center justify-between p-1 bg-green-50 border border-green-200 rounded text-[8px] font-bold">
+                                                              <span className="truncate text-green-600 max-w-20">{doc.pendingDocFile.name}</span>
+                                                              <button onClick={() => handleRemoveUploadedAdditionalId(g.id, doc.id)} className="text-red-500 hover:text-red-700 ml-1 font-black text-xs">×</button>
+                                                            </div>
+                                                          ) : (
+                                                            <input
+                                                              type="file"
+                                                              onChange={(e) => e.target.files?.[0] && handleUploadAdditionalId(g.id, doc.id, e.target.files[0])}
+                                                              className="w-full text-[8px] text-gray-400 font-bold file:mr-1 file:py-0.5 file:px-1 file:rounded file:border-0 file:bg-gray-100 hover:file:bg-gray-200 cursor-pointer"
+                                                            />
+                                                          )}
+                                                        </div>
                                                       ))}
-                                                  </div>
-                                                </td>
+                                                      {g.idType !== "Not Required" && (
+                                                        <button
+                                                          type="button"
+                                                          onClick={() => handleAddAdditionalId(g.id)}
+                                                          className="text-[9px] text-indigo-600 font-black uppercase hover:text-indigo-800 mt-1 self-start transition-colors"
+                                                        >
+                                                          + Add ID
+                                                        </button>
+                                                      )}
+                                                    </div>
+                                                  </td>
                                                 <td className="p-2">
                                                   <button
                                                     onClick={() =>

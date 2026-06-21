@@ -609,7 +609,7 @@ const CheckInForm = ({
         roomNumber: roomIdStr
           ? roomIdObj?.roomNumber || r.roomNumber || "TBD"
           : "TBD",
-        basePrice: (Number(roomTypeObj?.basePrice) || Number(r.pricePerNight) || Number(r.basePrice) || 0) * (1 - (roomTypeObj?.discountPercentage || 0) / 100),
+        basePrice: Math.round((Number(roomTypeObj?.basePrice) || Number(r.pricePerNight) || Number(r.basePrice) || 0) * (1 - (roomTypeObj?.discountPercentage || 0) / 100)),
         roomType: roomTypeObj,
         roomTypeName: roomTypeObj?.name || r.roomTypeName || "",
         hasExtraBed: false,
@@ -648,7 +648,7 @@ const CheckInForm = ({
             roomNumber: "TBD"
           };
         } else {
-          const calculatedBasePrice = (Number(availableRoom.roomType?.basePrice) || Number(availableRoom.basePrice) || 0) * (1 - (availableRoom.roomType?.discountPercentage || 0) / 100);
+          const calculatedBasePrice = Math.round((Number(availableRoom.roomType?.basePrice) || Number(availableRoom.basePrice) || 0) * (1 - (availableRoom.roomType?.discountPercentage || 0) / 100));
           if (room.basePrice !== calculatedBasePrice) {
             hasChanges = true;
             return {
@@ -917,7 +917,7 @@ const CheckInForm = ({
           ...updated[unassignedIndex],
           roomId: room._id,
           roomNumber: room.roomNumber,
-          basePrice: (Number(room.roomType?.basePrice) || Number(room.basePrice) || 0) * (1 - (room.roomType?.discountPercentage || 0) / 100),
+          basePrice: Math.round((Number(room.roomType?.basePrice) || Number(room.basePrice) || 0) * (1 - (room.roomType?.discountPercentage || 0) / 100)),
           roomType: roomTypeObj,
           roomTypeName: roomTypeObj?.name || "",
           hasExtraBed: false,
@@ -934,7 +934,7 @@ const CheckInForm = ({
           {
             roomId: room._id,
             roomNumber: room.roomNumber,
-            basePrice: (Number(room.roomType?.basePrice) || Number(room.basePrice) || 0) * (1 - (room.roomType?.discountPercentage || 0) / 100),
+            basePrice: Math.round((Number(room.roomType?.basePrice) || Number(room.basePrice) || 0) * (1 - (room.roomType?.discountPercentage || 0) / 100)),
             roomType: roomTypeObj,
             roomTypeName: roomTypeObj?.name || "",
             hasExtraBed: false,
@@ -1795,8 +1795,8 @@ const CheckInForm = ({
         roomSelections: selectedRooms.map((r: RoomEntry) => ({
           roomId: r.roomId,
           roomNumber: r.roomNumber,
-          originalPrice: r.basePrice,
-          appliedPrice: r.basePrice,
+          originalPrice: Math.round(r.basePrice),
+          appliedPrice: Math.round(r.basePrice),
           hasExtraBed: r.hasExtraBed,
           extraBedCharge: r.extraBedCharge,
         })),
@@ -3650,7 +3650,7 @@ const CheckInForm = ({
                                               ₹{(Number(room.roomType?.basePrice) || Number(room.basePrice) || 0).toLocaleString()}
                                             </span>
                                             <span>
-                                              ₹{((Number(room.roomType?.basePrice) || Number(room.basePrice) || 0) * (1 - (room.roomType?.discountPercentage || 0) / 100)).toLocaleString()}
+                                              ₹{Math.round((Number(room.roomType?.basePrice) || Number(room.basePrice) || 0) * (1 - (room.roomType?.discountPercentage || 0) / 100)).toLocaleString()}
                                             </span>
                                           </>
                                         ) : (

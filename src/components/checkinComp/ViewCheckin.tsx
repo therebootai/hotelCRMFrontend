@@ -192,12 +192,12 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
                         {room.roomType?.name || "Standard"}
                       </span>
                       <span className="text-gray-400 ml-2">
-                        ₹{room.appliedPrice || 0}/night
+                        ₹{Math.round(room.appliedPrice || 0).toLocaleString()}/night
                       </span>
                     </div>
                   </div>
                   <span className="font-bold text-orange-600">
-                    ₹{((room.appliedPrice || 0) * nights).toLocaleString()}
+                    ₹{Math.round((room.appliedPrice || 0) * nights).toLocaleString()}
                   </span>
                 </div>
               ))}

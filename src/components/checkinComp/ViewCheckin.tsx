@@ -212,30 +212,71 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
                 Guests ({checkIn.guests?.length || 0})
               </span>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {checkIn.guests?.map((guest: any, idx: number) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-2 bg-white rounded border border-gray-100 text-[10px]"
+                  className="flex flex-col p-2 bg-white rounded border border-gray-100 text-[10px]"
                 >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${guest.isPrimary ? "bg-orange-100 text-orange-600" : "bg-gray-100 text-gray-400"}`}
-                    >
-                      {guest.name?.charAt(0) || "?"}
-                    </span>
-                    <span className="font-bold text-gray-800">
-                      {guest.name || "Guest"}
-                    </span>
-                    {guest.isPrimary && (
-                      <span className="px-1 py-0.5 bg-orange-100 text-orange-600 rounded text-[8px] font-bold">
-                        Primary
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${guest.isPrimary ? "bg-orange-100 text-orange-600" : "bg-gray-100 text-gray-400"}`}
+                      >
+                        {guest.name?.charAt(0)?.toUpperCase() || "?"}
                       </span>
-                    )}
+                      <span className="font-bold text-gray-800">
+                        {guest.name || "Guest"}
+                      </span>
+                      {guest.isPrimary && (
+                        <span className="px-1 py-0.5 bg-orange-100 text-orange-600 rounded text-[8px] font-bold">
+                          Primary
+                        </span>
+                      )}
+                      {(() => {
+                        const gRoomId = guest.assignedRoomId?.$oid || guest.assignedRoomId?._id || guest.assignedRoomId;
+                        const room = checkIn.roomDetails?.find((r: any) => {
+                          const rId = r.roomId?.$oid || r.roomId?._id || r.roomId;
+                          return String(rId) === String(gRoomId);
+                        });
+                        return room?.roomNumber ? (
+                          <span className="px-1 py-0.5 bg-blue-100 text-blue-600 rounded text-[8px] font-bold">
+                            Room {room.roomNumber}
+                          </span>
+                        ) : null;
+                      })()}
+                    </div>
+                    <span className="text-gray-500">
+                      {guest.mobileNo || "No phone"}
+                    </span>
                   </div>
-                  <span className="text-gray-500">
-                    {guest.mobileNo || "No phone"}
-                  </span>
+
+                  {/* Document Links for Guest */}
+                  {(guest.idDocument?.secure_url || (guest.idDocuments && guest.idDocuments.length > 0)) && (
+                    <div className="mt-2 pt-2 border-t border-gray-50 flex flex-wrap gap-2">
+                      {guest.idDocument?.secure_url && (
+                        <a
+                          href={guest.idDocument.secure_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[9px] text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors font-bold"
+                        >
+                          <FiShield size={10} /> {guest.idType || "Main ID"}
+                        </a>
+                      )}
+                      {guest.idDocuments?.map((doc: any, dIdx: number) => doc.idDocument?.secure_url && (
+                        <a
+                          key={dIdx}
+                          href={doc.idDocument.secure_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[9px] text-indigo-600 bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100 transition-colors font-bold"
+                        >
+                          <FiFileText size={10} /> {doc.idType || "Additional ID"}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -346,11 +387,23 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
                         {grc.grcType}
                       </span>
                     </div>
-                    <span
-                      className={`px-1 py-0.5 rounded text-[8px] font-bold ${grc.isSigned ? "bg-green-100 text-green-600" : "bg-yellow-100 text-yellow-600"}`}
-                    >
-                      {grc.isSigned ? "Signed" : "Pending"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-1 py-0.5 rounded text-[8px] font-bold ${grc.isSigned ? "bg-green-100 text-green-600" : "bg-yellow-100 text-yellow-600"}`}
+                      >
+                        {grc.isSigned ? "Signed" : "Pending"}
+                      </span>
+                      {grc.signedPdfUrl?.secure_url && (
+                        <a
+                          href={grc.signedPdfUrl.secure_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[8px] text-purple-600 hover:text-purple-800 hover:underline font-bold transition-colors"
+                        >
+                          <FiFileText size={10} /> View GRC
+                        </a>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -397,23 +450,28 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
               </div>
             )}
 
-          {/* ID Document */}
-          {primaryGuest?.idDocument?.secure_url && (
+          {/* Other Documents */}
+          {checkIn.documents?.length > 0 && (
             <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
               <div className="flex items-center gap-2 mb-2">
-                <FiShield size={12} className="text-gray-400" />
+                <FiFileText size={12} className="text-gray-400" />
                 <span className="text-[10px] font-black text-gray-500 uppercase">
-                  ID Document
+                  Other Documents
                 </span>
               </div>
-              <a
-                href={primaryGuest.idDocument.secure_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] text-blue-600 hover:underline font-bold"
-              >
-                View Document
-              </a>
+              <div className="flex flex-wrap gap-2">
+                {checkIn.documents.map((doc: any, idx: number) => doc.fileUrl?.secure_url && (
+                  <a
+                    key={idx}
+                    href={doc.fileUrl.secure_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-[9px] text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors font-bold"
+                  >
+                    <FiFileText size={10} /> {doc.documentType || "Document"}
+                  </a>
+                ))}
+              </div>
             </div>
           )}
 
@@ -433,7 +491,7 @@ const ViewCheckin = ({ checkIn, onClose }: ViewCheckinProps) => {
           {checkIn.notes && (
             <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
               <span className="text-[10px] font-black text-gray-500 uppercase block mb-1">
-                Notes
+                Remarks & Notes
               </span>
               <p className="text-[10px] text-gray-600">{checkIn.notes}</p>
             </div>

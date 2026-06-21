@@ -18,20 +18,20 @@ const STATUS_STYLES = {
  cardBg: "bg-[#FF5A3C]/10",
  divider: "border-[#FF5A3C]/20",
  },
- pencil: {
- label: "Pencil",
- headerText: "text-[#8D6700]",
- headerBorder: "border-[#8D6700]",
- cardBg: "bg-[#8D6700]/10",
- divider: "border-[#8D6700]/20",
- },
- booked: {
- label: "Booked",
- headerText: "text-[#006875]",
- headerBorder: "border-[#006875]",
- cardBg: "bg-[#006875]/10",
- divider: "border-[#006875]/20",
- },
+  maintenance: {
+  label: "Maintenance",
+  headerText: "text-[#D97706]", // Amber
+  headerBorder: "border-[#D97706]",
+  cardBg: "bg-[#D97706]/10",
+  divider: "border-[#D97706]/20",
+  },
+  blocked: {
+  label: "Blocked",
+  headerText: "text-[#DC2626]", // Red
+  headerBorder: "border-[#DC2626]",
+  cardBg: "bg-[#DC2626]/10",
+  divider: "border-[#DC2626]/20",
+  },
  checkIn: {
  label: "Check-In",
  headerText: "text-[#0081FA]",

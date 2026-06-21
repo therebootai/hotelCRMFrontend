@@ -564,6 +564,7 @@ const CreateBooking = ({
         roomTypeId: rt._id,
         roomTypeName: rt.name,
         basePrice: rt.basePrice,
+        discountPercentage: rt.discountPercentage || 0,
         count: selectedCounts[rt._id].count,
         adults: selectedCounts[rt._id].adults,
         children: selectedCounts[rt._id].children,
@@ -621,7 +622,8 @@ const CreateBooking = ({
         });
       } else {
         selectedRoomTypesList.forEach((entry) => {
-          const rTotal = entry.basePrice * entry.count * totalNights;
+          const discountedRate = entry.basePrice * (1 - (entry.discountPercentage || 0) / 100);
+          const rTotal = discountedRate * entry.count * totalNights;
           roomTotal += rTotal;
           roomBreakdown.push({
             name: `${entry.roomTypeName} (${entry.count} Rooms)`,
@@ -1626,12 +1628,23 @@ const CreateBooking = ({
                             </td>
 
                             {/* Rate per night */}
-                            <td className="py-3 text-right font-bold text-text-primary">
-                              ₹{rt.basePrice.toLocaleString()}
-                              <p className="text-[8px] 3xl:text-[12px] text-text-secondary font-normal block">
+                            <td className="py-3 text-right font-bold text-text-primary flex flex-col items-end">
+                              {(rt.discountPercentage && rt.discountPercentage > 0) ? (
+                                <>
+                                  <span className="text-xs text-text-secondary line-through">
+                                    ₹{rt.basePrice?.toLocaleString()}
+                                  </span>
+                                  <span>
+                                    ₹{(rt.basePrice * (1 - rt.discountPercentage / 100)).toLocaleString()}
+                                  </span>
+                                </>
+                              ) : (
+                                <span>₹{rt.basePrice?.toLocaleString()}</span>
+                              )}
+                              <p className="text-[8px] 3xl:text-[12px] text-text-secondary font-normal block mt-0.5">
                                 + ₹
                                 {Math.round(
-                                  rt.basePrice *
+                                  (rt.basePrice * (1 - (rt.discountPercentage || 0) / 100)) *
                                     ((rt.gstId?.percentage || 0) / 100),
                                 )}{" "}
                                 Taxes
@@ -1786,17 +1799,17 @@ const CreateBooking = ({
                                 👤 {r.maxAdults} Adults, {r.maxChildren} Kids
                               </td>
                               <td className="py-3 text-right font-bold text-text-primary text-sm flex flex-col items-end">
-                                {r.discountPercentage > 0 ? (
+                                {(rt?.discountPercentage && rt.discountPercentage > 0) ? (
                                   <>
                                     <span className="text-xs text-text-secondary line-through">
-                                      ₹{r.basePrice.toLocaleString()}
+                                      ₹{rt.basePrice?.toLocaleString()}
                                     </span>
                                     <span>
-                                      ₹{(r.basePrice * (1 - r.discountPercentage / 100)).toLocaleString()}
+                                      ₹{(rt.basePrice * (1 - rt.discountPercentage / 100)).toLocaleString()}
                                     </span>
                                   </>
                                 ) : (
-                                  <span>₹{r.basePrice.toLocaleString()}</span>
+                                  <span>₹{rt?.basePrice?.toLocaleString()}</span>
                                 )}
                               </td>
                               <td className="py-3 text-right pr-2">
@@ -1812,8 +1825,8 @@ const CreateBooking = ({
                                           children: childrenFilter,
                                           roomTypeId: rt?._id,
                                           roomTypeName: rt?.name,
-                                          basePrice: r.basePrice,
-                                          discountPercentage: r.discountPercentage || 0,
+                                          basePrice: rt?.basePrice || 0,
+                                          discountPercentage: rt?.discountPercentage || 0,
                                           roomNumber: r.roomNumber,
                                         },
                                       }));

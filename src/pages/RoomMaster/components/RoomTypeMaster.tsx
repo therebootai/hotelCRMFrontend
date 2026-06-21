@@ -17,6 +17,7 @@ export interface RoomType {
   name: string;
   description?: string;
   basePrice: number;
+  discountPercentage?: number;
   isActive: boolean;
   gstId?: { _id: string; percentage: number; name: string };
 }
@@ -151,7 +152,10 @@ export default function RoomTypeMaster({
                   Description
                 </th>
                 <th className="px-10 py-4 text-[11px] 3xl:text-[14px] 4xl-text-[16px] font-semibold text-text-secondary uppercase tracking-wider">
-                  Base Price
+                  Price
+                </th>
+                <th className="px-10 py-4 text-[11px] 3xl:text-[14px] 4xl-text-[16px] font-semibold text-text-secondary uppercase tracking-wider">
+                  Discount
                 </th>
                 <th className="px-10 py-4 text-[11px] 3xl:text-[14px] 4xl-text-[16px] font-semibold text-text-secondary uppercase tracking-wider">
                   GST %
@@ -165,7 +169,7 @@ export default function RoomTypeMaster({
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-10 py-12 text-center text-text-secondary"
                   >
                     <div className="flex flex-col items-center justify-center gap-2">
@@ -200,8 +204,26 @@ export default function RoomTypeMaster({
                       </p>
                     </td>
                     <td className="px-10 py-5">
-                      <span className="text-base text-text-primary font-medium">
-                        ₹{rt.basePrice?.toLocaleString() ?? "—"}
+                      <div className="flex flex-col">
+                        {(rt.discountPercentage && rt.discountPercentage > 0) ? (
+                          <>
+                            <span className="text-sm text-text-secondary line-through">
+                              ₹{rt.basePrice?.toLocaleString("en-IN") ?? "—"}
+                            </span>
+                            <span className="text-base text-text-primary font-medium">
+                              ₹{(rt.basePrice * (1 - rt.discountPercentage / 100)).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-base text-text-primary font-medium">
+                            ₹{rt.basePrice?.toLocaleString("en-IN") ?? "—"}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-10 py-5">
+                      <span className="text-base text-text-secondary">
+                        {(rt.discountPercentage && rt.discountPercentage > 0) ? `${rt.discountPercentage}%` : "—"}
                       </span>
                     </td>
                     <td className="px-10 py-5">
@@ -230,7 +252,7 @@ export default function RoomTypeMaster({
               ) : (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-10 py-12 text-center text-text-secondary"
                   >
                     {searchQuery

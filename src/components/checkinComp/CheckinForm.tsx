@@ -602,7 +602,7 @@ const CheckInForm = ({
         roomNumber: roomIdStr
           ? roomIdObj?.roomNumber || r.roomNumber || "TBD"
           : "TBD",
-        basePrice: r.pricePerNight || r.basePrice || 0,
+        basePrice: (Number(roomTypeObj?.basePrice) || Number(r.pricePerNight) || Number(r.basePrice) || 0) * (1 - (roomTypeObj?.discountPercentage || 0) / 100),
         roomType: roomTypeObj,
         roomTypeName: roomTypeObj?.name || r.roomTypeName || "",
         hasExtraBed: false,
@@ -630,16 +630,25 @@ const CheckInForm = ({
       const updated = prev.map(room => {
         if (!room.roomId) return room;
         
-        const isAvailable = availableRooms.some(ar => ar._id === room.roomId);
+        const availableRoom = availableRooms.find(ar => ar._id === room.roomId);
         const isOccupied = occupiedRoomIds.has(room.roomId);
         
-        if (!isAvailable || isOccupied) {
+        if (!availableRoom || isOccupied) {
           hasChanges = true;
           return {
             ...room,
             roomId: "",
             roomNumber: "TBD"
           };
+        } else {
+          const calculatedBasePrice = (Number(availableRoom.roomType?.basePrice) || Number(availableRoom.basePrice) || 0) * (1 - (availableRoom.roomType?.discountPercentage || 0) / 100);
+          if (room.basePrice !== calculatedBasePrice) {
+            hasChanges = true;
+            return {
+              ...room,
+              basePrice: calculatedBasePrice
+            };
+          }
         }
         return room;
       });
@@ -901,7 +910,7 @@ const CheckInForm = ({
           ...updated[unassignedIndex],
           roomId: room._id,
           roomNumber: room.roomNumber,
-          basePrice: (Number(room.basePrice) || 0) * (1 - (room.discountPercentage || 0) / 100),
+          basePrice: (Number(room.roomType?.basePrice) || Number(room.basePrice) || 0) * (1 - (room.roomType?.discountPercentage || 0) / 100),
           roomType: roomTypeObj,
           roomTypeName: roomTypeObj?.name || "",
           hasExtraBed: false,
@@ -918,7 +927,7 @@ const CheckInForm = ({
           {
             roomId: room._id,
             roomNumber: room.roomNumber,
-            basePrice: (Number(room.basePrice) || 0) * (1 - (room.discountPercentage || 0) / 100),
+            basePrice: (Number(room.roomType?.basePrice) || Number(room.basePrice) || 0) * (1 - (room.roomType?.discountPercentage || 0) / 100),
             roomType: roomTypeObj,
             roomTypeName: roomTypeObj?.name || "",
             hasExtraBed: false,
@@ -3495,17 +3504,17 @@ const CheckInForm = ({
                                       <td className="p-2 font-bold text-gray-800">{room.roomNumber}</td>
                                       <td className="p-2 text-gray-600 truncate max-w-20">{roomTypeName}</td>
                                       <td className="p-2 font-bold text-gray-700 flex flex-col">
-                                        {room.discountPercentage > 0 ? (
+                                        {(room.roomType?.discountPercentage || 0) > 0 ? (
                                           <>
                                             <span className="text-[10px] text-gray-400 line-through">
-                                              ₹{(Number(room.basePrice) || 0).toLocaleString()}
+                                              ₹{(Number(room.roomType?.basePrice) || Number(room.basePrice) || 0).toLocaleString()}
                                             </span>
                                             <span>
-                                              ₹{((Number(room.basePrice) || 0) * (1 - room.discountPercentage / 100)).toLocaleString()}
+                                              ₹{((Number(room.roomType?.basePrice) || Number(room.basePrice) || 0) * (1 - (room.roomType?.discountPercentage || 0) / 100)).toLocaleString()}
                                             </span>
                                           </>
                                         ) : (
-                                          <span>₹{(Number(room.basePrice) || 0).toLocaleString()}</span>
+                                          <span>₹{(Number(room.roomType?.basePrice) || Number(room.basePrice) || 0).toLocaleString()}</span>
                                         )}
                                       </td>
                                       <td className="p-2">

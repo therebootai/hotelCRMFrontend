@@ -44,8 +44,8 @@ export interface RoomStatusData {
  statuses?: {
  available?: { count: number; rooms: RoomStatusEntry[] };
  confirmed?: { count: number; rooms: RoomStatusEntry[] };
- pencil?: { count: number; rooms: RoomStatusEntry[] };
- booked?: { count: number; rooms: RoomStatusEntry[] };
+ maintenance?: { count: number; rooms: RoomStatusEntry[] };
+ blocked?: { count: number; rooms: RoomStatusEntry[] };
  checkIn?: { count: number; rooms: RoomStatusEntry[] };
  };
 }
@@ -302,6 +302,8 @@ export function useDashboardData(selectedDate?: Date) {
  const availableRooms: RoomStatusEntry[] = [];
  const confirmedRooms: RoomStatusEntry[] = [];
  const checkInRooms: RoomStatusEntry[] = [];
+ const maintenanceRooms: RoomStatusEntry[] = [];
+ const blockedRooms: RoomStatusEntry[] = [];
 
  for (const room of weekOverview?.rooms || []) {
  const overlappingBookings = room.bookings?.filter((b: any) => {
@@ -317,6 +319,10 @@ export function useDashboardData(selectedDate?: Date) {
    checkInRooms.push({ type: room.type, qty: 1, numbers: room.number });
  } else if (hasConfirmed) {
    confirmedRooms.push({ type: room.type, qty: 1, numbers: room.number });
+ } else if (room.status === "maintenance") {
+   maintenanceRooms.push({ type: room.type, qty: 1, numbers: room.number });
+ } else if (room.status === "blocked") {
+   blockedRooms.push({ type: room.type, qty: 1, numbers: room.number });
  } else {
    availableRooms.push({ type: room.type, qty: 1, numbers: room.number });
  }
@@ -344,8 +350,8 @@ export function useDashboardData(selectedDate?: Date) {
  statuses: {
    available: { count: availableRooms.length, rooms: collapseRooms(availableRooms) },
    confirmed: { count: confirmedRooms.length, rooms: collapseRooms(confirmedRooms) },
-   pencil: { count: 0, rooms: [] },
-   booked: { count: 0, rooms: [] },
+   maintenance: { count: maintenanceRooms.length, rooms: collapseRooms(maintenanceRooms) },
+   blocked: { count: blockedRooms.length, rooms: collapseRooms(blockedRooms) },
    checkIn: { count: checkInRooms.length, rooms: collapseRooms(checkInRooms) },
  },
  });

@@ -9,6 +9,7 @@ interface RoomTypeData {
  name: string;
  description: string;
  basePrice: number | string;
+ discountPercentage: number | string;
  gstId?: string;
 }
 
@@ -33,6 +34,7 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  name: '',
  description: '',
  basePrice: '' as number | string,
+ discountPercentage: '' as number | string,
  gstId: '',
  });
  const [taxes, setTaxes] = useState<TaxGst[]>([]);
@@ -57,10 +59,11 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  name: initialData.name,
  description: initialData.description || '',
  basePrice: initialData.basePrice ?? '',
+ discountPercentage: initialData.discountPercentage ?? '',
  gstId: initialData.gstId || '',
  });
  } else {
- setFormData({ name: '', description: '', basePrice: '', gstId: '' });
+ setFormData({ name: '', description: '', basePrice: '', discountPercentage: '', gstId: '' });
  }
  }, [initialData, isOpen]);
 
@@ -107,6 +110,7 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  name: formData.name,
  description: formData.description,
  basePrice: Number(formData.basePrice),
+ discountPercentage: Number(formData.discountPercentage) || 0,
  };
 
  if (formData.gstId) payload.gstId = formData.gstId;
@@ -145,7 +149,7 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  />
 
  {/* Modal Content */}
- <div className="bg-card rounded-2xl shadow-modal w-full max-w-[40%] relative z-10 animate-fade-in flex flex-col">
+ <div className="bg-card rounded-2xl shadow-modal w-full max-w-[40%] max-h-[90vh] relative z-10 animate-fade-in flex flex-col">
  {/* Header */}
  <div className="flex items-center justify-between p-6 border-b border-border">
  <h2 className="text-xl font-bold text-text-primary">
@@ -161,7 +165,7 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  </div>
 
  {/* Body */}
- <div className="p-6 space-y-5">
+ <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
  {!initialData && (
  <p className="text-base text-text-secondary -mt-2 mb-4">Create a new category for your inventory system.</p>
  )}
@@ -196,27 +200,55 @@ export default function RoomTypeModal({ isOpen, onClose, onSuccess, initialData 
  />
  </div>
 
- <div>
- <label className="input-label uppercase tracking-wider text-[10px]">
- Base Price (₹) <span className="text-red-500">*</span>
- </label>
- <input
- type="number"
- name="basePrice"
- min="0"
- step="0.01"
- value={formData.basePrice}
- onChange={(e) => setFormData((prev) => ({ ...prev, basePrice: e.target.value }))}
- className={`input-field disabled:opacity-70 disabled:cursor-not-allowed ${
- errors.basePrice ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
- }`}
- placeholder="e.g. 2500"
- disabled={isLoading}
- />
- {errors.basePrice && (
- <p className="text-red-500 text-sm mt-1.5 font-medium animate-fade-in">{errors.basePrice}</p>
- )}
- </div>
+ <div className="grid grid-cols-3 gap-4">
+  <div>
+  <label className="input-label uppercase tracking-wider text-[10px]">
+  Base Price (₹) <span className="text-red-500">*</span>
+  </label>
+  <input
+  type="number"
+  name="basePrice"
+  min="0"
+  step="0.01"
+  value={formData.basePrice}
+  onChange={(e) => setFormData((prev) => ({ ...prev, basePrice: e.target.value }))}
+  className={`input-field disabled:opacity-70 disabled:cursor-not-allowed ${
+  errors.basePrice ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''
+  }`}
+  placeholder="e.g. 2500"
+  disabled={isLoading}
+  />
+  {errors.basePrice && (
+  <p className="text-red-500 text-sm mt-1.5 font-medium animate-fade-in">{errors.basePrice}</p>
+  )}
+  </div>
+
+  <div>
+  <label className="input-label uppercase tracking-wider text-[10px]">
+  Discount (%)
+  </label>
+  <input
+  type="number"
+  name="discountPercentage"
+  min="0"
+  max="100"
+  value={formData.discountPercentage}
+  onChange={(e) => setFormData((prev) => ({ ...prev, discountPercentage: e.target.value }))}
+  className="input-field disabled:opacity-70 disabled:cursor-not-allowed"
+  placeholder="e.g. 10"
+  disabled={isLoading}
+  />
+  </div>
+
+  <div>
+  <label className="input-label uppercase tracking-wider text-[10px]">
+  Final Price (₹)
+  </label>
+  <div className="input-field bg-gray-50 flex items-center text-text-secondary cursor-not-allowed select-none h-[42px]">
+  {(Number(formData.basePrice || 0) * (1 - Number(formData.discountPercentage || 0) / 100)).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+  </div>
+  </div>
+  </div>
 
  <div>
  <label className="input-label uppercase tracking-wider text-[10px]">

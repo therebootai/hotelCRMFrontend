@@ -42,7 +42,7 @@ export default function AddRoomForm({
   const [isFetchingDeps, setIsFetchingDeps] = useState(true);
 
   const [roomTypes, setRoomTypes] = useState<
-    { _id: string; name: string; basePrice: number }[]
+    { _id: string; name: string; basePrice: number; discountPercentage?: number }[]
   >([]);
   const [amenitiesList, setAmenitiesList] = useState<Amenity[]>([]);
 
@@ -55,13 +55,13 @@ export default function AddRoomForm({
     maxChildren: "0",
     extraBedAllowed: false,
     extraBedCharge: "0",
-    discountPercentage: "0",
     roomSize: "",
     viewType: "",
     status: "Active",
     description: "",
     amenities: [] as string[],
     basePrice: "",
+    discountPercentage: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -88,14 +88,13 @@ export default function AddRoomForm({
             maxChildren: initialData.maxChildren?.toString() || "0",
             extraBedAllowed: initialData.extraBedAllowed || false,
             extraBedCharge: initialData.extraBedCharge?.toString() || "0",
-            discountPercentage:
-              initialData.discountPercentage?.toString() || "0",
             roomSize: initialData.roomSize?.toString() || "",
             viewType: initialData.viewType || "",
             status: initialData.status || "Active",
             description: initialData.description || "",
             amenities: initialData.amenities?.map((a) => a._id) || [],
-            basePrice: initialData.basePrice?.toString() || "",
+            basePrice: (initialData.roomType as any)?.basePrice?.toString() || "",
+            discountPercentage: (initialData.roomType as any)?.discountPercentage?.toString() || "0",
           });
         }
       } catch (error) {
@@ -115,6 +114,7 @@ export default function AddRoomForm({
         setFormData((prev) => ({
           ...prev,
           basePrice: selected.basePrice.toString(),
+          discountPercentage: selected.discountPercentage?.toString() || "0",
         }));
       }
     }
@@ -155,16 +155,6 @@ export default function AddRoomForm({
     if (!formData.roomNumber.trim())
       newErrors.roomNumber = "Room Number is required";
     if (!formData.roomType) newErrors.roomType = "Room Type is required";
-
-    const bpNum = Number(formData.basePrice);
-    if (formData.basePrice === "" || isNaN(bpNum) || bpNum < 0) {
-      newErrors.basePrice = "Valid base price >= 0 required";
-    }
-
-    const discountNum = Number(formData.discountPercentage);
-    if (discountNum < 0 || discountNum > 100) {
-      newErrors.discountPercentage = "Must be between 0 and 100";
-    }
 
     const adultsNum = Number(formData.maxAdults);
     if (isNaN(adultsNum) || adultsNum < 1) {
@@ -212,7 +202,6 @@ export default function AddRoomForm({
         maxAdults: Number(formData.maxAdults),
         maxChildren: Number(formData.maxChildren),
         extraBedCharge: Number(formData.extraBedCharge) || 0,
-        discountPercentage: Number(formData.discountPercentage) || 0,
         roomSize: formData.roomSize ? Number(formData.roomSize) : undefined,
         basePrice: Number(formData.basePrice) || 0,
       };
@@ -254,11 +243,9 @@ export default function AddRoomForm({
   }
 
   const basePrice = Number(formData.basePrice) || 0;
-  const numericBasePrice = basePrice;
-  const numericDiscount = Number(formData.discountPercentage) || 0;
-  const discountAmount = (basePrice * numericDiscount) / 100;
-  const discountedPrice = basePrice - discountAmount;
-
+  const discountPercentage = Number(formData.discountPercentage) || 0;
+  const discountedPrice = basePrice * (1 - discountPercentage / 100);
+  
   const selectedRoomType: any = roomTypes.find(
     (rt) => rt._id === formData.roomType,
   );
@@ -275,7 +262,6 @@ export default function AddRoomForm({
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 items-start">
         <div className="xl:col-span-2 bg-card border border-border rounded-xl shadow-card p-6 lg:p-8">
           <div className="space-y-8">
-            {/* Section 1: Basic Information */}
             <div className="space-y-5">
               <h3 className="text-base font-bold text-text-primary uppercase tracking-wider border-b border-border pb-2">
                 Basic Information
@@ -390,7 +376,6 @@ export default function AddRoomForm({
               </div>
             </div>
 
-            {/* Section 2: Pricing & Rules */}
             <div className="space-y-5">
               <h3 className="text-base font-bold text-text-primary uppercase tracking-wider border-b border-border pb-2">
                 Pricing & Rules
@@ -403,15 +388,10 @@ export default function AddRoomForm({
                     type="number"
                     name="basePrice"
                     value={formData.basePrice}
-                    onChange={handleChange}
-                    placeholder="0"
-                    className={`input-field ${errors.basePrice ? "border-danger focus:ring-danger/20" : ""}`}
+                    readOnly
+                    placeholder="Auto-filled"
+                    className="input-field bg-gray-50 cursor-not-allowed select-none"
                   />
-                  {errors.basePrice && (
-                    <p className="text-sm text-danger mt-1 font-medium">
-                      {errors.basePrice}
-                    </p>
-                  )}
                 </div>
                 <div>
                   <label className="input-label">Discount (%)</label>
@@ -419,15 +399,10 @@ export default function AddRoomForm({
                     type="number"
                     name="discountPercentage"
                     value={formData.discountPercentage}
-                    onChange={handleChange}
-                    placeholder="0"
-                    className={`input-field ${errors.discountPercentage ? "border-danger focus:ring-danger/20" : ""}`}
+                    readOnly
+                    placeholder="Auto-filled"
+                    className="input-field bg-gray-50 cursor-not-allowed select-none"
                   />
-                  {errors.discountPercentage && (
-                    <p className="text-sm text-danger mt-1 font-medium">
-                      {errors.discountPercentage}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -501,7 +476,6 @@ export default function AddRoomForm({
               </div>
             </div>
 
-            {/* Section 3: Amenities */}
             <div className="space-y-4">
               <h3 className="text-base font-bold text-text-primary uppercase tracking-wider border-b border-border pb-2">
                 Amenities
@@ -533,7 +507,6 @@ export default function AddRoomForm({
               </div>
             </div>
 
-            {/* Section 4: Description */}
             <div className="space-y-4">
               <h3 className="text-base font-bold text-text-primary uppercase tracking-wider border-b border-border pb-2">
                 Description
@@ -549,12 +522,8 @@ export default function AddRoomForm({
           </div>
         </div>
 
-        {/* ========================================== */}
-        {/* RIGHT COLUMN: PREVIEW CARD (Sticky & Fit Content) */}
-        {/* ========================================== */}
         <div className="xl:col-span-1 sticky top-6 h-fit">
           <div className="bg-card border border-border rounded-3xl shadow-card p-6 xl:p-8">
-            {/* Header */}
             <div className="mb-8 border-b border-border pb-4">
               <h2 className="text-[24px] font-bold text-text-primary leading-tight">
                 Room #{formData.roomNumber || "---"}
@@ -565,23 +534,18 @@ export default function AddRoomForm({
               </p>
             </div>
 
-            {/* Pricing Breakdown */}
             <div className="space-y-3 text-base mb-6">
               <div className="flex justify-between items-center text-text-secondary">
                 <span>Base Rate</span>
-                <span className="font-medium text-text-primary">
-                  ₹
-                  {numericBasePrice.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                <span className="font-medium text-text-primary line-through mr-2">
+                  ₹{basePrice.toLocaleString("en-IN")}
                 </span>
               </div>
               <div className="flex justify-between items-center text-text-secondary">
-                <span>Discount ({numericDiscount}%)</span>
-                <span className="font-medium text-success">
-                  - ₹
-                  {discountAmount.toLocaleString("en-IN", {
+                <span>Discounted Rate</span>
+                <span className="font-medium text-text-primary">
+                  ₹
+                  {discountedPrice.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}

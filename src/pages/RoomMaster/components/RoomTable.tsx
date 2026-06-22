@@ -12,7 +12,7 @@ import { AxiosError } from "axios";
 export interface Room {
   _id: string;
   roomNumber: string;
-  roomType: { _id: string; name: string; basePrice: number };
+  roomType: { _id: string; name: string; basePrice: number; discountPercentage?: number };
   building?: string;
   floor?: string;
   maxAdults: number;
@@ -25,7 +25,6 @@ export interface Room {
   amenities: { _id: string; name: string }[];
   description?: string;
   status: "Active" | "Maintenance" | "Blocked";
-  basePrice?: number;
 }
 
 interface RoomTableProps {
@@ -167,7 +166,12 @@ export default function RoomTable({
               <th
                 className={`${headerPadding} font-semibold 3xl:text-[14px] text-text-secondary uppercase tracking-wider`}
               >
-                Base Price
+                Price
+              </th>
+              <th
+                className={`${headerPadding} font-semibold 3xl:text-[14px] text-text-secondary uppercase tracking-wider`}
+              >
+                Discount
               </th>
               <th
                 className={`${headerPadding} font-semibold 3xl:text-[14px] text-text-secondary uppercase tracking-wider`}
@@ -192,7 +196,7 @@ export default function RoomTable({
             {tableData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={isSelectionMode ? 8 : 7}
+                  colSpan={isSelectionMode ? 9 : 8}
                   className="px-10 py-12 text-center text-text-secondary"
                 >
                   No rooms found.
@@ -229,10 +233,25 @@ export default function RoomTable({
                     <td
                       className={`${cellPadding} text-text-primary font-medium ${textScale}`}
                     >
-                      ₹
-                      {(
-                        room.basePrice ?? room.roomType?.basePrice
-                      )?.toLocaleString("en-IN") ?? "—"}
+                      <div className="flex flex-col">
+                        {(room.roomType?.discountPercentage && room.roomType.discountPercentage > 0) ? (
+                          <>
+                            <span className="text-[10px] sm:text-[12px] text-text-secondary line-through">
+                              ₹{room.roomType?.basePrice?.toLocaleString("en-IN") ?? "—"}
+                            </span>
+                            <span>
+                              ₹{((room.roomType?.basePrice || 0) * (1 - room.roomType.discountPercentage / 100)).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                            </span>
+                          </>
+                        ) : (
+                          <span>
+                            ₹{room.roomType?.basePrice?.toLocaleString("en-IN") ?? "—"}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className={`${cellPadding} text-text-secondary ${textScale}`}>
+                      {(room.roomType?.discountPercentage && room.roomType.discountPercentage > 0) ? `${room.roomType.discountPercentage}%` : "—"}
                     </td>
                     <td className={cellPadding}>
                       <div className="flex gap-1.5 flex-wrap max-w-50">

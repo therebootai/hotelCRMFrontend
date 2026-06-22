@@ -1354,24 +1354,7 @@ const CreateBooking = ({
                       placeholder="Mobile"
                     />
                   </div>
-                  <div>
-                    <label className="text-[10px] 3xl:text-[14px] font-bold text-text-secondary uppercase">
-                      Rate/Night
-                    </label>
-                    <input
-                      type="text"
-                      value={corporateForm.negotiatedRate || ""}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "");
-                        setCorporateForm({
-                          ...corporateForm,
-                          negotiatedRate: val ? Number(val) : 0,
-                        });
-                      }}
-                      className="w-full border border-border rounded-lg p-2 text-sm font-bold text-primary bg-white outline-none"
-                      placeholder="0"
-                    />
-                  </div>
+
                 </div>
               )}
             </div>

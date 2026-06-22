@@ -138,6 +138,7 @@ interface GuestEntry {
     pendingDocFile: File | null;
     idDocument: { public_id: string; secure_url: string } | null;
   }[];
+  _isRevealed?: boolean;
 }
 
 interface RoomEntry {

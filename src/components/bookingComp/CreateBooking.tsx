@@ -555,8 +555,7 @@ const CreateBooking = ({
 
   // Calculate totals
   const calculateTotals = useCallback(() => {
-    const selectedTax = taxOptions.find((t) => t._id === selectedTaxId);
-    const globalTaxRate = selectedTax ? selectedTax.percentage / 100 : 0;
+
 
     const selectedRoomTypesList = roomTypes
       .filter((rt) => selectedCounts[rt._id]?.count > 0)

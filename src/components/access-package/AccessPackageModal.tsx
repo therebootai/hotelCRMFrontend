@@ -28,6 +28,7 @@ export interface AccessPackageData {
  exit_time: string;
  add_ons: string[] | ExtraService[];
  isActive?: boolean;
+ taxPercentage?: number;
 }
 
 interface AccessPackageModalProps {
@@ -58,6 +59,8 @@ export default function AccessPackageModal({
  const [entryTime, setEntryTime] = useState("");
  const [exitTime, setExitTime] = useState("");
  const [isActive, setIsActive] = useState(true);
+ const [taxPercentage, setTaxPercentage] = useState<number | "">(0);
+ const [taxes, setTaxes] = useState<any[]>([]);
 
  // Inclusions state
  const [inclusions, setInclusions] = useState<string[]>([]);
@@ -72,26 +75,31 @@ export default function AccessPackageModal({
 
  const [errors, setErrors] = useState<Record<string, string>>({});
 
- // Fetch extra services for add-ons list
+ // Fetch extra services and taxes
  useEffect(() => {
  if (!isOpen) return;
 
- const fetchExtraServices = async () => {
+ const fetchData = async () => {
  try {
  setIsLoadingServices(true);
- const response = await api.get("/extra-services");
- const services = response.data?.data || [];
- // Only list active extra services
+ const [servicesRes, taxesRes] = await Promise.all([
+   api.get("/extra-services"),
+   api.get("/tax-gst")
+ ]);
+ const services = servicesRes.data?.data || [];
  setExtraServices(services.filter((s: ExtraService) => s.isActive));
+
+ const fetchedTaxes = taxesRes.data?.data || [];
+ setTaxes(fetchedTaxes);
  } catch (err) {
- console.error("Failed to fetch extra services", err);
- toast.error("Failed to load extra services list");
+ console.error("Failed to fetch data", err);
+ toast.error("Failed to load required data");
  } finally {
  setIsLoadingServices(false);
  }
  };
 
- fetchExtraServices();
+ fetchData();
  }, [isOpen]);
 
  // Load initial data for Edit Mode
@@ -107,6 +115,7 @@ export default function AccessPackageModal({
  setEntryTime(initialData.entry_time || "");
  setExitTime(initialData.exit_time || "");
  setIsActive(initialData.isActive !== false);
+ setTaxPercentage(initialData.taxPercentage ?? 0);
  setInclusions(initialData.inclusions || []);
 
  // Map add-ons to string IDs
@@ -134,6 +143,7 @@ export default function AccessPackageModal({
  setEntryTime("09:00");
  setExitTime("18:00");
  setIsActive(true);
+ setTaxPercentage(0);
  setInclusions([]);
  setSelectedAddOns([]);
  setImageFile(null);
@@ -257,6 +267,7 @@ export default function AccessPackageModal({
  child_price: Number(childPrice),
  entry_time: entryTime,
  exit_time: exitTime,
+ taxPercentage: Number(taxPercentage),
  inclusions,
  add_ons: selectedAddOns,
  isActive,
@@ -270,10 +281,10 @@ export default function AccessPackageModal({
  }
 
  if (initialData?._id) {
- await api.put(`/day-packages/${initialData._id}`, formData);
+ await api.put(`/access-packages/${initialData._id}`, formData);
  toast.success("Day Package updated successfully!");
  } else {
- await api.post("/day-packages", formData);
+ await api.post("/access-packages", formData);
  toast.success("Day Package created successfully!");
  }
 
@@ -370,7 +381,7 @@ export default function AccessPackageModal({
  />
  </div>
 
- <div>
+ <div className="grid grid-cols-2 gap-4">
  <div>
  <label className="input-label uppercase tracking-wider text-[10px] mb-2 block">
  Package Type *
@@ -383,6 +394,22 @@ export default function AccessPackageModal({
  >
  <option value="Premium Combo">Premium Combo</option>
  <option value="Corporate">Corporate</option>
+ </select>
+ </div>
+ <div>
+ <label className="input-label uppercase tracking-wider text-[10px] mb-2 block">
+ Applicable Tax *
+ </label>
+ <select
+ value={taxPercentage}
+ onChange={(e) => setTaxPercentage(Number(e.target.value))}
+ disabled={isLoading}
+ className="input-field py-2.5"
+ >
+ <option value={0}>No Tax (0%)</option>
+ {taxes.map((t: any) => (
+   <option key={t._id} value={t.percentage}>{t.name} ({t.percentage}%)</option>
+ ))}
  </select>
  </div>
  </div>

@@ -29,6 +29,7 @@ import {
   format,
 } from "date-fns";
 import api from "../../lib/axios";
+import toast from "react-hot-toast";
 import GuestRegistrationCard from "./GuestRegistrationCard";
 
 // GRC Data Type
@@ -434,6 +435,8 @@ const CheckInForm = ({
     bookingData?.bookingCategory === "Day Access" ||
     (!bookingData && urlCategory === "Day Access");
 
+
+
   const getInitialCheckInTime = () => {
     if (isDayAccess && bookingData?.accessPackageId) {
       const pkg = bookingData.accessPackageId;
@@ -483,8 +486,13 @@ const CheckInForm = ({
   });
 
   // Guests with room assignment
-  const [guests, setGuests] = useState<GuestEntry[]>([
-    {
+  const [guests, setGuests] = useState<GuestEntry[]>(() => {
+    const initialGuests: GuestEntry[] = [];
+    const numAdults = bookingData?.totalAdults || bookingData?.pricingSummary?.totalAdults || 1;
+    const numChildren = bookingData?.totalChildren || bookingData?.pricingSummary?.totalChildren || 0;
+
+    // Add Primary Guest
+    initialGuests.push({
       id: `g-${Date.now()}`,
       name:
         bookingData?.bookingContact?.name ||
@@ -497,15 +505,57 @@ const CheckInForm = ({
       idType: "Aadhar Card",
       idNumber: "",
       gender: "",
-      age: "",
+      age: "25", // Default adult age
       nationality: "Indian",
       isPrimary: true,
       assignedRoomId: null,
       idDocument: null,
       pendingDocFile: null,
       pendingDocPreview: null,
-    },
-  ]);
+    });
+
+    // Add remaining adults
+    for (let i = 1; i < numAdults; i++) {
+      initialGuests.push({
+        id: `g-${Date.now()}-a${i}`,
+        name: "",
+        mobileNo: "",
+        idType: "Not Required",
+        idNumber: "",
+        gender: "",
+        age: "25", // Default adult age
+        nationality: "Indian",
+        isPrimary: false,
+        assignedRoomId: null,
+        idDocument: null,
+        pendingDocFile: null,
+        pendingDocPreview: null,
+        _isRevealed: false,
+      });
+    }
+
+    // Add children (age 10 to fall into 5-12 bracket)
+    for (let i = 0; i < numChildren; i++) {
+      initialGuests.push({
+        id: `g-${Date.now()}-c${i}`,
+        name: "",
+        mobileNo: "",
+        idType: "Not Required",
+        idNumber: "",
+        gender: "",
+        age: "10", // Default child age (5-12)
+        nationality: "Indian",
+        isPrimary: false,
+        assignedRoomId: null,
+        idDocument: null,
+        pendingDocFile: null,
+        pendingDocPreview: null,
+        _isRevealed: false,
+      });
+    }
+
+    return initialGuests;
+  });
 
   // Step 3: Payment
   const [paymentData, setPaymentData] = useState({
@@ -547,6 +597,27 @@ const CheckInForm = ({
     visitPurpose: "",
     remarks: "",
   });
+  
+  // Day Access Packages State
+  const [accessPackages, setAccessPackages] = useState<any[]>([]);
+  const [selectedPackageId, setSelectedPackageId] = useState(bookingData?.accessPackageId?._id || "");
+  const displayPackage = bookingData?.accessPackageId || accessPackages.find(p => p._id === selectedPackageId);
+
+  useEffect(() => {
+    // Fetch Day Access Packages if it's Day Access and no booking package is locked
+    if (isDayAccess && !bookingData?.accessPackageId) {
+      api.get("/access-packages?isActive=true")
+        .then(res => {
+           if (res.data.success) {
+             setAccessPackages(res.data.data.packages || []);
+             if (res.data.data.packages?.length > 0 && !selectedPackageId) {
+               setSelectedPackageId(res.data.data.packages[0]._id);
+             }
+           }
+        })
+        .catch(err => console.error("Failed to load access packages", err));
+    }
+  }, [isDayAccess, bookingData]);
 
   // Calculate nights using calendar days (matches backend eachDayOfInterval logic)
   const nights = Math.max(
@@ -776,13 +847,17 @@ const CheckInForm = ({
   }, [stayFormData.checkInTime, stayFormData.expectedCheckOutTime]);
 
   // Calculate totals
-  // Package price for Day Access
-  const packagePrice = isDayAccess
-    ? bookingData?.pricingSummary?.grandTotal ||
-      bookingData?.accessPackageId?.adult_price ||
-      bookingData?.pricingSummary?.roomTotal ||
-      0
-    : 0;
+  // Calculate package base pricing
+  let packagePrice = 0;
+  if (isDayAccess) {
+    if (displayPackage) {
+      const adultCount = guests.filter((g) => Number(g.age) > 12 || !g.age).length;
+      const childCount = guests.filter((g) => Number(g.age) <= 12 && g.age).length;
+      packagePrice = (adultCount * (displayPackage.adult_price || 0)) + (childCount * (displayPackage.child_price || 0));
+    } else {
+      packagePrice = bookingData?.pricingSummary?.roomTotal || 0;
+    }
+  }
 
   // Room add-on charges (for Day Access rooms are charged as flat add-on, not per night)
   const roomAddOnTotal = isDayAccess
@@ -813,7 +888,7 @@ const CheckInForm = ({
   
   let roomTaxAmount = 0;
   if (isDayAccess) {
-    roomTaxAmount = roomTotal * 0.12; // Default 18% for day access
+    roomTaxAmount = roomTotal * ((bookingData?.accessPackageId?.taxPercentage || 0) / 100);
   } else {
     selectedRooms.forEach((room: RoomEntry) => {
       const basePrice = Number(room.basePrice) || 0;
@@ -978,6 +1053,7 @@ const CheckInForm = ({
         idDocument: null,
         pendingDocFile: null,
         pendingDocPreview: null,
+        _isRevealed: true,
       },
     ]);
   };
@@ -1273,7 +1349,9 @@ const CheckInForm = ({
 
         const coGuests = guests.filter((g) => !g.isPrimary);
         return coGuests.every((g) => {
-          const hasSomeData = g.name?.trim() || g.age?.trim() || g.gender;
+          if (!(g as any)._isRevealed && !g.name?.trim()) return true; // Safely ignore hidden un-named guests
+
+          const hasSomeData = g.name?.trim() || g.mobileNo?.trim() || g.idNumber?.trim() || g.gender;
           if (!hasSomeData) return true; // Ignore completely empty rows
           return !!g.name?.trim(); // Name is required if they started filling
         });
@@ -1358,7 +1436,10 @@ const CheckInForm = ({
     const coGuests = guests.filter((g) => !g.isPrimary);
     for (let i = 0; i < coGuests.length; i++) {
       const cg = coGuests[i];
-      const hasSomeData = cg.name?.trim() || cg.age?.trim() || cg.gender;
+      if (!(cg as any)._isRevealed && !cg.name?.trim()) continue; // Safely ignore hidden un-named guests
+
+      // Only check if user explicitly started filling it out (ignore pre-filled age)
+      const hasSomeData = cg.name?.trim() || cg.mobileNo?.trim() || cg.idNumber?.trim() || cg.gender;
       if (hasSomeData && !cg.name?.trim()) {
         return `Co-guest name is required (Row ${i + 1})`;
       }
@@ -1450,7 +1531,7 @@ const CheckInForm = ({
 
         let taxPercentage = 0;
         if (isDayAccess) {
-          taxPercentage = 12; // Default 12% for day access as per main calculation
+          taxPercentage = bookingData?.accessPackageId?.taxPercentage || 0;
         } else {
           const rtId = room.requiredRoomTypeId || room.roomType?._id || room.roomType;
           const rt = roomTypes.find((r: any) => String(r._id) === String(rtId));
@@ -1692,9 +1773,15 @@ const CheckInForm = ({
   // Final submit - Proceed with check-in
   const handleFinalCheckIn = async () => {
     if (loading) return;
+
+    if (isDayAccess && dueAmount > 0) {
+      toast.error(`Day Access bookings require full payment before check-in. Pending amount: ₹${dueAmount}`);
+      return;
+    }
     
-    // Check payment amount against due amount
-    if (paymentData.checkInAdvance && paymentData.checkInAdvance > dueAmount) {
+    // Check payment amount against original due amount (before checkInAdvance is subtracted)
+    const originalDueAmount = Math.max(0, grandTotal - bookingAdvance);
+    if (paymentData.checkInAdvance && paymentData.checkInAdvance > originalDueAmount) {
       setShowPaymentWarningModal(true);
       return;
     }
@@ -1737,9 +1824,9 @@ const CheckInForm = ({
         }
       }
 
-      // Validate signed GRC upload
-      if (!editMode && !signedGRCFile) {
-        alert("GRC must be signed and uploaded before checking in!");
+      // Validate signed GRC upload (only for Room Stays)
+      if (!editMode && !isDayAccess && !signedGRCFile) {
+        toast.error("GRC must be signed and uploaded before checking in!");
         setLoading(false);
         return;
       }
@@ -1784,6 +1871,7 @@ const CheckInForm = ({
           ? existingCheckIn?.bookingId?._id || existingCheckIn?.bookingId
           : bookingData?._id,
         checkInType: partyType,
+        accessPackageId: selectedPackageId || undefined,
         checkInTime:
           stayFormData.checkInTime instanceof Date
             ? stayFormData.checkInTime.toISOString()
@@ -2570,42 +2658,65 @@ const CheckInForm = ({
                         </p>
 
                         <div className="flex gap-2 mb-3">
-                          <select className="flex-1 p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none">
-                            <option>
-                              {bookingData?.accessPackageId?.packageName ||
-                                "Pool + Locker + Lunch (Premium Package)"}
-                            </option>
-                          </select>
-                          <button className="px-3 py-2 border border-orange-500 text-orange-500 font-bold text-sm rounded-lg hover:bg-orange-50 transition-all">
-                            View All Packages
-                          </button>
+                          {bookingData?.accessPackageId ? (
+                            <div className="flex-1 p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold text-gray-700">
+                              {displayPackage?.packageName || "No Package Selected"}
+                            </div>
+                          ) : (
+                            <select 
+                              value={selectedPackageId}
+                              onChange={(e) => setSelectedPackageId(e.target.value)}
+                              className="flex-1 p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
+                            >
+                              <option value="" disabled>Select a package</option>
+                              {accessPackages.map((p: any) => (
+                                <option key={p._id} value={p._id}>
+                                  {p.packageName} (Adult: ₹{p.adult_price})
+                                </option>
+                              ))}
+                            </select>
+                          )}
                         </div>
 
                         {/* Package Details Box */}
                         <div className="flex gap-4 p-3 bg-gray-50 border border-border rounded-xl">
                           <div className="w-28 h-20 bg-gray-200 rounded-lg overflow-hidden shrink-0 flex items-center justify-center text-gray-400">
-                            <FiImage size={24} />
+                            {displayPackage?.cover_img?.secure_url ? (
+                              <img src={displayPackage.cover_img.secure_url} alt="Package" className="w-full h-full object-cover" />
+                            ) : (
+                              <FiImage size={24} />
+                            )}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="font-bold text-sm text-gray-800">
-                                {bookingData?.accessPackageId?.packageName ||
-                                  "Pool + Locker + Lunch (Premium Package)"}
+                                {displayPackage?.packageName || "Custom Day Access"}
                               </h4>
-                              <span className="px-1.5 py-0.5 bg-green-100 text-green-600 rounded-full font-black text-[8px] uppercase">
-                                Active
-                              </span>
+                              {displayPackage && (
+                                <span className="px-1.5 py-0.5 bg-green-100 text-green-600 rounded-full font-black text-[8px] uppercase">
+                                  Active
+                                </span>
+                              )}
                             </div>
-                            <div className="flex flex-wrap gap-2 mt-2 text-[9px] 3xl:text-[12px] text-gray-500 font-medium">
-                              <span>🏊 Swimming Pool</span>
-                              <span>🔒 Locker</span>
-                              <span>🍽️ Lunch</span>
-                              <span>🧼 Towel</span>
-                              <span>🚿 Changing Room</span>
-                            </div>
+                            
+                            {displayPackage?.inclusions && displayPackage.inclusions.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2 text-[9px] 3xl:text-[12px] text-gray-500 font-medium">
+                                {displayPackage.inclusions.map((inc: string, idx: number) => (
+                                  <span key={idx}>✓ {inc}</span>
+                                ))}
+                              </div>
+                            )}
+
                             <p className="text-[9px] 3xl:text-[12px] text-gray-400 mt-2 font-bold">
-                              Valid Time: 10:00 AM - 06:00 PM | Adult Price:
-                              ₹1,200 | Child Price: ₹800 (5-12 Yrs)
+                              {displayPackage ? (
+                                <>
+                                  Valid Time: {displayPackage.entry_time || "10:00 AM"} - {displayPackage.exit_time || "06:00 PM"} | 
+                                  Adult Price: ₹{(displayPackage.adult_price || 0).toLocaleString()} | 
+                                  Child Price: ₹{(displayPackage.child_price || 0).toLocaleString()}
+                                </>
+                              ) : (
+                                "No package details available for this booking."
+                              )}
                             </p>
                           </div>
                         </div>
@@ -2689,16 +2800,21 @@ const CheckInForm = ({
                         </div>
 
                         {/* Guest Counters */}
-                        <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div className="grid grid-cols-2 gap-4 mb-4">
                           <div className="flex flex-col items-center p-2 bg-gray-50 border border-border rounded-xl">
                             <span className="text-[9px] font-bold text-gray-400 uppercase mb-1">
-                              Adults (Above 12)
+                              Adults
                             </span>
                             <div className="flex items-center gap-3">
                               <button
-                                onClick={() => {
-                                  if (guests.length > 1)
-                                    removeGuest(guests[guests.length - 1].id);
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  const lastAdultIndex = guests.map(g => Number(g.age) > 12 || !g.age).lastIndexOf(true);
+                                  if (lastAdultIndex !== -1 && guests.filter(g => Number(g.age) > 12 || !g.age).length > 1) {
+                                    const newGuests = [...guests];
+                                    newGuests.splice(lastAdultIndex, 1);
+                                    setGuests(newGuests);
+                                  }
                                 }}
                                 className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100"
                               >
@@ -2712,7 +2828,28 @@ const CheckInForm = ({
                                 }
                               </span>
                               <button
-                                onClick={addGuest}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setGuests([
+                                    ...guests,
+                                    {
+                                      id: `g-${Date.now()}`,
+                                      name: "",
+                                      mobileNo: "",
+                                      idType: "Not Required",
+                                      idNumber: "",
+                                      gender: "",
+                                      age: "25",
+                                      nationality: "Indian",
+                                      isPrimary: false,
+                                      assignedRoomId: null,
+                                      idDocument: null,
+                                      pendingDocFile: null,
+                                      pendingDocPreview: null,
+                                      _isRevealed: false,
+                                    },
+                                  ]);
+                                }}
                                 className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100"
                               >
                                 +
@@ -2722,43 +2859,55 @@ const CheckInForm = ({
 
                           <div className="flex flex-col items-center p-2 bg-gray-50 border border-border rounded-xl">
                             <span className="text-[9px] font-bold text-gray-400 uppercase mb-1">
-                              Children (5-12)
+                              Children
                             </span>
                             <div className="flex items-center gap-3">
-                              <button className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  const lastChildIndex = guests.map(g => Boolean(Number(g.age) <= 12 && g.age)).lastIndexOf(true);
+                                  if (lastChildIndex !== -1) {
+                                    const newGuests = [...guests];
+                                    newGuests.splice(lastChildIndex, 1);
+                                    setGuests(newGuests);
+                                  }
+                                }}
+                                className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100"
+                              >
                                 -
                               </button>
                               <span className="font-black text-base">
                                 {
                                   guests.filter(
-                                    (g) =>
-                                      Number(g.age) <= 12 &&
-                                      Number(g.age) >= 5 &&
-                                      g.age,
+                                    (g) => Number(g.age) <= 12 && g.age,
                                   ).length
                                 }
                               </span>
-                              <button className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100">
-                                +
-                              </button>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-center p-2 bg-gray-50 border border-border rounded-xl">
-                            <span className="text-[9px] font-bold text-gray-400 uppercase mb-1">
-                              Children (Below 5)
-                            </span>
-                            <div className="flex items-center gap-3">
-                              <button className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100">
-                                -
-                              </button>
-                              <span className="font-black text-base">
-                                {
-                                  guests.filter(
-                                    (g) => Number(g.age) < 5 && g.age,
-                                  ).length
-                                }
-                              </span>
-                              <button className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setGuests([
+                                    ...guests,
+                                    {
+                                      id: `g-${Date.now()}`,
+                                      name: "",
+                                      mobileNo: "",
+                                      idType: "Not Required",
+                                      idNumber: "",
+                                      gender: "",
+                                      age: "10",
+                                      nationality: "Indian",
+                                      isPrimary: false,
+                                      assignedRoomId: null,
+                                      idDocument: null,
+                                      pendingDocFile: null,
+                                      pendingDocPreview: null,
+                                      _isRevealed: false,
+                                    },
+                                  ]);
+                                }}
+                                className="w-6 h-6 rounded-full bg-white border border-border flex items-center justify-center font-bold text-gray-600 hover:bg-gray-100"
+                              >
                                 +
                               </button>
                             </div>
@@ -3345,17 +3494,15 @@ const CheckInForm = ({
                           <div className="flex justify-between text-[10px] 3xl:text-[14px] text-gray-400 pl-2">
                             <span>
                               Room Tax (
-                              {bookingData?.pricingSummary?.taxPercentage || 12}
+                              {bookingData?.pricingSummary?.taxPercentage || bookingData?.accessPackageId?.taxPercentage || 0}
                               %)
                             </span>
                             <span>
                               ₹
                               {Math.round(
                                 roomTotal *
-                                  (bookingData?.pricingSummary?.taxPercentage
-                                    ? bookingData.pricingSummary.taxPercentage /
-                                      100
-                                    : 0.12),
+                                  ((bookingData?.pricingSummary?.taxPercentage || bookingData?.accessPackageId?.taxPercentage || 0) /
+                                      100),
                               ).toLocaleString()}
                             </span>
                           </div>
@@ -4090,7 +4237,7 @@ const CheckInForm = ({
 
                             {/* Co-Guests Table */}
                             <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
-                              {coGuests.length > 0 && (
+                              {coGuests.filter((g: any) => g._isRevealed || g.name).length > 0 && (
                                 <table className="w-full text-left text-[10px]">
                                   <thead className="bg-gray-50 border-b border-gray-200 text-gray-500">
                                     <tr>
@@ -4112,7 +4259,7 @@ const CheckInForm = ({
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-gray-100 bg-white">
-                                    {coGuests.map((g) => (
+                                    {coGuests.filter((g: any) => g._isRevealed || g.name).map((g) => (
                                       <tr
                                         key={g.id}
                                         className="hover:bg-gray-50/50 transition-colors group"
@@ -4280,7 +4427,18 @@ const CheckInForm = ({
                               )}
                               <div className="bg-gray-50 p-2 border-t border-gray-200">
                                 <button
-                                  onClick={() => handleAddCoGuest("")}
+                                  onClick={() => {
+                                    const firstUnrevealed = guests.findIndex((g: any) => !g.isPrimary && !g._isRevealed && !g.name);
+                                    if (firstUnrevealed !== -1) {
+                                      setGuests((prev: any) => {
+                                        const next = [...prev];
+                                        next[firstUnrevealed] = { ...next[firstUnrevealed], _isRevealed: true };
+                                        return next;
+                                      });
+                                    } else {
+                                      handleAddCoGuest("");
+                                    }
+                                  }}
                                   className="w-full py-1.5 border border-dashed border-gray-300 text-gray-500 rounded text-[9px] font-black uppercase tracking-wider hover:border-orange-400 hover:text-orange-500 transition-all flex items-center justify-center gap-1"
                                 >
                                   Add Co-Guest

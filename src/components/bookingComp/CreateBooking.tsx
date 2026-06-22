@@ -581,19 +581,22 @@ const CreateBooking = ({
 
     if (bookingCategory === "Day Access") {
       const pkg = accessPackages.find((p) => p._id === selectedPackageId);
-      const rate = pkg ? pkg.adult_price : 0;
-      const count = Number(adultsFilter) + Number(childrenFilter);
-      roomTotal = rate * count;
+      const adultRate = pkg ? (pkg.adult_price || 0) : 0;
+      const childRate = pkg ? (pkg.child_price || 0) : 0;
+      const adultsCount = Number(adultsFilter) || 0;
+      const childrenCount = Number(childrenFilter) || 0;
+      roomTotal = (adultRate * adultsCount) + (childRate * childrenCount);
       roomBreakdown.push({
-        name: `Day Access (${count} Pax)`,
+        name: `Day Access (${adultsCount} Adult(s), ${childrenCount} Child(ren))`,
         price: roomTotal,
       });
 
-      const taxAmt = roomTotal * globalTaxRate;
+      const pkgTaxPercentage = pkg?.taxPercentage || 0;
+      const taxAmt = roomTotal * (pkgTaxPercentage / 100);
       roomTaxAmount += taxAmt;
       roomTaxBreakdown.push({
         name: `Day Access Tax`,
-        taxPercentage: selectedTax?.percentage || 0,
+        taxPercentage: pkgTaxPercentage,
         taxAmount: taxAmt,
       });
     } else {
@@ -1484,7 +1487,7 @@ const CreateBooking = ({
                       <option value="">-- Choose Access Package --</option>
                       {accessPackages.map((pkg) => (
                         <option key={pkg._id} value={pkg._id}>
-                          {pkg.packageName} (Adult: ₹{pkg.adult_price})
+                          {pkg.packageName} (Adult: ₹{pkg.adult_price} | Child: ₹{pkg.child_price})
                         </option>
                       ))}
                     </select>

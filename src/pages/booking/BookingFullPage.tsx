@@ -61,7 +61,7 @@ const BookingFullPage = () => {
   const navigate = useNavigate();
 
   const handleOpenCheckIn = (booking: any) => {
-    navigate(`/checkin?bookingId=${booking._id || booking.id}`);
+    navigate(`/checkin?bookingId=${booking._id || booking.id}&category=${booking.bookingCategory || "Room Stay"}`);
   };
 
   // Sync string filters + page to URL whenever they change

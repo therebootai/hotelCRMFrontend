@@ -309,6 +309,11 @@ export default function AccessPackages() {
                         <p className="text-sm text-text-secondary mt-0.5">
                           Child: ₹{pkg.child_price.toLocaleString("en-IN")}
                         </p>
+                        {pkg.taxPercentage !== undefined && pkg.taxPercentage > 0 && (
+                          <p className="text-[10px] text-gray-500 mt-1 font-semibold">
+                            +{pkg.taxPercentage}% Tax
+                          </p>
+                        )}
                       </div>
                     </td>
                     <td className="py-4 px-10">

@@ -204,7 +204,7 @@ const CheckInForm = ({
   const navigate = useNavigate();
   const [roomTypes, setRoomTypes] = useState<any[]>([]);
   const [availableRooms, setAvailableRooms] = useState<any[]>([]);
-  const [loadingRooms, setLoadingRooms] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(true);
   const grcCardRef = useRef<any>(null);
 
   // GRC Modal State

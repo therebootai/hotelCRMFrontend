@@ -620,6 +620,35 @@ const CheckInForm = ({
     }
   }, [isDayAccess, bookingData]);
 
+  // Handle Day Access Package Time Binding & Validation
+  useEffect(() => {
+    if (isDayAccess && displayPackage) {
+      const now = new Date();
+      const entryStr = displayPackage.entry_time || "09:00";
+      const exitStr = displayPackage.exit_time || "18:00";
+      const [entryH, entryM] = entryStr.split(":").map(Number);
+      const [exitH, exitM] = exitStr.split(":").map(Number);
+      
+      const checkOutDate = new Date(now);
+      checkOutDate.setHours(exitH, exitM, 0, 0);
+      
+      if (exitH < entryH || (exitH === entryH && exitM < entryM)) {
+        checkOutDate.setDate(checkOutDate.getDate() + 1);
+      }
+      
+      if (now > checkOutDate) {
+        window.alert("Cannot check in at this time. The package duration has already ended for today.");
+        navigate(-1); // Navigate back
+      } else {
+        setStayFormData(prev => ({
+          ...prev,
+          checkInTime: now,
+          expectedCheckOutTime: checkOutDate
+        }));
+      }
+    }
+  }, [isDayAccess, displayPackage, navigate]);
+
   // Calculate nights using calendar days (matches backend eachDayOfInterval logic)
   const nights = Math.max(
     1,
@@ -2772,14 +2801,16 @@ const CheckInForm = ({
                             <DatePicker
                               selected={stayFormData.expectedCheckOutTime}
                               onChange={(date: Date | null) =>
-                                date &&
+                                !isDayAccess && date &&
                                 setStayFormData({
                                   ...stayFormData,
                                   expectedCheckOutTime: date,
                                 })
                               }
                               minDate={stayFormData.checkInTime}
-                              className="w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none"
+                              readOnly={isDayAccess}
+                              disabled={isDayAccess}
+                              className={`w-full p-2 bg-gray-50 border border-border rounded-lg text-sm font-bold outline-none ${isDayAccess ? 'opacity-70 cursor-not-allowed' : ''}`}
                               showTimeSelect
                               showTimeSelectOnly
                               timeIntervals={30}
